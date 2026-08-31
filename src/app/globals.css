@@ -1,26 +1,240 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ═══════════════════════════════════════════════════════════════
+   OABase — sistema visual
+
+   Princípios:
+
+   1. AMBIENTE CONTIDO, PERSONAGEM COLORIDO. O mascote é o único
+      elemento saturado da página. Tudo à volta é névoa, branco e
+      esmeralda — para ele cantar em vez de competir.
+   2. SUPERFÍCIES, NÃO CAIXAS. Cartão branco sobre névoa, com sombra
+      curta e borda de fio. A hierarquia vem da elevação, não de
+      moldura grossa nem de contraste bruto.
+   3. A SERIFA É A LEI. Aparece exclusivamente em texto normativo e
+      enunciado de prova. Quando ela entra, começou o Direito.
+   ═══════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
+  --font-lei: var(--font-source-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jakarta), system-ui, sans-serif;
+
+  /* esmeralda — a marca. Mais profunda e saturada que o teal antigo:
+     lê elegante onde o outro lia institucional. */
+  --color-brand-50: #ebf5f1;
+  --color-brand-100: #cfe8df;
+  --color-brand-200: #a2d2c2;
+  --color-brand-300: #62b39c;
+  --color-brand-400: #2a9478;
+  --color-brand-500: #0f7a5f;
+  --color-brand-600: #0b6250;
+  --color-brand-700: #094c40;
+  --color-brand-800: #073b33;
+  --color-brand-900: #052b26;
+
+  /* âmbar — destaque quente. Substitui o amarelo elétrico, que
+     estourava e puxava tudo para o lado do aviso de trânsito. */
+  --color-ouro-50: #fdf6ea;
+  --color-ouro-100: #fae9cc;
+  --color-ouro-200: #f2d095;
+  --color-ouro-400: #e9a23b;
+  --color-ouro-500: #d98c22;
+  --color-ouro-600: #b87016;
+  --color-ouro-700: #8c5410;
+
+  /* ameixa — a camada paga, e só ela. */
+  --color-vinho-50: #f8edf1;
+  --color-vinho-100: #efd6df;
+  --color-vinho-200: #dcaebf;
+  --color-vinho-400: #a44467;
+  --color-vinho-500: #7e2a44;
+  --color-vinho-600: #6a2239;
+  --color-vinho-700: #541a2c;
+
+  /* neutros de viés verde, escolhidos e não herdados */
+  --color-ink: #16201d;
+  --color-body: #4c5a55;
+  --color-muted: #7c8a85;
+  --color-line: #e3eae6;
+  --color-hairline: #d6e0db;
+  --color-paper: #f5f8f6;
+  --color-surface: #ffffff;
+  --color-sunk: #edf3f0;
+  --color-abyss: #073b33;
+
+  --radius-suave: 12px;
+  --radius-medio: 18px;
+  --radius-amplo: 26px;
+
+  --shadow-baixa:
+    0 1px 2px rgba(16, 32, 27, 0.04), 0 6px 18px -10px rgba(16, 32, 27, 0.12);
+  --shadow-media:
+    0 2px 4px rgba(16, 32, 27, 0.04), 0 18px 40px -18px rgba(16, 32, 27, 0.18);
+  --shadow-alta:
+    0 4px 8px rgba(16, 32, 27, 0.05), 0 34px 70px -26px rgba(16, 32, 27, 0.26);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    text-wrap: balance;
+    letter-spacing: -0.022em;
+    font-weight: 700;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-400);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+    color: var(--color-brand-900);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* ---- Superfície: o cartão que a página inteira usa ---- */
+  .superficie {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-medio);
+    box-shadow: var(--shadow-baixa);
+  }
+  .superficie-alta {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-amplo);
+    box-shadow: var(--shadow-alta);
+  }
+
+  /* ---- Selo: rótulo de seção em pílula, no lugar do eyebrow em
+       monoespaçada maiúscula que marcava o sistema anterior ---- */
+  .selo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .selo-claro {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+
+  /* ---- Texto de lei e enunciado: a serifa, e só aqui ---- */
+  .lei-texto {
+    font-family: var(--font-lei);
+    font-size: 1.1rem;
+    line-height: 1.66;
+    color: var(--color-ink);
+  }
+  .lei-texto p + p {
+    margin-top: 0.85rem;
+  }
+
+  .comentario > * + * {
+    margin-top: 1rem;
+  }
+  .comentario p {
+    max-width: 68ch;
+  }
+  .comentario strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* ---- Grifo: traço quente sob a palavra, não bloco atrás dela ---- */
+  .grifo {
+    position: relative;
+    /* Contexto próprio: sem ele o traço cai atrás do fundo da seção. */
+    z-index: 0;
+    display: inline;
+  }
+  .grifo::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: -0.14em;
+    right: -0.16em;
+    top: 0.1em;
+    bottom: 0.05em;
+    background: var(--color-ouro-200);
+    border-radius: 7px;
+    opacity: 0.75;
+    transform-origin: left center;
+  }
+
+  /* ---- Reveal discreto, uma vez, só em cabeçalho de seção ---- */
+  .oab-reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .oab-reveal[data-visivel="true"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Grade do cartão-resposta. Classe própria em vez de utilitários:
+     `grid-cols-10` e a variante arbitrária disputavam a cascata. */
+  .oab-cartao {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 5px;
+  }
+  @media (min-width: 640px) {
+    .oab-cartao {
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+      gap: 6px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oab-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

@@ -1,0 +1,67 @@
+import type { MetadataRoute } from "next";
+import { getArtigosIndexaveis, getExames, getLeis } from "./queries";
+
+/** Limite do protocolo de sitemap. Acima disso, particionar é obrigatório. */
+export const URLS_POR_SITEMAP = 50_000;
+
+type Entrada = MetadataRoute.Sitemap[number];
+
+const ESTATICAS: {
+  path: string;
+  priority: number;
+  changeFrequency: Entrada["changeFrequency"];
+}[] = [
+  { path: "/", priority: 1, changeFrequency: "weekly" },
+  { path: "/legislacao", priority: 0.9, changeFrequency: "weekly" },
+  { path: "/exames", priority: 0.9, changeFrequency: "weekly" },
+  { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
+];
+
+/**
+ * Fonte única de verdade do que é rastreável.
+ *
+ * Repare no filtro: artigos entram por `getArtigosIndexaveis()`, que só
+ * devolve o que passou pela revisão editorial. Uma página sem comentário
+ * revisado continua acessível, mas não é anunciada ao Google.
+ */
+export async function getUrlsIndexaveis(): Promise<
+  {
+    path: string;
+    lastModified?: string;
+    priority: number;
+    changeFrequency: Entrada["changeFrequency"];
+  }[]
+> {
+  const [leis, artigos, exames] = await Promise.all([
+    getLeis(),
+    getArtigosIndexaveis(),
+    getExames(),
+  ]);
+
+  return [
+    ...ESTATICAS,
+    ...leis.map((lei) => ({
+      path: `/legislacao/${lei.slug}`,
+      priority: 0.8,
+      changeFrequency: "monthly" as const,
+    })),
+    ...artigos.map((artigo) => ({
+      path: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
+      lastModified: artigo.atualizadoEm,
+      priority: 0.7,
+      changeFrequency: "monthly" as const,
+    })),
+    ...exames.map((exame) => ({
+      path: `/exames/${exame.slug}`,
+      lastModified: exame.data,
+      priority: 0.6,
+      changeFrequency: "yearly" as const,
+    })),
+  ];
+}
+
+export async function contarParticoes(): Promise<number> {
+  const urls = await getUrlsIndexaveis();
+  return Math.max(1, Math.ceil(urls.length / URLS_POR_SITEMAP));
+}
