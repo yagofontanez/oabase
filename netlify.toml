@@ -1,0 +1,41 @@
+# ============================================================================
+# Netlify.
+#
+# O deploy do Next é feito pelo runtime oficial da Netlify, que é detectado
+# sozinho — não há plugin a declarar aqui. O que este arquivo existe para
+# fixar é o resto:
+#
+# 1. o diretório das funções, porque a função agendada não é descoberta fora
+#    do caminho padrão;
+# 2. o comando de build com pnpm, que é o gerenciador do projeto
+#    (packageManager em package.json);
+# 3. o cabeçalho que mantém `/app` e `/api` fora dos índices de busca.
+#
+# O agendamento em si mora no próprio arquivo da função
+# (netlify/functions/emails-diarios.mts), e não aqui: é assim que a Netlify
+# lê `export const config = { schedule }`.
+# ============================================================================
+
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[functions]
+  directory = "netlify/functions"
+  # `.mts` precisa do bundler moderno; o padrão antigo não resolve ESM.
+  node_bundler = "esbuild"
+
+# ----------------------------------------------------------------------------
+# A fronteira aberto/pago é aplicada em três lugares de propósito: `robots` na
+# rota, `Disallow` em robots.ts e o cabeçalho aqui. Depender de um mecanismo
+# só é como o produto pago vaza para o índice.
+# ----------------------------------------------------------------------------
+[[headers]]
+  for = "/app/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

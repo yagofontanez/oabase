@@ -9,8 +9,9 @@ import { planos } from "@/lib/planos";
 /**
  * Tarefa diária de e-mail: lembrete de revisão e aviso de fim de plano.
  *
- * Chamada pelo Cron da Vercel, que envia `Authorization: Bearer $CRON_SECRET`.
- * Sem sessão, como o webhook — e a saída é a mesma: funções `security
+ * Chamada pela função agendada da Netlify
+ * (netlify/functions/emails-diarios.mts), que envia
+ * `Authorization: Bearer $CRON_SECRET`. Sem sessão, como o webhook — e a saída é a mesma: funções `security
  * definer` guardadas por um segredo próprio em `interno.segredos`. Segredo
  * separado do webhook de propósito: quem consegue disparar e-mail não deveria,
  * pelo mesmo vazamento, conseguir confirmar pagamento.
@@ -27,7 +28,18 @@ import { planos } from "@/lib/planos";
  */
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+
+/**
+ * Teto de envios por execução.
+ *
+ * Na Netlify a função síncrona tem alguns segundos de vida, não os 300 que a
+ * Vercel dá — um lote grande estouraria o tempo e morreria no meio, deixando
+ * parte das pessoas marcada como avisada e parte não. Com teto, o excedente
+ * simplesmente entra na execução do dia seguinte.
+ *
+ * Com o volume atual isso nunca é alcançado; existe para o dia em que for.
+ */
+const TETO_POR_EXECUCAO = 80;
 
 type Destinatario = {
   user_id: string;
@@ -75,8 +87,8 @@ export async function GET(request: Request) {
   const dias = diasAte(proximo.data);
 
   const relatorio = {
-    revisao: { enviados: 0, falhas: 0 },
-    planoAcabando: { enviados: 0, falhas: 0 },
+    revisao: { enviados: 0, falhas: 0, pendentes: 0 },
+    planoAcabando: { enviados: 0, falhas: 0, pendentes: 0 },
   };
 
   async function marcar(userId: string, tipo: string, referencia: string) {
@@ -100,7 +112,11 @@ export async function GET(request: Request) {
   }
 
   const hoje = new Date().toISOString().slice(0, 10);
-  for (const pessoa of (revisar ?? []) as ParaRevisar[]) {
+  const filaRevisao = ((revisar ?? []) as ParaRevisar[]).slice(
+    0,
+    TETO_POR_EXECUCAO,
+  );
+  for (const pessoa of filaRevisao) {
     const modelo = revisaoDoDia({
       nome: pessoa.nome,
       questoes: pessoa.questoes,
@@ -125,6 +141,11 @@ export async function GET(request: Request) {
   }
 
   /* ---- Plano acabando ---- */
+  relatorio.revisao.pendentes = Math.max(
+    0,
+    ((revisar ?? []) as ParaRevisar[]).length - filaRevisao.length,
+  );
+
   const { data: avisar, error: erroAvisar } = await supabase.rpc(
     "destinatarios_plano_acabando",
     { p_segredo: segredo, p_dias: 7 },
@@ -134,7 +155,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ ...relatorio, erro: "falha" }, { status: 500 });
   }
 
-  for (const pessoa of (avisar ?? []) as ParaAvisar[]) {
+  const filaAviso = ((avisar ?? []) as ParaAvisar[]).slice(
+    0,
+    TETO_POR_EXECUCAO,
+  );
+  for (const pessoa of filaAviso) {
     const nomeDoPlano =
       planos.find((p) => p.chave === pessoa.plano)?.nome ?? pessoa.plano;
     const modelo = planoAcabando({
@@ -160,6 +185,11 @@ export async function GET(request: Request) {
       console.error("Aviso de fim de plano falhou:", envio.erro);
     }
   }
+
+  relatorio.planoAcabando.pendentes = Math.max(
+    0,
+    ((avisar ?? []) as ParaAvisar[]).length - filaAviso.length,
+  );
 
   console.info("Tarefa de e-mail:", JSON.stringify(relatorio));
   return NextResponse.json({ ok: true, ...relatorio });

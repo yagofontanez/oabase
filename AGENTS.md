@@ -392,6 +392,18 @@ uma coisa e outra.
 `webhook_asaas`, ambos em `interno.segredos`. Quem conseguir disparar e-mail
 não deve, pelo mesmo vazamento, conseguir confirmar pagamento.
 
+**O deploy é na Netlify, não na Vercel.** O agendamento é uma *scheduled
+function* (`netlify/functions/emails-diarios.mts`), com o `schedule` exportado
+do próprio arquivo — é assim que a Netlify lê, não pelo `netlify.toml`. Ela só
+faz `fetch` em `/api/tarefas/emails` com o `CRON_SECRET`: a lógica fica na
+rota, dentro do Next, porque as funções da Netlify são empacotadas pelo
+esbuild e o alias `@/...` não resolve lá.
+
+**A função síncrona da Netlify tem segundos de vida, não os 300 da Vercel.**
+Daí o `TETO_POR_EXECUCAO` na rota: um lote grande morreria no meio, deixando
+parte das pessoas marcada como avisada e parte não. O excedente entra na
+execução do dia seguinte, e o relatório devolve `pendentes`.
+
 **Lembrete só com 5 questões ou mais na fila**, e só para quem tem assinatura
 ativa. Lembrar de revisar quem perdeu o acesso é propaganda disfarçada de
 utilidade — para esse caso existe o aviso de fim de plano.
