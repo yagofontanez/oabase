@@ -35,6 +35,23 @@ export const planos: Plano[] = [
     cta: "Começar por R$ 1",
   },
   {
+    chave: "mensal",
+    nome: "Mensal",
+    preco: "R$ 15",
+    precoNumerico: 15,
+    periodo: "por mês",
+    resumo:
+      "Para quem quer entrar barato e decidir depois quanto tempo vai ficar.",
+    itens: [
+      "Banco de questões completo",
+      "Caderno de erros automático",
+      "Cronograma até a data do exame",
+      "Cancela quando quiser",
+    ],
+    destaque: false,
+    cta: "Assinar mensal",
+  },
+  {
     chave: "ate-a-prova",
     nome: "Até a prova",
     preco: "R$ 109",

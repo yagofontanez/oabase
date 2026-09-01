@@ -171,16 +171,21 @@ export default async function Home() {
               da FGV. Sem cadastro: clique numa alternativa e veja o comentário.
             </p>
 
+            {/* `flex-1` com base igual: os dois botões têm rótulos de
+                comprimentos bem diferentes, e dimensionados pelo conteúdo
+                ficavam um curto e um longo, empilhados e desalinhados. Assim
+                dividem a linha quando cabem e ocupam a mesma largura quando
+                quebram. */}
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="#planos"
-                className="rounded-full bg-brand-600 px-7 py-3.5 font-semibold text-white shadow-[0_10px_28px_-12px_rgba(11,98,80,0.8)] transition-colors hover:bg-brand-700"
+                className="flex-1 basis-60 rounded-full bg-brand-600 px-7 py-3.5 text-center font-semibold text-white shadow-[0_10px_28px_-12px_rgba(11,98,80,0.8)] transition-colors hover:bg-brand-700"
               >
                 Começar por R$&nbsp;1
               </Link>
               <Link
                 href="#guia"
-                className="rounded-full border border-hairline bg-surface px-7 py-3.5 font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+                className="flex-1 basis-60 rounded-full border border-hairline bg-surface px-7 py-3.5 text-center font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
               >
                 Como se aprova na 1ª fase
               </Link>
@@ -538,7 +543,7 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className="mt-11 grid gap-4 lg:grid-cols-3">
+            <div className="mt-11 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {planos.map((plano) => (
                 <div
                   key={plano.chave}
@@ -580,7 +585,7 @@ export default async function Home() {
                   </ul>
 
                   <Link
-                    href="/criar-conta"
+                    href={`/app/assinar?plano=${plano.chave}`}
                     className={`rounded-full px-6 py-3 text-center text-[0.94rem] font-semibold transition-colors ${
                       plano.destaque
                         ? "bg-brand-600 text-white hover:bg-brand-700"

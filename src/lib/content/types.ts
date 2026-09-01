@@ -19,6 +19,9 @@ export type Lei = {
   resumo: string;
 };
 
+/** O bastante para montar o link de "artigo anterior / próximo". */
+export type Vizinho = { slug: string; numero: string };
+
 export type Artigo = {
   leiSlug: string;
   slug: string;
@@ -52,4 +55,12 @@ export type Exame = {
   gabaritoDefinitivo: boolean;
   /** Só existe quando a classificação por disciplina foi confirmada. */
   distribuicao: { disciplinaSlug: string; questoes: number }[];
+};
+
+/** Em que exames um artigo já foi cobrado. Contagem, nunca enunciado. */
+export type IncidenciaEmExame = {
+  exameSlug: string;
+  edicao: number;
+  data: string;
+  questoes: number;
 };

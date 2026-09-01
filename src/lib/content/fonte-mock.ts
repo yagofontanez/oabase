@@ -1,5 +1,6 @@
 import { artigos, disciplinas, exames, leis } from "./data";
 import type { FonteDeConteudo } from "./fonte";
+import { naOrdemDoCodigo } from "./ordem";
 
 /** Origem de desenvolvimento: os arrays de `data.ts`. */
 export const fonteMock: FonteDeConteudo = {
@@ -10,15 +11,16 @@ export const fonteMock: FonteDeConteudo = {
     return leis.find((l) => l.slug === slug) ?? null;
   },
   async getArtigosDaLei(leiSlug) {
-    return artigos
-      .filter((a) => a.leiSlug === leiSlug)
-      .sort((a, b) => b.incidencia - a.incidencia);
+    return naOrdemDoCodigo(artigos.filter((a) => a.leiSlug === leiSlug));
   },
   async getArtigo(leiSlug, artigoSlug) {
     return (
       artigos.find((a) => a.leiSlug === leiSlug && a.slug === artigoSlug) ??
       null
     );
+  },
+  async contarArtigos(leiSlug) {
+    return artigos.filter((a) => a.leiSlug === leiSlug).length;
   },
   async getArtigosIndexaveis() {
     return artigos.filter((a) => a.indexavel);
@@ -37,6 +39,23 @@ export const fonteMock: FonteDeConteudo = {
       .concat(artigos.filter((a) => a.disciplinaSlug !== artigo.disciplinaSlug))
       .filter((a) => a.slug !== artigo.slug)
       .slice(0, limite);
+  },
+  async getVizinhos(leiSlug, artigoSlug) {
+    const daLei = naOrdemDoCodigo(artigos.filter((a) => a.leiSlug === leiSlug));
+    const i = daLei.findIndex((a) => a.slug === artigoSlug);
+    const em = (n: number) => {
+      const a = daLei[n];
+      return a ? { slug: a.slug, numero: a.numero } : null;
+    };
+    return i < 0
+      ? { anterior: null, proximo: null }
+      : { anterior: em(i - 1), proximo: em(i + 1) };
+  },
+  // Sem banco não há acervo de questões para contar. Zero é a resposta
+  // honesta — inventar incidência aqui reproduziria exatamente o placeholder
+  // que este recurso existe para eliminar.
+  async getIncidenciaDoArtigo() {
+    return [];
   },
   async getExames() {
     return [...exames].sort((a, b) => b.edicao - a.edicao);

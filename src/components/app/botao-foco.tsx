@@ -26,7 +26,12 @@ const Relogio = () => (
  * já está na tela. Levar a pessoa para outra rota seria justamente o que
  * atrapalhava antes.
  */
-export function BotaoFoco({ variante = "cabecalho" }: { variante?: "cabecalho" | "cartao" }) {
+export function BotaoFoco({
+  variante = "cabecalho",
+}: {
+  /** `cabecalho` esconde o rótulo no celular; `acao` nunca esconde. */
+  variante?: "cabecalho" | "acao" | "cartao";
+}) {
   if (variante === "cartao") {
     return (
       <button
@@ -54,7 +59,9 @@ export function BotaoFoco({ variante = "cabecalho" }: { variante?: "cabecalho" |
       className="flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-[0.9rem] font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100"
     >
       <Relogio />
-      <span className="hidden sm:inline">Modo foco</span>
+      <span className={variante === "acao" ? undefined : "hidden sm:inline"}>
+        Modo foco
+      </span>
     </button>
   );
 }

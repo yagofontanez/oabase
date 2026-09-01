@@ -44,6 +44,11 @@
   --color-ouro-600: #b87016;
   --color-ouro-700: #8c5410;
 
+  /* noite — o trilho do painel. A área logada é a mesa de estudo; o site
+     aberto é a biblioteca. O escuro é o que separa uma da outra sem trocar
+     a paleta nem tocar na landing. */
+  --color-noite: #041f1c;
+
   /* ameixa — a camada paga, e só ela. */
   --color-vinho-50: #f8edf1;
   --color-vinho-100: #efd6df;
@@ -229,6 +234,177 @@
       gap: 6px;
     }
   }
+
+  /* ═════════ Painel (área logada) ═════════════════════════════════
+     O site aberto é lido; o painel é operado. Daí o trilho escuro fixo,
+     a coluna de conteúdo com teto de largura e a atmosfera no topo:
+     três coisas que dizem "ferramenta" sem repintar a marca. */
+
+  /* Coluna de conteúdo do painel. Sem teto, tabela e grade esticam até
+     2.500px em monitor largo e a linha de leitura morre. */
+  .painel-conteudo {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+  @media (min-width: 640px) {
+    .painel-conteudo {
+      padding-inline: 1.75rem;
+    }
+  }
+
+  /* Fundo do trilho e dos cartões escuros. O verde só aparece no canto
+     alto: gradiente uniforme lê como plástico. */
+  .trilho-fundo {
+    background:
+      radial-gradient(
+        130% 55% at 0% 0%,
+        rgba(42, 148, 120, 0.3),
+        transparent 62%
+      ),
+      linear-gradient(
+        180deg,
+        var(--color-brand-800) 0%,
+        var(--color-brand-900) 58%,
+        var(--color-noite) 100%
+      );
+  }
+  /* O escuro do painel vive só no trilho e no widget de foco — chrome e
+     sobreposição. Nenhum cartão de conteúdo é escuro: um bloco desses no
+     meio da tela vira o assunto da página inteira, e o assunto tem de ser
+     o que a pessoa veio fazer. */
+
+  /* Rótulo de coluna/seção do painel. Versalete pequeno em vez de outro
+     título: a hierarquia do painel já tem h1 e h2 disputando. */
+  .rotulo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .rotulo-claro {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Barra de rolagem discreta em painel e conversa. */
+  .rolagem-fina {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-hairline) transparent;
+  }
+  .rolagem-fina::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .rolagem-fina::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: var(--color-hairline);
+    background-clip: content-box;
+  }
+
+  /* ---- Superfície de IA -------------------------------------------
+     O plano de estudos é a única tela em que a máquina escreve. Ela
+     ganha um tratamento próprio — gradiente da marca ao âmbar — para
+     que nunca se confunda com texto de lei ou com dado do acervo. */
+  .texto-aurora {
+    background: linear-gradient(
+      98deg,
+      var(--color-brand-700) 0%,
+      var(--color-brand-400) 34%,
+      var(--color-ouro-600) 72%,
+      var(--color-ouro-500) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .oab-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-muted) 0%,
+      var(--color-brand-600) 42%,
+      var(--color-muted) 84%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: oab-brilho 1.9s linear infinite;
+  }
+
+  .oab-ponto {
+    animation: oab-pulso 1.15s ease-in-out infinite;
+  }
+
+  /* Célula do índice de uma lei. Aqui a classe de componente não é preferência
+     de estilo: o Código Civil tem 2.081 artigos, e repetir as utilitárias em
+     cada um deles engordava o HTML da página em cerca de 400 KB. */
+  .oab-artigo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.625rem 0.5rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: 10px;
+    background: var(--color-surface);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-body);
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .oab-artigo:hover {
+    border-color: var(--color-brand-400);
+    background: var(--color-brand-50);
+    color: var(--color-brand-700);
+  }
+  .oab-artigo > span {
+    display: block;
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-ouro-500);
+  }
+}
+
+@keyframes oab-brilho {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes oab-pulso {
+  0%,
+  75%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+  38% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes oab-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -236,5 +412,10 @@
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  .oab-shimmer {
+    animation: none;
+    color: var(--color-muted);
+    -webkit-text-fill-color: var(--color-muted);
   }
 }

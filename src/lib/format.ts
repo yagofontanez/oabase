@@ -15,3 +15,36 @@ export function formatarData(
     new Date(ano, mes - 1, dia),
   );
 }
+
+/**
+ * "do Código Civil", "da Constituição Federal".
+ *
+ * O nome da lei não carrega gênero, e concatenar um "da" fixo produzia
+ * "Art. 1337 da Código Civil" — em título, em `<h1>` e na meta description de
+ * cada um dos milhares de artigos. A primeira palavra do nome resolve: nomes
+ * de norma no Brasil começam por um substantivo cujo gênero rege o resto.
+ */
+const NOMES_MASCULINOS = new Set([
+  "código",
+  "estatuto",
+  "ato",
+  "decreto",
+  "regimento",
+  "regulamento",
+]);
+
+export function daLei(nome: string): string {
+  const primeira = nome.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  return NOMES_MASCULINOS.has(primeira) ? "do" : "da";
+}
+
+/**
+ * Número de artigo como o jurista escreve: 1337 vira "1.337", e o sufixo de
+ * letra é preservado ("121-A"). O separador é convenção do texto legal — só
+ * na URL o número continua cru, porque lá ele é identificador e não texto.
+ */
+export function formatarNumeroDeArtigo(numero: string): string {
+  return numero.replace(/^\d+/, (digitos) =>
+    Number(digitos).toLocaleString("pt-BR"),
+  );
+}

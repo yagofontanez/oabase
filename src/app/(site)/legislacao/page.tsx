@@ -3,18 +3,18 @@ import Link from "next/link";
 import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
-import { getArtigosDaLei, getLeis } from "@/lib/content/queries";
+import { contarArtigos, getLeis } from "@/lib/content/queries";
 export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Legislação comentada para a OAB",
   description:
-    "Constituição Federal, Código Civil e Código Penal artigo por artigo, com comentário voltado ao Exame de Ordem e a incidência real de cada dispositivo.",
+    "Constituição, códigos e o Estatuto da OAB artigo por artigo, com o texto oficial atualizado, comentário voltado ao Exame de Ordem e a incidência real de cada dispositivo.",
   alternates: { canonical: "/legislacao" },
 };
 export default async function LegislacaoIndex() {
   const leis = await getLeis();
   const contagens = await Promise.all(
-    leis.map(async (lei) => (await getArtigosDaLei(lei.slug)).length),
+    leis.map((lei) => contarArtigos(lei.slug)),
   );
   return (
     <>
@@ -45,7 +45,7 @@ export default async function LegislacaoIndex() {
                   {lei.sigla}
                 </span>
                 <span className="text-[0.72rem] tabular-nums text-muted">
-                  {contagens[i]} artigos
+                  {contagens[i].toLocaleString("pt-BR")} artigos
                 </span>
               </div>
               <h2 className="text-2xl font-bold tracking-[-0.03em] group-hover:text-brand-600">

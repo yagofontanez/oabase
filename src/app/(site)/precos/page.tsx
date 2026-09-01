@@ -67,7 +67,7 @@ export default async function PrecosPage() {
       />
 
       <Container className="py-16">
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {planos.map((plano) => (
             <div
               key={plano.chave}
@@ -109,7 +109,7 @@ export default async function PrecosPage() {
               </ul>
 
               <Link
-                href="/criar-conta"
+                href={`/app/assinar?plano=${plano.chave}`}
                 className={`rounded-full px-6 py-3 text-center font-semibold transition-colors ${
                   plano.destaque
                     ? "bg-ouro-500 text-brand-900 hover:bg-ouro-400"

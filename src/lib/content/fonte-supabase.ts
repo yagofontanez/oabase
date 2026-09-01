@@ -1,6 +1,7 @@
 import { supabaseAnon } from "@/lib/supabase/client";
 import type { FonteDeConteudo } from "./fonte";
-import type { Artigo, Disciplina, Exame, Lei } from "./types";
+import { naOrdemDoCodigo } from "./ordem";
+import type { Artigo, Disciplina, Exame, Lei, Vizinho } from "./types";
 
 /* As consultas usam a chave anônima: o RLS é quem garante que só o conteúdo
    aberto sai daqui. Ver src/lib/supabase/client.ts. */
@@ -46,6 +47,28 @@ function erro(contexto: string, e: { message: string } | null): void {
   if (e) throw new Error(`Supabase (${contexto}): ${e.message}`);
 }
 
+/* O PostgREST devolve no máximo mil linhas por requisição e não avisa quando
+   corta — o Código Civil tem 2.081 artigos e sumiria metade em silêncio, que é
+   o pior jeito de perder dado. Quem precisa da lista inteira pede por aqui. */
+const PAGINA = 1000;
+
+async function todasAsPaginas<T>(
+  contexto: string,
+  buscar: (
+    de: number,
+    ate: number,
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const tudo: T[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await buscar(de, de + PAGINA - 1);
+    erro(contexto, error);
+    const lote = data ?? [];
+    tudo.push(...lote);
+    if (lote.length < PAGINA) return tudo;
+  }
+}
+
 export const fonteSupabase: FonteDeConteudo = {
   async getLeis() {
     const { data, error } = await supabaseAnon()
@@ -67,13 +90,22 @@ export const fonteSupabase: FonteDeConteudo = {
   },
 
   async getArtigosDaLei(leiSlug) {
-    const { data, error } = await supabaseAnon()
-      .from("artigos")
-      .select(CAMPOS_ARTIGO)
-      .eq("leis.slug", leiSlug)
-      .order("incidencia", { ascending: false });
-    erro("artigos da lei", error);
-    return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+    const linhas = await todasAsPaginas<LinhaArtigo>(
+      "artigos da lei",
+      (de, ate) =>
+        supabaseAnon()
+          .from("artigos")
+          .select(CAMPOS_ARTIGO)
+          .eq("leis.slug", leiSlug)
+          // Ordem estável no servidor só para o fatiamento por página não
+          // repetir nem pular linha; a ordem que a tela usa é a do código.
+          .order("id", { ascending: true })
+          .range(de, ate) as unknown as PromiseLike<{
+          data: LinhaArtigo[] | null;
+          error: { message: string } | null;
+        }>,
+    );
+    return naOrdemDoCodigo(linhas.map(paraArtigo));
   },
 
   async getArtigo(leiSlug, artigoSlug) {
@@ -85,6 +117,15 @@ export const fonteSupabase: FonteDeConteudo = {
       .maybeSingle();
     erro("artigo", error);
     return data ? paraArtigo(data as unknown as LinhaArtigo) : null;
+  },
+
+  async contarArtigos(leiSlug) {
+    const { count, error } = await supabaseAnon()
+      .from("artigos")
+      .select("id, leis!inner(slug)", { count: "exact", head: true })
+      .eq("leis.slug", leiSlug);
+    erro("contagem de artigos", error);
+    return count ?? 0;
   },
 
   async getArtigosIndexaveis() {
@@ -108,24 +149,86 @@ export const fonteSupabase: FonteDeConteudo = {
   },
 
   async getArtigosRelacionados(artigo, limite) {
-    // Hoje por disciplina; quando o embedding estiver preenchido, vira uma
-    // busca por vizinhança em pgvector sem mudar a assinatura.
+    // A disciplina entra como filtro da consulta, e não como peneira do
+    // resultado: ordenar 5.756 artigos por incidência e só então separar por
+    // disciplina devolvia quase sempre os mesmos poucos comentados, porque
+    // 5.751 empatam em zero e o desempate é arbitrário.
+    // Quando o embedding estiver preenchido, isto vira busca por vizinhança
+    // em pgvector sem mudar a assinatura.
     const { data, error } = await supabaseAnon()
       .from("artigos")
       .select(CAMPOS_ARTIGO)
+      .eq("disciplinas.slug", artigo.disciplinaSlug)
       .neq("slug", artigo.slug)
       .order("incidencia", { ascending: false })
-      .limit(limite * 3);
+      .limit(limite);
     erro("artigos relacionados", error);
+    return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+  },
 
-    const todos = ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
-    const mesmaDisciplina = todos.filter(
-      (a) => a.disciplinaSlug === artigo.disciplinaSlug,
-    );
-    const resto = todos.filter(
-      (a) => a.disciplinaSlug !== artigo.disciplinaSlug,
-    );
-    return [...mesmaDisciplina, ...resto].slice(0, limite);
+  async getVizinhos(leiSlug, artigoSlug) {
+    const base = supabaseAnon();
+    const { data: atual, error: erroAtual } = await base
+      .from("artigos")
+      .select("ordem, lei_id, leis!inner(slug)")
+      .eq("leis.slug", leiSlug)
+      .eq("slug", artigoSlug)
+      .maybeSingle();
+    erro("artigo atual", erroAtual);
+    if (!atual) return { anterior: null, proximo: null };
+
+    const { ordem, lei_id } = atual as { ordem: number; lei_id: string };
+    const lado = (anterior: boolean) =>
+      base
+        .from("artigos")
+        .select("slug, numero")
+        .eq("lei_id", lei_id)
+        [anterior ? "lt" : "gt"]("ordem", ordem)
+        .order("ordem", { ascending: !anterior })
+        .limit(1);
+
+    const [antes, depois] = await Promise.all([lado(true), lado(false)]);
+    erro("artigo anterior", antes.error);
+    erro("próximo artigo", depois.error);
+    return {
+      anterior: (antes.data?.[0] as Vizinho) ?? null,
+      proximo: (depois.data?.[0] as Vizinho) ?? null,
+    };
+  },
+
+  /**
+   * `exames_do_artigo` é `security definer` porque `questoes` exige
+   * assinatura e esta consulta roda em página aberta. O que atravessa é
+   * contagem por exame — número de questões, nunca enunciado.
+   */
+  async getIncidenciaDoArtigo(leiSlug, artigoSlug) {
+    const base = supabaseAnon();
+    const { data: artigo, error: erroArtigo } = await base
+      .from("artigos")
+      .select("id, leis!inner(slug)")
+      .eq("leis.slug", leiSlug)
+      .eq("slug", artigoSlug)
+      .maybeSingle();
+    erro("artigo para incidência", erroArtigo);
+    if (!artigo) return [];
+
+    const { data, error } = await base.rpc("exames_do_artigo", {
+      p_artigo_id: (artigo as { id: string }).id,
+    });
+    erro("incidência do artigo", error);
+
+    type Linha = {
+      exame_slug: string;
+      edicao: number;
+      data_prova: string;
+      questoes: number;
+    };
+    return ((data ?? []) as Linha[]).map((l) => ({
+      exameSlug: l.exame_slug,
+      edicao: l.edicao,
+      data: l.data_prova,
+      questoes: l.questoes,
+    }));
   },
 
   async getExames() {

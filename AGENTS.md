@@ -94,8 +94,9 @@ dependências). Ver `ingest/README.md`.
 | Real, de fonte oficial | Placeholder |
 |---|---|
 | `questoes` do 43º Exame (80, das quais 2 anuladas) | `disciplinas.media_por_prova` |
-| `exames.data_prova` do 43º (27/04/2025) | `leis`, `artigos` e seus comentários |
+| `exames.data_prova` do 43º (27/04/2025) | `artigos.incidencia` |
 | gabarito definitivo, tipo 1 | |
+| `leis` e `artigos`: 8 códigos, 5.756 artigos do Planalto | |
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
@@ -104,6 +105,113 @@ assim que convivem na mesma tabela.
 A distribuição por disciplina exibida na landing e em `/estatisticas` ainda sai
 de `media_por_prova`, que é estimativa. Ela só pode ser calculada dos dados
 reais quando houver questões com `disciplina_confirmada = true` em volume.
+
+## Ingestão de legislação
+
+`ingest/oabase_ingest/legislacao.py` baixa o texto oficial compilado do
+Planalto e carrega em `artigos`. Ver `ingest/README.md` para as armadilhas do
+formato de origem.
+
+```bash
+cd ingest
+python3 -m oabase_ingest.legislacao --sql /tmp/l.sql   # ensaio, não grava
+python3 -m oabase_ingest.legislacao --carregar         # grava
+python3 -m oabase_ingest.legislacao --lei codigo-civil --carregar
+```
+
+Três regras que a carga respeita e que não devem ser afrouxadas:
+
+1. **O upsert não toca em linha com comentário.** A cláusula é
+   `where public.artigos.comentario = '{}'`. Texto de lei se atualiza sozinho
+   enquanto ninguém escreveu sobre ele; a partir do comentário, a linha é
+   trabalho autoral e mudança de redação vira revisão humana.
+2. **Tudo entra com `indexavel = false`.** São 5.756 páginas de texto legal que
+   existem em centenas de outros sites. Elas servem para consulta e para
+   navegação interna; ao índice só vai o que tiver comentário. Já as páginas
+   de lei (`/legislacao/<slug>`) entram no sitemap: são índices completos e
+   navegáveis, não cópia de texto.
+3. **`ordem` vem do número, não da posição de chegada.** É o que permite
+   percorrer a lei em sequência e achar o vizinho anterior/seguinte sem
+   recarregar a lei inteira, e sobrevive a uma carga parcial.
+
+O PostgREST devolve no máximo mil linhas e não avisa quando corta — o Código
+Civil tem 2.081 artigos. Qualquer consulta que precise da lei inteira passa por
+`todasAsPaginas()` em `fonte-supabase.ts`.
+
+## Resolução de questões
+
+`/app/questoes` monta uma fila e resolve questão por questão sem recarregar a
+página. Três funções no banco sustentam a tela, e a divisão entre elas é
+deliberada:
+
+- `fila_de_questoes(modo, exame, disciplina, limite)` — **security invoker**,
+  para que a RLS de `questoes` continue decidindo o acesso: sem assinatura
+  ativa a fila volta vazia. **O gabarito não está entre as colunas
+  devolvidas.** Ele nunca sai do banco rumo ao navegador antes da resposta,
+  senão bastaria abrir o inspetor para gabaritar a prova inteira.
+- `registrar_resposta(questao, alternativa, tempo_ms)` — **security definer**,
+  pelo motivo oposto: quem compara com o gabarito é o banco. Se `acertou`
+  viesse do cliente, a taxa de acerto do painel seria ficção — e ela é o
+  número que diz se dá para passar. A função repete a checagem de assinatura
+  porque `security definer` ignora a RLS; sem isso ela seria a porta dos
+  fundos do produto pago.
+- `meu_desempenho()` — conta por **questão**, não por tentativa. Quem errou
+  uma questão três vezes e acertou na quarta tem uma questão dominada, não
+  três erros. É `distinct on (questao_id)` ordenado por data, consulta que o
+  PostgREST não expressa — daí a função.
+
+`/api/responder` é fina de propósito: recebe questão e alternativa, chama a
+função e devolve `{acertou, gabarito, comentario}`. Qualquer regra aplicada
+na rota, e não no banco, seria uma regra contornável.
+
+**Revisão espaçada.** SM-2 enxuto dentro de `registrar_resposta`: acerto
+multiplica o intervalo pela facilidade (teto 2.8); erro joga para amanhã e
+derruba a facilidade em 0.2 (piso 1.3). Errar tem de doer no calendário, não
+só no número.
+
+**Anuladas ficam fora da fila.** Não têm resposta certa para treinar.
+Continuam no acervo como material de estudo, e é assim que `/desempenho` as
+apresenta.
+
+**Comentário de questão é trabalho autoral e ainda não existe** — a tabela
+`comentarios` está vazia. A tela diz isso com todas as letras em vez de
+preencher o espaço: gerar explicação jurídica por IA é o pior defeito
+possível aqui, porque quem estuda a regra alucinada só descobre no dia da
+prova.
+
+**A classificação por disciplina é aproximada.** 880 das 1.120 questões têm
+`disciplina_id`, nenhuma tem `disciplina_confirmada = true`. O filtro por
+disciplina funciona e a tela avisa que é aproximado; filtro por exame é
+exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
+gráfico de evolução por matéria — seria dado inventado com cara de medição.
+
+## Quadro de anotações
+
+`/app/anotacoes` é uma tela livre (React Flow, `@xyflow/react`) com cartões de
+anotação e de questões já respondidas, ligáveis entre si.
+
+**A ligação não tem semântica no banco** — só origem, destino e um rótulo em
+texto. Tipar a aresta ("causa", "exceção", "fundamento") seria impor um
+esquema de estudo que ninguém pediu; o sentido é de quem escreve.
+
+**Posição é dado, não enfeite.** `x` e `y` são gravados a cada `onNodeDragStop`.
+Um quadro que reorganiza os cartões sozinho a cada abertura deixa de ser um
+quadro.
+
+**O quadro escreve direto do navegador**, com a chave anônima e a sessão de
+quem está logado — como `sessoes_foco` já fazia. Não há segredo a proteger
+(nada de gabarito, nada de preço), então a política de dono com `with check`
+basta. Não invente rota de API para isto.
+
+**O construtor de consulta do supabase-js é um _thenable_ preguiçoso.**
+`void supabase.from(...).update(...)` **não dispara requisição nenhuma** — sem
+alguém chamando `then`, o fetch nunca acontece. É a falha silenciosa perfeita:
+a tela mostra o texto salvo até a pessoa recarregar. Sempre `await`.
+
+**A gravação com atraso acumula campos.** Guardar só o último lote perdia o
+título de quem escrevia o título e passava para o corpo em menos de meio
+segundo — que é o que todo mundo faz. O mapa `pendentes` mescla os campos e é
+descarregado no desmonte do componente.
 
 ## Autenticação
 
@@ -134,3 +242,170 @@ qualquer política de dono barraria a inserção.
 limite de Suspense e tira o formulário do HTML inicial — o campo de login
 precisa existir antes de o JS rodar. Leia o parâmetro de `window.location` na
 hora do envio.
+
+## Pagamento (Asaas)
+
+**Sandbox é o padrão.** Só vira produção com `ASAAS_AMBIENTE=producao` escrito
+explicitamente. O pior defeito possível aqui é cobrar dinheiro real por engano,
+e padrão inseguro transforma qualquer descuido de configuração nesse defeito.
+Cada cobrança grava o ambiente em que nasceu, para que uma de teste nunca seja
+confundida com uma real depois.
+
+**Chaves com `$` precisam de escape no `.env`.** As chaves da Asaas começam com
+`$aact_`, e o dotenv do Next expande `$VAR` — entre aspas duplas ou simples o
+valor chega **vazio**, sem erro nenhum. A única forma que funciona é
+`ASAAS_API_KEY="\$aact_..."`. Se um dia a chave "sumir", é isto.
+
+**O valor nunca vem do cliente.** `/api/assinar` recebe só a chave do plano; o
+preço é lido de `src/lib/planos.ts` no servidor. Aceitar valor do navegador
+deixaria qualquer pessoa comprar o anual por um real.
+
+**Cobrança não é gravada por política de RLS.** `cobrancas` só libera `select`
+ao dono; a escrita passa pela função `registrar_cobranca`, que é
+`security definer` e define dono e status por conta própria. Liberar `insert`
+ao papel autenticado deixaria o navegador forjar um pagamento confirmado — e o
+servidor não pode usar service role, porque ele usa a chave anônima com a
+sessão de quem está logado.
+
+**CPF e telefone** vivem em `perfis`, cuja política restringe ao dono. Nenhuma
+rota pública lê essa tabela.
+
+**O webhook é o que transforma compra em acesso.** `/api/asaas/webhook`
+recebe o evento, e sem ele `assinaturas` nunca é escrita — a pessoa paga e
+continua sem plano. Requisição de máquina não tem sessão, então a RLS não tem
+em quem se apoiar; a resposta **não** é service role no Next (ela pertence ao
+pipeline de ingestão, fora daqui). São três guardas independentes:
+
+1. o token do cabeçalho `asaas-access-token`, conferido quando
+   `ASAAS_WEBHOOK_TOKEN` está configurado;
+2. a **reconsulta em `GET /payments/{id}`** — o corpo do POST vem de uma URL
+   pública e nada nele é levado a sério; o status que vale é o da Asaas;
+3. o segredo em `interno.segredos`, esquema sem permissão para papel nenhum,
+   exigido por `confirmar_pagamento`, `cancelar_pagamento` e
+   `plano_da_cobranca`. Sem ele, qualquer pessoa com um id de fatura vazado —
+   e o id aparece na própria URL da fatura — se daria um plano.
+
+**Confirmar duas vezes não pode dobrar a validade.** A Asaas reenvia o evento
+até receber 2xx. `confirmar_pagamento` sai pela porta dos fundos quando a
+cobrança já está `CONFIRMED`. Pelo mesmo motivo, evento irrelevante devolve
+200: 500 põe a Asaas num laço de retentativa eterno. A exceção é falha nossa
+— aí 500 é o certo, porque perder a confirmação é alguém pagar e não receber.
+
+**Renovação soma ao que resta.** Quem renova uma semana antes não pode perder
+a semana que já pagou; a base do cálculo é `max(fim)` da assinatura ativa.
+
+**A duração vai em dias, do TypeScript para o banco.** `ate-a-prova` depende
+da data do próximo exame, que mora em `src/lib/content/data.ts`. Duplicar essa
+data numa tabela de configuração criaria duas verdades que sairiam de
+sincronia no primeiro edital novo — então o banco responde qual plano foi
+comprado e a rota calcula os dias.
+
+**A Asaas responde 404 com corpo vazio.** `await resposta.json()` estoura no
+parse e o status HTTP se perde; `chamar()` lê `text()` primeiro. Importa
+porque 404 é definitivo (ignorar) e falha de rede não é (repetir).
+
+## Simulado
+
+`/app/simulado` é a prova cronometrada. A diferença para `/app/questoes` não é
+cosmética: **não há gabarito até a entrega**. Ver o resultado a cada questão
+treina reconhecimento; a prova cobra decisão sob incerteza e sob relógio.
+
+**O relógio é do banco.** `finaliza_em` é gravado na criação e é ele que
+autoriza cada marcação. Se o cronômetro morasse no navegador, recarregar a
+página zeraria a prova — e um simulado que se pausa fechando a aba não simula
+nada. Por isso `simulado_encerrado()` existe: a página não pode responder essa
+pergunta com o relógio do processo Node enquanto `marcar_no_simulado` responde
+com o do Postgres. Uma pergunta, um relógio.
+
+**`questoes_do_simulado` não devolve `gabarito`.** Durante a prova ele não sai
+do banco. A correção é em `finalizar_simulado`, que é `security definer`, e o
+espelho em `relatorio_do_simulado`, que só devolve linha depois de
+`finalizado_em`.
+
+**O simulado alimenta o resto.** Ao corrigir, cada resposta entra em
+`respostas` e reagenda `revisoes` — a questão errada no simulado cai no caderno
+de erros como qualquer outra. Um simulado que não deixa rastro no estudo é só
+um número.
+
+**Um simulado aberto por vez.** Dois relógios correndo não é funcionalidade, é
+jeito de perder os dois.
+
+**A repetição espaçada vive em `agendar_revisao`.** Estava embutida em
+`registrar_resposta`; o simulado precisa da mesma regra para 80 questões de
+uma vez, e duas cópias da fórmula divergiriam na primeira mudança.
+
+## Questões parecidas e dificuldade
+
+`questoes_parecidas` soma três sinais em vez de escolher um: **dispositivo em
+comum** (de `questao_artigos`, vínculo verificável, peso 3), **embedding**
+(cosseno, peso 2) e **semelhança de texto** (`ts_rank` em português, peso 1),
+mais um empurrão para a mesma disciplina.
+
+**`questoes.embedding` está vazio** — o projeto não tem chave de serviço de
+embeddings, e a Groq não oferece esse endpoint. A função já usa o vetor quando
+ele existir, e `ingest/oabase_ingest/embeddings.py` preenche contra qualquer
+provedor compatível com `POST /embeddings` (OpenAI, Vercel AI Gateway, Azure).
+O modelo **precisa** devolver 1536 dimensões — é o que está em `vector(1536)`,
+e o pipeline recusa antes de gravar meia base com tamanhos diferentes.
+
+**Dificuldade e percentil contam a primeira tentativa de cada pessoa.** Depois
+de ver o gabarito, acertar de novo é memória, não conhecimento — e a fila de
+revisão faz a questão voltar de propósito. Contar tentativas inflaria a taxa
+de todo mundo com o tempo.
+
+**Os dois números têm piso.** `dificuldade_da_questao` exige 5 respondentes;
+`meu_percentil` exige uma coorte de 10 pessoas com 20 questões ou mais. Abaixo
+disso devolvem nulo e a tela cala. "50% acertam" apurado em duas pessoas não é
+estatística, é uma moeda — e num universo de dois o número diz o que a outra
+pessoa respondeu.
+
+`estatisticas_questao` é mantida por gatilho a cada primeira resposta. Varrer
+`respostas` a cada questão exibida funciona hoje e para de funcionar
+exatamente quando o produto der certo. A tabela tem RLS sem política e sem
+grant: o agregado só sai pelas funções, que aplicam o piso.
+
+## E-mail (Resend)
+
+Três mensagens, e a divisão entre elas é o que decide o que é opcional:
+
+- **compra confirmada** — disparada pelo webhook da Asaas, no mesmo instante
+  em que a assinatura nasce;
+- **plano acabando** — 7 dias antes, uma vez por assinatura;
+- **revisão do dia** — o único opcional, com chave em `perfis.avisos_email`.
+
+Os dois primeiros são transacionais: quem pagou tem direito de saber o que
+comprou e até quando vale, e esconder isso atrás de uma preferência esconde o
+que a pessoa precisa para decidir.
+
+**O envio nunca derruba o que o chamou.** `enviar()` devolve resultado em vez
+de lançar. No webhook isso é obrigatório: a assinatura já está criada, e um
+500 faria a Asaas reenviar um evento que não tem mais nada a confirmar. E-mail
+que não saiu vira log, não retentativa.
+
+**A marcação em `emails_enviados` acontece depois do envio bem-sucedido.**
+Marcar antes evitaria duplicata ao custo de perder a mensagem em silêncio numa
+falha do provedor — e um lembrete a mais incomoda menos do que um aviso de fim
+de plano que nunca chegou. A `Idempotency-Key` do Resend cobre a janela entre
+uma coisa e outra.
+
+**Segredos separados.** O cron usa `cron_email`, o webhook usa
+`webhook_asaas`, ambos em `interno.segredos`. Quem conseguir disparar e-mail
+não deve, pelo mesmo vazamento, conseguir confirmar pagamento.
+
+**Lembrete só com 5 questões ou mais na fila**, e só para quem tem assinatura
+ativa. Lembrar de revisar quem perdeu o acesso é propaganda disfarçada de
+utilidade — para esse caso existe o aviso de fim de plano.
+
+**Quem já renovou não recebe "seu plano acaba".** A consulta descarta quem tem
+outra assinatura ativa terminando depois.
+
+**HTML de e-mail é tabela com estilo em atributo.** Não é nostalgia: o Outlook
+renderiza com o motor do Word e o Gmail descarta `<style>` no corpo em boa
+parte dos casos. Nenhuma imagem externa — cliente bloqueia por padrão, e
+mensagem que só faz sentido com imagem ligada não faz sentido. Versão em texto
+sempre, escrita à mão.
+
+**Cuidado com nome de parâmetro de saída igual a nome de coluna.** Em
+`dados_da_compra`, `fim` era os dois ao mesmo tempo e o Postgres recusava a
+consulta por ambiguidade — dentro do `try/catch` do webhook, isso virava
+compra confirmada sem e-mail e só log. Qualifique a coluna.

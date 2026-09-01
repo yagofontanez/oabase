@@ -22,6 +22,9 @@ export const getLei = cache((slug: string) => fonte.getLei(slug));
 export const getArtigosDaLei = cache((leiSlug: string) =>
   fonte.getArtigosDaLei(leiSlug),
 );
+export const contarArtigos = cache((leiSlug: string) =>
+  fonte.contarArtigos(leiSlug),
+);
 export const getArtigo = cache((leiSlug: string, artigoSlug: string) =>
   fonte.getArtigo(leiSlug, artigoSlug),
 );
@@ -42,6 +45,9 @@ export const getArtigosMaisBuscados = cache((limite = 500) =>
   fonte.getArtigosMaisBuscados(limite),
 );
 
+export const getVizinhos = cache((leiSlug: string, artigoSlug: string) =>
+  fonte.getVizinhos(leiSlug, artigoSlug),
+);
 export const getArtigosRelacionados = cache(
   (artigo: Parameters<typeof fonte.getArtigosRelacionados>[0], limite = 4) =>
     fonte.getArtigosRelacionados(artigo, limite),
@@ -85,3 +91,8 @@ export function diasAte(iso: string, hoje = new Date()): number {
     Math.round((alvo.getTime() - base.getTime()) / 86_400_000),
   );
 }
+
+export const getIncidenciaDoArtigo = cache(
+  (leiSlug: string, artigoSlug: string) =>
+    fonte.getIncidenciaDoArtigo(leiSlug, artigoSlug),
+);

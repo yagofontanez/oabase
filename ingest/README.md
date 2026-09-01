@@ -108,3 +108,60 @@ O upsert bate em `(exame_id, numero)` — a chave natural. Rodar dez vezes dá o
 mesmo resultado de rodar uma. O `slug` é o único campo deliberadamente **não**
 atualizado no conflito: reclassificar disciplina não pode mudar a URL de uma
 página já indexada.
+
+# Legislação
+
+`legislacao.py` baixa o texto oficial compilado do `planalto.gov.br` e carrega
+em `artigos`. Oito códigos, **5.756 artigos**:
+
+| Norma | Artigos | Norma | Artigos |
+|---|---:|---|---:|
+| Código Civil | 2.081 | Código Penal | 387 |
+| Código de Processo Civil | 1.073 | Constituição Federal | 272 |
+| CLT | 979 | CDC | 130 |
+| Código de Processo Penal | 745 | Estatuto da OAB | 89 |
+
+```bash
+python3 -m oabase_ingest.legislacao --sql /tmp/l.sql   # ensaio, não grava
+python3 -m oabase_ingest.legislacao --carregar
+```
+
+## O que a fonte tem de traiçoeiro
+
+O HTML do Planalto é antigo, em ISO-8859-1, e quebra linha no meio das frases —
+um artigo não é um parágrafo do HTML. Cada item abaixo custou uma rodada de
+depuração e está coberto no código:
+
+- **User-Agent.** Com o padrão do `curl`/`urllib` o servidor não responde e a
+  requisição estoura o tempo. Com cabeçalho de navegador, responde em segundos.
+- **A redação vigente é a última, não a primeira.** O compilado imprime o texto
+  original e, abaixo, cada nova redação. Guardar a primeira publicaria o art.
+  37 da CF na redação de 1988, revogada pela EC 19/1998.
+- **Separador de milhar inconsistente.** O Código Civil escreve `Art. 1.337` e
+  `Art. 1337` na mesma página. Ler só três dígitos transformava o 1337 em 133 e
+  sobrescrevia o artigo 133.
+- **Travessão da grafia antiga.** `Art. 13 - O resultado...` no CP e na CLT.
+  Lido como artigo com letra, virava "13-O" e sumia com o artigo 13 — quase 300
+  artigos assim entre os dois. O que separa: a letra de verdade vem colada
+  (`Art. 58-A`), o travessão vem cercado de espaços.
+- **Superscritos soltos.** `<sup>o</sup>` e `§` caem em linhas próprias. O
+  ordinal cola na linha anterior; o `§` cola na seguinte, porque abre o que vem
+  depois.
+- **`§` citado não é `§` estrutural.** O caput do art. 179 do CPP começa em "No
+  caso do § 1º do art. 159". Parágrafo de verdade abre frase nova, então vem
+  seguido de maiúscula, travessão ou parêntese.
+- **Sumário no topo.** A Constituição lista o ADCT no índice antes do art. 1º;
+  parar na primeira ocorrência do marcador devolvia zero artigo.
+
+## Cobertura
+
+Vale conferir a cobertura contra o número final de cada código antes de confiar
+na carga. Hoje: zero falhas de parser nos oito. As lacunas que restam são
+artigos que a própria fonte não imprime — revogados sem texto e vetados (os
+arts. 15, 16, 62, 85, 86, 89, 96 e 109 do CDC, por exemplo, foram vetados).
+
+## Comentário é autoral
+
+Este módulo carrega texto de lei e nada mais. Tudo entra com
+`indexavel = false`, e o upsert tem `where public.artigos.comentario = '{}'`:
+recarregar nunca passa por cima de análise escrita por gente.
