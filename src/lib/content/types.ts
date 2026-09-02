@@ -41,6 +41,21 @@ export type Artigo = {
   indexavel: boolean;
 };
 
+/**
+ * Enunciado de súmula. Texto oficial do tribunal, curto e verificável — não
+ * depende de ninguém escrever nada para existir, ao contrário do comentário.
+ */
+export type Sumula = {
+  slug: string;
+  tribunal: "stf" | "stj" | "tst" | "tse";
+  numero: number;
+  texto: string;
+  comentario: string[];
+  vinculante: boolean;
+  /** Mesmo portão dos artigos: ao índice só vai o que tem comentário. */
+  indexavel: boolean;
+};
+
 export type Exame = {
   slug: string;
   edicao: number;

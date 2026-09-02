@@ -77,11 +77,33 @@ coluna.
 que permitiu desenhar o site antes de existir banco. Ao adicionar uma consulta,
 adicione nas duas implementações e no contrato, nunca direto na página.
 
+## Súmulas
+
+`ingest/oabase_ingest/sumulas.py` traz as **Súmulas Vinculantes do STF** do
+portal oficial. Texto curto, oficial e verificável — existe sem depender de
+ninguém escrever comentário, ao contrário do resto do acervo autoral.
+
+**Súmula cancelada não entra.** O índice do STF as marca, e exibir enunciado
+revogado como direito vigente é o defeito que quem estuda só descobre na
+prova. Ficam de fora da carga, não escondidas por filtro de tela.
+
+**O portão de qualidade vale aqui também.** `/sumulas` entra no sitemap
+porque é índice completo e navegável, como a página de cada lei; as páginas de
+cada súmula só entram quando `indexavel` — o enunciado oficial existe em
+centenas de sites.
+
+Três armadilhas do portal do STF estão documentadas no módulo: o servidor
+**não envia o certificado intermediário** (a cadeia completa fica em
+`ingest/certs/`, e desligar a verificação destruiria a garantia de origem);
+sem `User-Agent` de navegador a resposta é 403; e a página que parece a certa
+é uma casca de JavaScript — quem tem o conteúdo no HTML é
+`sumariosumulas.asp?base=26`.
+
 ## Links internos
 
 Não linke para rota que ainda não existe. Link interno para 404 gasta orçamento
 de rastreamento, e num site cuja aquisição é 100% orgânica isso é custo direto.
-Pendentes da camada aberta: `/sumulas`, `/glossario`, `/blog`.
+Pendentes da camada aberta: `/glossario`, `/blog`.
 `/sobre`, `/termos` e `/privacidade` já existem e estão no rodapé.
 
 ## Ingestão de provas

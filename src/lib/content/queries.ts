@@ -53,6 +53,11 @@ export const getArtigosRelacionados = cache(
     fonte.getArtigosRelacionados(artigo, limite),
 );
 
+export const getSumulas = cache((tribunal?: "stf" | "stj" | "tst" | "tse") =>
+  fonte.getSumulas(tribunal),
+);
+export const getSumula = cache((slug: string) => fonte.getSumula(slug));
+
 export const getExames = cache(() => fonte.getExames());
 
 /**

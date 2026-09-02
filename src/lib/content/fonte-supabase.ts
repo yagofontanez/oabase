@@ -1,7 +1,14 @@
 import { supabaseAnon } from "@/lib/supabase/client";
 import type { FonteDeConteudo } from "./fonte";
 import { naOrdemDoCodigo } from "./ordem";
-import type { Artigo, Disciplina, Exame, Lei, Vizinho } from "./types";
+import type {
+  Artigo,
+  Disciplina,
+  Exame,
+  Lei,
+  Sumula,
+  Vizinho,
+} from "./types";
 
 /* As consultas usam a chave anônima: o RLS é quem garante que só o conteúdo
    aberto sai daqui. Ver src/lib/supabase/client.ts. */
@@ -278,6 +285,27 @@ export const fonteSupabase: FonteDeConteudo = {
       .maybeSingle();
     erro("exame", error);
     return data ? paraExame(data) : null;
+  },
+
+  async getSumulas(tribunal) {
+    let consulta = supabaseAnon()
+      .from("sumulas")
+      .select("slug, tribunal, numero, texto, comentario, vinculante, indexavel")
+      .order("numero", { ascending: true });
+    if (tribunal) consulta = consulta.eq("tribunal", tribunal);
+    const { data, error } = await consulta;
+    erro("súmulas", error);
+    return (data ?? []) as Sumula[];
+  },
+
+  async getSumula(slug) {
+    const { data, error } = await supabaseAnon()
+      .from("sumulas")
+      .select("slug, tribunal, numero, texto, comentario, vinculante, indexavel")
+      .eq("slug", slug)
+      .maybeSingle();
+    erro("súmula", error);
+    return (data as Sumula | null) ?? null;
   },
 
   async getDisciplinas() {

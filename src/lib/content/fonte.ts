@@ -5,6 +5,7 @@ import type {
   DispositivoDoExame,
   IncidenciaEmExame,
   Lei,
+  Sumula,
   Vizinho,
 } from "./types";
 
@@ -45,6 +46,13 @@ export type FonteDeConteudo = {
    * nenhum e as páginas profundas ficam sem caminho de rastreio.
    */
   getArtigosDoExame(exameSlug: string): Promise<DispositivoDoExame[]>;
+  /**
+   * Súmulas em vigor, do tribunal pedido ou de todos. Texto oficial: a
+   * página existe mesmo sem comentário, e o portão de qualidade decide
+   * apenas se ela entra no índice.
+   */
+  getSumulas(tribunal?: Sumula["tribunal"]): Promise<Sumula[]>;
+  getSumula(slug: string): Promise<Sumula | null>;
   getExames(): Promise<Exame[]>;
   getExame(slug: string): Promise<Exame | null>;
   getDisciplinas(): Promise<Disciplina[]>;

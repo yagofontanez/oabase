@@ -61,6 +61,15 @@ export const fonteMock: FonteDeConteudo = {
   async getArtigosDoExame() {
     return [];
   },
+  // Súmula é texto oficial de tribunal: ou vem da ingestão, ou não existe.
+  // Escrever enunciado de exemplo aqui seria criar direito de mentira, que é
+  // pior do que uma lista vazia no ambiente sem banco.
+  async getSumulas() {
+    return [];
+  },
+  async getSumula() {
+    return null;
+  },
   async getExames() {
     return [...exames].sort((a, b) => b.edicao - a.edicao);
   },

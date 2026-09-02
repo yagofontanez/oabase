@@ -1,5 +1,10 @@
 import type { MetadataRoute } from "next";
-import { getArtigosIndexaveis, getExames, getLeis } from "./queries";
+import {
+  getArtigosIndexaveis,
+  getExames,
+  getLeis,
+  getSumulas,
+} from "./queries";
 
 /** Limite do protocolo de sitemap. Acima disso, particionar é obrigatório. */
 export const URLS_POR_SITEMAP = 50_000;
@@ -14,6 +19,10 @@ const ESTATICAS: {
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/legislacao", priority: 0.9, changeFrequency: "weekly" },
   { path: "/exames", priority: 0.9, changeFrequency: "weekly" },
+  // Índice completo e navegável, como o de cada lei — não é cópia de texto
+  // solta. As páginas de cada súmula seguem o portão de qualidade e só
+  // entram quando tiverem comentário.
+  { path: "/sumulas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
   // `/sobre` é sinal de procedência: conteúdo jurídico é avaliado por quem
@@ -38,10 +47,11 @@ export async function getUrlsIndexaveis(): Promise<
     changeFrequency: Entrada["changeFrequency"];
   }[]
 > {
-  const [leis, artigos, exames] = await Promise.all([
+  const [leis, artigos, exames, sumulas] = await Promise.all([
     getLeis(),
     getArtigosIndexaveis(),
     getExames(),
+    getSumulas(),
   ]);
 
   return [
@@ -63,6 +73,15 @@ export async function getUrlsIndexaveis(): Promise<
       priority: 0.6,
       changeFrequency: "yearly" as const,
     })),
+    // Mesmo filtro dos artigos, e pelo mesmo motivo: o enunciado oficial
+    // existe em centenas de sites. Ao índice vai o que tem comentário.
+    ...sumulas
+      .filter((s) => s.indexavel)
+      .map((sumula) => ({
+        path: `/sumulas/${sumula.slug}`,
+        priority: 0.6,
+        changeFrequency: "yearly" as const,
+      })),
   ];
 }
 

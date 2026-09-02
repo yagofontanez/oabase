@@ -4,9 +4,10 @@ import { Wordmark } from "./wordmark";
 import { EstadoSessao } from "./auth/estado-sessao";
 
 /* Só rotas que existem. Link interno para 404 gasta orçamento de rastreamento e quebra a confiança de quem clica.
-   Pendentes da camada aberta: /sumulas, /glossario, /blog. */
+   Pendentes da camada aberta: /glossario, /blog. */
 const nav = [
   { href: "/legislacao", label: "Legislação" },
+  { href: "/sumulas", label: "Súmulas" },
   { href: "/exames", label: "Exames" },
   { href: "/estatisticas", label: "O que mais cai" },
 ];
