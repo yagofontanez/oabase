@@ -247,6 +247,37 @@ disciplina funciona e a tela avisa que é aproximado; filtro por exame é
 exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
 gráfico de evolução por matéria — seria dado inventado com cara de medição.
 
+## Classificação automática e procedência
+
+Confirmar 3.460 questões e vincular 3.317 à mão é trabalho de meses. A saída
+foi automatizar **registrando de onde veio cada dado**, e nunca marcar palpite
+como revisão humana:
+
+- `questoes.classificacao_origem` — `lexico`, `sequencia`, `modelo`, `humano`.
+  `disciplina_confirmada` continua significando "alguém leu" e **não é escrita
+  por script**.
+- `questao_artigos.origem` — `citacao`, `modelo`, `humano`.
+- `artigos.incidencia` conta só `citacao` e `humano`: é o número que a página
+  aberta publica e que se confere relendo a questão. **Não muda de
+  significado.**
+- `artigos.incidencia_estimada` conta tudo. Ordena a fila editorial, onde
+  errar custa uma leitura a mais — não um dado falso publicado.
+
+Um contador só seria mais simples e destruiria a distinção justamente na
+página aberta de legislação.
+
+`ingest/enriquecer.sh` roda os dois classificadores em sequência (nunca
+juntos: dividir o teto de tokens entre dois processos só faz os dois baterem
+em 429). Eles **gravam a cada lote** e as consultas só trazem o que falta —
+repetir o comando continua de onde parou. Na conta gratuita da Groq são 8.000
+tokens por minuto, e a base leva horas.
+
+**Três armadilhas da API, em `groq.py`:** o `User-Agent` do urllib leva 403 na
+borda e o erro parece chave inválida; o `gpt-oss` gasta o orçamento de saída
+raciocinando e devolve JSON cortado sem erro nenhum; e 429 diz no cabeçalho
+quanto esperar — chutar oito segundos gasta as tentativas e deixa um exame
+inteiro sem classificação.
+
 ## Revisão editorial
 
 Os dois gargalos do projeto são trabalho humano: 3.460 questões classificadas
