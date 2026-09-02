@@ -140,12 +140,23 @@ export function BarraLateral({
         <span className={recolhida ? "sr-only" : undefined}>Modo foco</span>
       </button>
 
-      <NavegacaoApp
-        orientacao="trilho"
-        recolhida={recolhida}
-        admin={admin}
-        editor={editor}
-      />
+      {/* A lista rola dentro do trilho; o cabeçalho, o modo foco e o rodapé
+          ficam parados. Sem isso, o trilho cresceu com as abas de operação,
+          estourou a altura da janela e o `overflow-hidden` do layout cortou o
+          fim da lista **e** o rodapé inteiro — o avatar e o botão de sair
+          simplesmente sumiam em tela baixa.
+
+          A folga horizontal existe para a marca âmbar da tela ativa, que fica
+          em `-left-3`: sem ela, a rolagem vertical recorta o eixo x junto e
+          a marca desaparece. */}
+      <div className="rolagem-fina -mx-3 min-h-0 flex-1 overflow-y-auto px-3">
+        <NavegacaoApp
+          orientacao="trilho"
+          recolhida={recolhida}
+          admin={admin}
+          editor={editor}
+        />
+      </div>
 
       <div className="mt-auto flex flex-col gap-3">
         {!recolhida && (
