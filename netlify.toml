@@ -42,6 +42,11 @@
   from = "/sitemap.xml"
   to = "/sitemap-index.xml"
   status = 200
+  # `force` não é zelo: sem ele a regra não vale nada aqui. O runtime do Next
+  # reivindica `/sitemap.xml` (é caminho da convenção de metadata, mesmo sem
+  # arquivo servindo) e responde 404 antes de a reescrita ser consultada.
+  # Verificado em produção: sem `force`, 404; com `force`, o índice.
+  force = true
 
 [[headers]]
   for = "/app/*"
