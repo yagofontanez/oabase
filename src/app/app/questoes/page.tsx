@@ -165,15 +165,12 @@ export default async function QuestoesPage({
   }
 
   return (
-    /* Uma coluna só para a tela inteira.
-       O painel de filtros ia até os 1.280 do `painel-conteudo` e a questão
-       parava nos 820 do resolvedor, centralizada embaixo — dois blocos com
-       larguras diferentes lêem como erro de montagem. O teto vale agora para
-       os dois, e ficou perto do valor da questão, não do painel: enunciado a
-       1.200px daria linhas de umas 150 letras, que é o dobro do que se lê sem
-       perder a linha. Os chips de exame quebram em mais fileiras, e é um
-       preço menor do que o texto largo. */
-    <div className="painel-conteudo flex max-w-[900px] flex-col gap-5">
+    /* Uma coluna só, na largura cheia do painel.
+       O cartão da questão parava nos 820 do resolvedor e ficava centralizado
+       sob um painel de filtros que ia até a margem — dois blocos de larguras
+       diferentes, um sobre o outro, lêem como erro de montagem. Agora quem
+       manda na largura é esta coluna, e os dois nascem alinhados. */
+    <div className="painel-conteudo flex flex-col gap-5">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-[clamp(1.6rem,2.6vw,1.95rem)] leading-[1.1] font-extrabold tracking-[-0.035em] text-ink">
