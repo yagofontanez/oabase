@@ -305,6 +305,29 @@ pipeline de ingestão, fora daqui). São três guardas independentes:
    `plano_da_cobranca`. Sem ele, qualquer pessoa com um id de fatura vazado —
    e o id aparece na própria URL da fatura — se daria um plano.
 
+**A confirmação tem um caminho só.** `src/lib/pagamento/confirmar.ts` —
+reconsultar na Asaas, ler o plano do nosso banco, calcular os dias, chamar
+`confirmar_pagamento`, avisar por e-mail. O webhook chama, e a reconciliação
+chama. Duas cópias divergiriam na primeira mudança, e de forma invisível: o
+caminho do webhook é exercitado todo dia, o da reconciliação só quando algo
+já deu errado.
+
+**A reconciliação é a rede do webhook.** `/api/tarefas/reconciliar`, de hora
+em hora pela Netlify, pega as cobranças ainda `PENDING`, pergunta à Asaas
+quais foram pagas e confirma. Existe porque o acesso pago inteiro depende de
+um POST chegar: se ele não chega, a pessoa paga e nada acontece — e a
+primeira notícia viria por reclamação. Cada linha reconciliada sai como
+`console.error`, porque não é operação normal: é sinal de que o webhook
+quebrou e é ele que precisa de conserto.
+
+**A fronteira aberto/pago tem teste.** `pnpm fronteira` fala com o PostgREST
+com a mesma chave anônima do navegador e afirma as duas metades: leis,
+artigos, exames e disciplinas respondem; questões, comentários, perfis e
+assinaturas voltam vazios; escrita direta é recusada; as funções de segredo
+exigem o segredo. É a única regra do projeto que nenhum tipo protege — uma
+política derrubada numa migration não quebra build, lint nem tela. Rode antes
+de subir migration que mexa em RLS.
+
 **Confirmar duas vezes não pode dobrar a validade.** A Asaas reenvia o evento
 até receber 2xx. `confirmar_pagamento` sai pela porta dos fundos quando a
 cobrança já está `CONFIRMED`. Pelo mesmo motivo, evento irrelevante devolve
