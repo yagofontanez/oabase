@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import {
   Quadro,
   type CartaoSalvo,
+  type DispositivoDoQuadro,
   type LigacaoSalva,
   type QuestaoDisponivel,
 } from "@/components/app/quadro";
+import { getLeis } from "@/lib/content/queries";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 
 export const metadata: Metadata = {
@@ -14,8 +16,10 @@ export const metadata: Metadata = {
 
 type LinhaDoNo = {
   id: string;
-  tipo: "nota" | "questao";
+  tipo: CartaoSalvo["tipo"];
   questao_id: string | null;
+  artigo_id: string | null;
+  sumula_id: string | null;
   titulo: string;
   corpo: string;
   cor: CartaoSalvo["cor"];
@@ -27,16 +31,19 @@ type LinhaDoNo = {
 export default async function AnotacoesPage() {
   const supabase = await supabaseServidor();
 
-  const [nosRes, ligacoesRes, assinaturaRes] = await Promise.all([
+  const [nosRes, ligacoesRes, assinaturaRes, leis] = await Promise.all([
     supabase
       .from("quadro_nos")
-      .select("id, tipo, questao_id, titulo, corpo, cor, x, y, largura"),
+      .select(
+        "id, tipo, questao_id, artigo_id, sumula_id, titulo, corpo, cor, x, y, largura",
+      ),
     supabase.from("quadro_ligacoes").select("id, origem, destino, rotulo"),
     supabase
       .from("assinaturas")
       .select("plano")
       .eq("status", "ativa")
       .limit(1),
+    getLeis(),
   ]);
 
   const nos = (nosRes.data ?? []) as LinhaDoNo[];
@@ -103,6 +110,77 @@ export default async function AnotacoesPage() {
 
   const porId = new Map(disponiveis.map((q) => [q.id, q]));
 
+  /* Dispositivos presos ao quadro. `artigos` e `sumulas` são leitura aberta,
+     então isto vale para quem tem plano e para quem não tem — o cartão de
+     lei não é produto pago, é a regra que a pessoa anotou. */
+  const dispositivos = new Map<string, DispositivoDoQuadro>();
+
+  const idsArtigos = nos
+    .map((n) => n.artigo_id)
+    .filter((id): id is string => Boolean(id));
+  if (idsArtigos.length > 0) {
+    const { data } = await supabase
+      .from("artigos")
+      .select("id, numero, slug, caput, comentario, leis(slug, sigla)")
+      .in("id", idsArtigos);
+
+    type LinhaArtigo = {
+      id: string;
+      numero: string;
+      slug: string;
+      caput: string;
+      comentario: string[] | null;
+      leis:
+        | { slug: string; sigla: string }
+        | { slug: string; sigla: string }[]
+        | null;
+    };
+
+    for (const a of (data ?? []) as unknown as LinhaArtigo[]) {
+      const lei = Array.isArray(a.leis) ? a.leis[0] : a.leis;
+      if (!lei) continue;
+      dispositivos.set(a.id, {
+        id: a.id,
+        tipo: "artigo",
+        rotulo: `Art. ${a.numero} ${lei.sigla}`,
+        resumo:
+          a.caput.length > 260 ? `${a.caput.slice(0, 260)}…` : a.caput,
+        href: `/legislacao/${lei.slug}/${a.slug}`,
+        comentado: (a.comentario ?? []).length > 0,
+      });
+    }
+  }
+
+  const idsSumulas = nos
+    .map((n) => n.sumula_id)
+    .filter((id): id is string => Boolean(id));
+  if (idsSumulas.length > 0) {
+    const { data } = await supabase
+      .from("sumulas")
+      .select("id, numero, slug, texto, comentario, vinculante")
+      .in("id", idsSumulas);
+
+    for (const s of (data ?? []) as {
+      id: string;
+      numero: number;
+      slug: string;
+      texto: string;
+      comentario: string[] | null;
+      vinculante: boolean;
+    }[]) {
+      dispositivos.set(s.id, {
+        id: s.id,
+        tipo: "sumula",
+        rotulo: s.vinculante
+          ? `SV ${s.numero}`
+          : `Súmula ${s.numero} do STF`,
+        resumo: s.texto,
+        href: `/sumulas/${s.slug}`,
+        comentado: (s.comentario ?? []).length > 0,
+      });
+    }
+  }
+
   const cartoes: CartaoSalvo[] = nos.map((n) => ({
     id: n.id,
     tipo: n.tipo,
@@ -114,6 +192,8 @@ export default async function AnotacoesPage() {
     y: n.y,
     largura: n.largura,
     questao: n.questao_id ? (porId.get(n.questao_id) ?? null) : null,
+    dispositivo:
+      dispositivos.get(n.artigo_id ?? n.sumula_id ?? "") ?? null,
   }));
 
   const ligacoes: LigacaoSalva[] = (ligacoesRes.data ?? []) as LigacaoSalva[];
@@ -125,6 +205,7 @@ export default async function AnotacoesPage() {
       questoesDisponiveis={disponiveis.filter(
         (q) => !idsNoQuadro.includes(q.id),
       )}
+      leis={leis.map((l) => ({ slug: l.slug, sigla: l.sigla }))}
       temPlano={temPlano}
     />
   );

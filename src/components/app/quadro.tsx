@@ -44,9 +44,27 @@ export type QuestaoDisponivel = {
   acertou: boolean | null;
 };
 
+/**
+ * Artigo de lei ou súmula preso ao quadro.
+ *
+ * Um cartão que aponta para a linha real, e não um texto colado à mão: leva
+ * ao dispositivo oficial, sabe se já tem comentário e some junto se a linha
+ * sair do acervo. É o terceiro lado do triângulo que a pessoa monta sozinha
+ * — "errei esta questão por causa deste artigo" —, e antes ele só existia
+ * como frase digitada dentro de uma nota.
+ */
+export type DispositivoDoQuadro = {
+  id: string;
+  tipo: "artigo" | "sumula";
+  rotulo: string;
+  resumo: string;
+  href: string;
+  comentado: boolean;
+};
+
 export type CartaoSalvo = {
   id: string;
-  tipo: "nota" | "questao";
+  tipo: TipoDeCartao;
   questaoId: string | null;
   titulo: string;
   corpo: string;
@@ -55,7 +73,13 @@ export type CartaoSalvo = {
   y: number;
   largura: number;
   questao: QuestaoDisponivel | null;
+  dispositivo: DispositivoDoQuadro | null;
 };
+
+export type TipoDeCartao = "nota" | "questao" | "artigo" | "sumula";
+
+/** O bastante para montar o seletor de dispositivo. */
+export type LeiDoSeletor = { slug: string; sigla: string };
 
 export type LigacaoSalva = {
   id: string;
@@ -92,12 +116,13 @@ const CORES: Record<Cor, { cartao: string; alca: string; amostra: string }> = {
 const ORDEM_DAS_CORES: Cor[] = ["neutra", "esmeralda", "ambar", "ameixa"];
 
 type DadosDoCartao = {
-  tipo: "nota" | "questao";
+  tipo: TipoDeCartao;
   titulo: string;
   corpo: string;
   cor: Cor;
   largura: number;
   questao: QuestaoDisponivel | null;
+  dispositivo: DispositivoDoQuadro | null;
 };
 
 type NoDoQuadro = Node<DadosDoCartao>;
@@ -278,7 +303,76 @@ function CartaoDeQuestao({ id, data, selected }: NodeProps<NoDoQuadro>) {
   );
 }
 
-const TIPOS_DE_NO = { nota: CartaoDeNota, questao: CartaoDeQuestao };
+/* ------------------------ Cartão de dispositivo ------------------------- */
+
+/**
+ * Artigo de lei ou súmula.
+ *
+ * O texto oficial fica cortado de propósito e o link leva à página inteira: o
+ * quadro é onde se enxerga a relação entre as coisas, não onde se lê o Código
+ * Civil. O que ocupa espaço aqui é a anotação de quem estuda.
+ */
+function CartaoDeDispositivo({ id, data, selected }: NodeProps<NoDoQuadro>) {
+  const { editar, remover } = useContext(Acoes);
+  const d = data.dispositivo;
+  const cores = CORES[data.cor];
+
+  return (
+    <div
+      style={{ width: data.largura }}
+      className={`group flex flex-col gap-2 rounded-[14px] border p-3.5 shadow-[var(--shadow-baixa)] ${cores.cartao} ${
+        selected ? "ring-2 ring-brand-400" : ""
+      }`}
+    >
+      <Alcas cor={data.cor} />
+
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[0.82rem] font-bold text-brand-700">
+            {d ? d.rotulo : "dispositivo removido"}
+          </span>
+          {d?.comentado && (
+            <span className="rounded-full bg-ouro-100 px-1.5 py-0.5 text-[0.7rem] font-semibold text-ouro-700">
+              comentado
+            </span>
+          )}
+        </span>
+        <BotaoRemover onClick={() => remover(id)} />
+      </div>
+
+      {d && (
+        <p className="nowheel max-h-[8.5rem] overflow-y-auto text-[0.82rem] leading-relaxed text-body">
+          {d.resumo}
+        </p>
+      )}
+
+      <textarea
+        value={data.corpo}
+        onChange={(e) => editar(id, { corpo: e.target.value })}
+        placeholder="O que esta regra resolve"
+        rows={2}
+        className="nodrag nowheel w-full resize-none border-t border-line/70 bg-transparent pt-2 text-[0.82rem] leading-relaxed text-body outline-none placeholder:text-muted"
+      />
+
+      {d && (
+        <Link
+          href={d.href}
+          target="_blank"
+          className="nodrag self-start text-[0.78rem] font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4"
+        >
+          Ler o texto oficial →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+const TIPOS_DE_NO = {
+  nota: CartaoDeNota,
+  questao: CartaoDeQuestao,
+  artigo: CartaoDeDispositivo,
+  sumula: CartaoDeDispositivo,
+};
 
 /* ------------------------------ O quadro -------------------------------- */
 
@@ -286,11 +380,13 @@ function QuadroInterno({
   cartoesIniciais,
   ligacoesIniciais,
   questoesDisponiveis,
+  leis,
   temPlano,
 }: {
   cartoesIniciais: CartaoSalvo[];
   ligacoesIniciais: LigacaoSalva[];
   questoesDisponiveis: QuestaoDisponivel[];
+  leis: LeiDoSeletor[];
   temPlano: boolean;
 }) {
   const [nos, setNos, aoMudarNos] = useNodesState<NoDoQuadro>(
@@ -305,6 +401,7 @@ function QuadroInterno({
         cor: c.cor,
         largura: c.largura,
         questao: c.questao,
+        dispositivo: c.dispositivo,
       },
     })),
   );
@@ -321,6 +418,11 @@ function QuadroInterno({
   const [seletorAberto, setSeletorAberto] = useState(false);
   const [busca, setBusca] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+
+  const [dispositivoAberto, setDispositivoAberto] = useState(false);
+  const [fonte, setFonte] = useState(leis[0]?.slug ?? "sumula-vinculante");
+  const [numeroBuscado, setNumeroBuscado] = useState("");
+  const [procurando, setProcurando] = useState(false);
 
   const { screenToFlowPosition } = useReactFlow();
   const temporizadores = useRef<Map<string, number>>(new Map());
@@ -427,6 +529,7 @@ function QuadroInterno({
           cor: "neutra",
           largura: 260,
           questao: null,
+          dispositivo: null,
         },
       },
     ]);
@@ -472,12 +575,154 @@ function QuadroInterno({
           cor: questao.acertou === false ? "ameixa" : "neutra",
           largura: 300,
           questao,
+          dispositivo: null,
         },
       },
     ]);
     setDisponiveis((atual) => atual.filter((q) => q.id !== questao.id));
     setSeletorAberto(false);
     setBusca("");
+  }
+
+  /** Procura o dispositivo e, achando, põe no quadro. */
+  async function procurarDispositivo() {
+    const numero = numeroBuscado.trim();
+    if (!numero) return;
+    setProcurando(true);
+    setErro(null);
+    const supabase = supabaseNavegador();
+
+    // `artigos` e `sumulas` são leitura aberta: a mesma consulta que qualquer
+    // visitante do site faz. Não há função a inventar aqui.
+    if (fonte.startsWith("sumula-")) {
+      const vinculante = fonte === "sumula-vinculante";
+      const { data } = await supabase
+        .from("sumulas")
+        .select("id, numero, slug, texto, comentario, vinculante")
+        .eq("vinculante", vinculante)
+        .eq("numero", Number(numero.replace(/\D/g, "")) || -1)
+        .limit(1);
+
+      const s = (data ?? [])[0] as
+        | {
+            id: string;
+            numero: number;
+            slug: string;
+            texto: string;
+            comentario: string[];
+          }
+        | undefined;
+      setProcurando(false);
+      if (!s) {
+        setErro(`Não achei a súmula ${numero}.`);
+        return;
+      }
+      await adicionarDispositivo({
+        id: s.id,
+        tipo: "sumula",
+        rotulo: vinculante ? `SV ${s.numero}` : `Súmula ${s.numero} do STF`,
+        resumo: s.texto,
+        href: `/sumulas/${s.slug}`,
+        comentado: (s.comentario ?? []).length > 0,
+      });
+      setNumeroBuscado("");
+      return;
+    }
+
+    const { data } = await supabase
+      .from("artigos")
+      .select("id, numero, slug, caput, comentario, leis!inner(slug, sigla)")
+      .eq("leis.slug", fonte)
+      .eq("numero", numero)
+      .limit(1);
+
+    const a = (data ?? [])[0] as
+      | {
+          id: string;
+          numero: string;
+          slug: string;
+          caput: string;
+          comentario: string[];
+          leis:
+            | { slug: string; sigla: string }
+            | { slug: string; sigla: string }[];
+        }
+      | undefined;
+    setProcurando(false);
+    if (!a) {
+      setErro(`Não achei o art. ${numero} nessa norma.`);
+      return;
+    }
+    const lei = Array.isArray(a.leis) ? a.leis[0] : a.leis;
+    await adicionarDispositivo({
+      id: a.id,
+      tipo: "artigo",
+      rotulo: `Art. ${a.numero} ${lei.sigla}`,
+      // O caput inteiro viraria um muro dentro do cartão; o link leva ao resto.
+      resumo: a.caput.length > 260 ? `${a.caput.slice(0, 260)}…` : a.caput,
+      href: `/legislacao/${lei.slug}/${a.slug}`,
+      comentado: (a.comentario ?? []).length > 0,
+    });
+    setNumeroBuscado("");
+  }
+
+  /**
+   * Põe no quadro um artigo de lei ou uma súmula.
+   *
+   * A busca é por número dentro de uma norma escolhida — e não por texto
+   * livre — porque é assim que se procura dispositivo: quem está anotando já
+   * sabe qual artigo quer. O índice único no banco impede o mesmo
+   * dispositivo duas vezes; aqui o erro vira mensagem em vez de exceção.
+   */
+  async function adicionarDispositivo(d: DispositivoDoQuadro) {
+    setErro(null);
+    const supabase = supabaseNavegador();
+    const { data: sessao } = await supabase.auth.getUser();
+    if (!sessao.user) return;
+
+    const posicao = posicaoNova();
+    const { data, error } = await supabase
+      .from("quadro_nos")
+      .insert({
+        user_id: sessao.user.id,
+        tipo: d.tipo,
+        artigo_id: d.tipo === "artigo" ? d.id : null,
+        sumula_id: d.tipo === "sumula" ? d.id : null,
+        cor: "esmeralda",
+        x: posicao.x,
+        y: posicao.y,
+        largura: 300,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      setErro(
+        error?.code === "23505"
+          ? `${d.rotulo} já está no quadro.`
+          : "Não consegui adicionar o dispositivo.",
+      );
+      return;
+    }
+
+    setNos((atual) => [
+      ...atual,
+      {
+        id: data.id,
+        type: d.tipo,
+        position: posicao,
+        selected: true,
+        data: {
+          tipo: d.tipo,
+          titulo: "",
+          corpo: "",
+          cor: "esmeralda",
+          largura: 300,
+          questao: null,
+          dispositivo: d,
+        },
+      },
+    ]);
   }
 
   /**
@@ -692,6 +937,18 @@ function QuadroInterno({
               >
                 + Questão
               </button>
+              <button
+                type="button"
+                onClick={() => setDispositivoAberto((a) => !a)}
+                aria-expanded={dispositivoAberto}
+                className={`rounded-full border px-4 py-2 text-[0.88rem] font-semibold transition-colors ${
+                  dispositivoAberto
+                    ? "border-brand-300 bg-brand-50 text-brand-700"
+                    : "border-hairline text-ink hover:border-brand-300 hover:text-brand-700"
+                }`}
+              >
+                + Lei ou súmula
+              </button>
               <span className="px-2 text-[0.8rem] text-muted tabular-nums">
                 {nos.length} {nos.length === 1 ? "cartão" : "cartões"} ·{" "}
                 {ligacoes.length}{" "}
@@ -776,6 +1033,52 @@ function QuadroInterno({
                 )}
               </div>
             )}
+
+            {/* ---- Seletor de dispositivo ----
+                Busca por número dentro da norma escolhida, e não por texto
+                livre: quem está anotando já sabe qual artigo quer, e uma
+                busca textual em 9.845 artigos devolveria ruído. */}
+            {dispositivoAberto && (
+              <div className="superficie mt-2 flex w-[min(90vw,380px)] flex-col gap-2 p-3">
+                <div className="flex gap-2">
+                  <select
+                    value={fonte}
+                    onChange={(e) => setFonte(e.target.value)}
+                    className="min-w-0 flex-1 rounded-[10px] border border-line bg-surface px-2 py-2 text-[0.85rem] text-ink"
+                  >
+                    {leis.map((l) => (
+                      <option key={l.slug} value={l.slug}>
+                        {l.sigla}
+                      </option>
+                    ))}
+                    <option value="sumula-vinculante">Súmula Vinculante</option>
+                    <option value="sumula-stf">Súmula do STF</option>
+                  </select>
+                  <input
+                    value={numeroBuscado}
+                    onChange={(e) => setNumeroBuscado(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void procurarDispositivo();
+                    }}
+                    placeholder="número"
+                    className="w-[7.5rem] rounded-[10px] border border-line bg-surface px-3 py-2 text-[0.88rem] text-ink outline-none placeholder:text-muted focus:border-brand-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void procurarDispositivo()}
+                    disabled={procurando || !numeroBuscado.trim()}
+                    className="rounded-[10px] bg-brand-600 px-3 py-2 text-[0.85rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-brand-200"
+                  >
+                    Pôr
+                  </button>
+                </div>
+                <p className="px-1 text-[0.78rem] text-muted">
+                  Ex.: art. <strong>155</strong> do CP, ou{" "}
+                  <strong>11</strong> em Súmula Vinculante. O cartão fica
+                  ligado ao texto oficial.
+                </p>
+              </div>
+            )}
           </Panel>
 
           {/* ---- Tela vazia ---- */}
@@ -804,6 +1107,7 @@ export function Quadro(props: {
   cartoesIniciais: CartaoSalvo[];
   ligacoesIniciais: LigacaoSalva[];
   questoesDisponiveis: QuestaoDisponivel[];
+  leis: LeiDoSeletor[];
   temPlano: boolean;
 }) {
   return (
