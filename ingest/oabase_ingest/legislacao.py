@@ -48,9 +48,19 @@ NAVEGADOR = (
 # "Art 1º" sem ele — na Lei 5.584/70 isso derrubava 20 dos 21 artigos. Exigir
 # o dígito logo em seguida é o que impede que "Artigo incluído pela Lei..."
 # das notas de alteração seja lido como começo de artigo.
+#
+# O sufixo de letra vem **depois** do ordinal, e não como alternativa a ele.
+# "Art. 121-A" não tem ordinal e casava; "Art. 7º-B" tem, e a alternância
+# parava no "º" deixando "-B Constitui crime..." como início do caput. O
+# artigo 7º-B virava então um artigo de número 7 — e o upsert, pela chave
+# (lei, slug), **sobrescrevia o art. 7º de verdade**. No Estatuto da OAB isso
+# apagou justamente as prerrogativas do advogado, o artigo mais cobrado de
+# Ética, e nada no relatório acusou: o total continuou certo, porque uma
+# linha existia no lugar da outra.
 INICIO_ARTIGO = re.compile(
     r"^Art\.?\s*(\d+(?:\.\d{3})*)"
-    r"(?:\.|\s?[ºo°](?![A-Za-zÀ-ÿ])|-([A-Z])(?![a-zà-ÿ]))?"
+    r"(?:\.|\s?[ºo°](?![A-Za-zÀ-ÿ]))?"
+    r"(?:\s*-\s*([A-Z])(?![a-zà-ÿ]))?"
 )
 # O parágrafo abre frase nova, então vem seguido de maiúscula, travessão ou
 # parêntese. Uma citação continua a frase em minúscula — "§ 1º do art. 159",
