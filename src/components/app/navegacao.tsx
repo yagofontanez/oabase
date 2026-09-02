@@ -128,6 +128,11 @@ function Icone({ children }: { children: React.ReactNode }) {
 /** Telas que existem sem ficar na navegação — chegam por botão, não por menu. */
 const FORA_DO_MENU: Record<string, string> = {
   "/app/assinar": "Assinar",
+  // Ferramentas de editor. Fora do menu porque a navegação é de quem estuda,
+  // e um item que 100% das pessoas não podem abrir é ruído para 100% delas.
+  // O caminho até elas está em Configurações, e só para quem é editor.
+  "/app/revisao": "Triagem de disciplina",
+  "/app/redacao": "Redação de comentário",
 };
 
 /** Rótulo da tela atual, para o cabeçalho. Uma lista só, uma verdade só. */

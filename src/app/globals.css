@@ -165,6 +165,35 @@
     color: #ffffff;
   }
 
+  /* ---- Tecla: atalho de teclado nas ferramentas de edição.
+       Elas são feitas para a mão não sair do teclado, e um atalho que não
+       aparece na tela é um atalho que ninguém usa. ---- */
+  .tecla {
+    display: inline-flex;
+    min-width: 1.45rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--color-line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--color-sunk);
+    color: var(--color-muted);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tecla-clara {
+    display: inline-flex;
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
   /* ---- Texto de lei e enunciado: a serifa, e só aqui ---- */
   .lei-texto {
     font-family: var(--font-lei);

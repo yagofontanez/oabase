@@ -41,6 +41,10 @@ export default async function ConfiguracoesPage() {
     .eq("id", usuario!.id)
     .maybeSingle();
 
+  // As ferramentas de edição não têm item de menu: a navegação é de quem
+  // estuda. Este é o único caminho até elas, e só aparece para editor.
+  const { data: editor } = await supabase.rpc("sou_editor");
+
   const { data: assinaturas } = await supabase
     .from("assinaturas")
     .select("plano, status, inicio, fim")
@@ -161,6 +165,27 @@ export default async function ConfiguracoesPage() {
         )}
       </Bloco>
 
+      {editor && (
+        <Bloco
+          titulo="Ferramentas de editor"
+          descricao="Os dois gargalos do acervo são trabalho de leitura e de escrita. Estas telas tiram o atrito do caminho — quem decide continua sendo você."
+        >
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/app/revisao"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Triagem de disciplina
+            </Link>
+            <Link
+              href="/app/redacao"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Redação de comentário
+            </Link>
+          </div>
+        </Bloco>
+      )}
     </div>
   );
 }

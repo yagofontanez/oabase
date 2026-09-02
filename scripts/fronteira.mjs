@@ -153,6 +153,33 @@ caso("confirmar_pagamento exige o segredo do banco", async () => {
   }
 });
 
+caso("anônimo não é editor", async () => {
+  const { corpo } = await chamar("sou_editor", {});
+  if (corpo.trim() !== "false") {
+    throw new Error(`resposta inesperada: ${corpo.slice(0, 80)}`);
+  }
+});
+
+for (const funcao of ["fila_de_revisao", "revisao_pendente"]) {
+  caso(`${funcao} recusa quem não é editor`, async () => {
+    const { corpo } = await chamar(funcao, {});
+    if (/"enunciado"|"pendentes"/.test(corpo)) {
+      throw new Error("devolveu dado de revisão");
+    }
+  });
+}
+
+caso("publicar_comentario recusa quem não é editor", async () => {
+  const { corpo } = await chamar("publicar_comentario", {
+    p_artigo: "00000000-0000-0000-0000-000000000000",
+    p_comentario: ["texto forjado"],
+    p_indexavel: true,
+  });
+  if (!/não autorizado/.test(corpo)) {
+    throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
+  }
+});
+
 caso("cobrancas_a_reconciliar exige o segredo do banco", async () => {
   const { corpo } = await chamar("cobrancas_a_reconciliar", {
     p_segredo: "segredo-errado",

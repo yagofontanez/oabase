@@ -205,6 +205,41 @@ disciplina funciona e a tela avisa que é aproximado; filtro por exame é
 exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
 gráfico de evolução por matéria — seria dado inventado com cara de medição.
 
+## Revisão editorial
+
+Os dois gargalos do projeto são trabalho humano: 3.460 questões classificadas
+por heurística e nenhuma confirmada; 5.756 artigos e quatro comentados.
+`/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
+para tirar o atrito desse trabalho, não para fazê-lo.
+
+**O sinalizador de editor não mora em `perfis`.** A política de `perfis` é de
+dono com `with check (auth.uid() = id)` — uma coluna `editor` ali seria uma
+coluna que a própria pessoa marca como verdadeira, do navegador, com a chave
+anônima. Fica em `interno.editores`, ao lado dos segredos, e se concede por
+SQL:
+
+```sql
+insert into interno.editores (user_id)
+select id from auth.users where email = '...';
+```
+
+**As telas ficam sob `/app`** — a fronteira que protege o produto pago já as
+cobre (`noindex` na rota, `Disallow` no robots). A checagem na página é de
+porta; quem decide é `sou_editor()` dentro de cada função.
+
+**`fila_de_revisao` não devolve `gabarito`.** Quem classifica por disciplina
+não precisa da resposta, e o que não sai do banco não vaza. É `security
+definer` porque editor não é necessariamente assinante.
+
+**Confirmar é afirmar que alguém leu**, então não existe confirmar sem
+escolher disciplina: marcar `disciplina_confirmada` com o campo vazio
+transformaria "ninguém sabe" em "alguém verificou".
+
+**O portão de qualidade virou invariante do banco.** `publicar_comentario`
+recusa `indexavel = true` sem comentário. Estava certo no código do sitemap e
+na cabeça de quem escreveu; agora é impossível de violar por engano — que é a
+diferença entre uma regra e um combinado.
+
 ## Quadro de anotações
 
 `/app/anotacoes` é uma tela livre (React Flow, `@xyflow/react`) com cartões de
