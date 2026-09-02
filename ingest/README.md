@@ -39,7 +39,7 @@ python3 -m oabase_ingest.lote --de 32 --ate 46 --carregar
 | 3º–46º | **43 ingeridas**, 3.460 questões — todas as publicadas menos o 35º |
 | 2º | O arquivo não publica gabarito desta edição. |
 | 35º | Único buraco: a página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
-| 47º | Prova ainda não aplicada. |
+| 47º | Anunciada (06/09/2026), ainda não aplicada — ver abaixo. |
 
 São **44 edições com par prova+gabarito publicado** (de 46 listadas; faltam o
 2º, sem gabarito, e o 47º, não aplicado). Um comando faz todas:
@@ -52,6 +52,38 @@ O `lote` não aborta na primeira falha: cada edição que não baixa entra em
 `pendentes` no resumo final, com o motivo. Rodar de novo é seguro — a carga é
 idempotente por edição, e o download é pulado quando o PDF já está em
 `provas/`.
+
+## No dia da prova
+
+Uma edição nova vale mais nas 72 horas seguintes à aplicação do que em todo o
+resto do ano: é quando quem acabou de fazer a prova procura o gabarito. O
+buscador, porém, não indexa uma URL que nunca visitou — por isso a edição é
+**anunciada antes** e ingerida depois, na mesma linha e na mesma URL.
+
+```bash
+# semanas antes: cria /exames/47 com o que se sabe do edital
+python3 -m oabase_ingest.anunciar --edicao 47 --data 2026-09-06 --carregar
+
+# no dia: redescobre o arquivo oficial e ingere o que já estiver publicado
+python3 -m oabase_ingest.lote --manifesto
+python3 -m oabase_ingest.lote --de 47 --ate 47 --carregar
+
+# depois de qualquer carga: revincula questão↔artigo e recalcula incidência
+python3 -m oabase_ingest.dispositivos --carregar
+```
+
+Três coisas que mudam nesse dia e não em outro:
+
+- **O caderno sai antes do gabarito.** Enquanto só houver prova, o `pipeline`
+  falha por falta de gabarito — é o comportamento certo: questão sem resposta
+  certa não entra no banco.
+- **O primeiro gabarito é preliminar.** Rode com `--gabarito-preliminar`; a
+  procedência fica em `exames.gabarito_definitivo` e a ficha do exame no site
+  diz qual das duas versões está no ar. Quando o definitivo sair, rode de
+  novo sem a flag: o upsert corrige gabarito, anulações e a marca.
+- **`anunciar` nunca apaga ingestão.** O `on conflict` dele tem
+  `where questoes_carregadas = 0`. Rodar o anúncio por engano depois da carga
+  não faz nada — e o dia em que isso aconteceria é justamente este.
 
 ### O 502 era o esquema da URL, não o servidor
 

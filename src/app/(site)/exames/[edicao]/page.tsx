@@ -5,9 +5,11 @@ import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
 import { JsonLd } from "@/lib/jsonld";
-import { formatarData } from "@/lib/format";
+import { formatarData, jaAconteceu } from "@/lib/format";
 import { abs } from "@/lib/site";
 import {
+  diasAte,
+  getAcervo,
   getArtigosDoExame,
   getDisciplinas,
   getExame,
@@ -24,10 +26,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { edicao } = await params;
   const exame = await getExame(edicao);
   if (!exame) return {};
-  const titulo = `${exame.edicao}º Exame da OAB — gabarito e distribuição`;
-  const descricao = `Ficha completa do ${exame.edicao}º Exame de Ordem Unificado, aplicado em ${formatarData(
-    exame.data,
-  )}: gabarito oficial e quantas questões caíram de cada disciplina.`;
+  const passou = jaAconteceu(exame.data);
+  const titulo = passou
+    ? `${exame.edicao}º Exame da OAB — gabarito e distribuição`
+    : `${exame.edicao}º Exame da OAB — data, gabarito e o que cai`;
+  const descricao = passou
+    ? `Ficha completa do ${exame.edicao}º Exame de Ordem Unificado, aplicado em ${formatarData(
+        exame.data,
+      )}: gabarito oficial e quantas questões caíram de cada disciplina.`
+    : `O ${exame.edicao}º Exame de Ordem Unificado será aplicado em ${formatarData(
+        exame.data,
+      )}. O gabarito oficial da FGV e a distribuição por disciplina entram nesta página assim que a banca publicar.`;
   return {
     title: titulo,
     description: descricao,
@@ -44,9 +53,10 @@ export default async function ExamePage({ params }: Props) {
   const { edicao } = await params;
   const exame = await getExame(edicao);
   if (!exame) notFound();
-  const [disciplinas, dispositivos] = await Promise.all([
+  const [disciplinas, dispositivos, acervo] = await Promise.all([
     getDisciplinas(),
     getArtigosDoExame(exame.slug),
+    getAcervo(),
   ]);
   const nomes = new Map(disciplinas.map((d) => [d.slug, d.nome]));
   const linhas = [...exame.distribuicao].sort(
@@ -58,24 +68,32 @@ export default async function ExamePage({ params }: Props) {
     month: "long",
     year: "numeric",
   });
+  const passou = jaAconteceu(exame.data);
+  const diasParaProva = diasAte(exame.data);
   return (
     <>
-      <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: `${exame.edicao}º Exame de Ordem Unificado`,
-          inLanguage: "pt-BR",
-          datePublished: exame.data,
-          mainEntityOfPage: {
-            "@type": "WebPage",
-            "@id": abs(`/exames/${exame.slug}`),
-          },
-          author: { "@id": abs("/#organization") },
-          publisher: { "@id": abs("/#organization") },
-          isAccessibleForFree: true,
-        }}
-      />
+      {/* `Article` com `datePublished` no futuro é marcação errada — e
+          marcação errada em conteúdo jurídico custa mais do que marcação
+          nenhuma. A trilha de migalhas do PageHeader continua nos dois
+          casos. */}
+      {passou && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: `${exame.edicao}º Exame de Ordem Unificado`,
+            inLanguage: "pt-BR",
+            datePublished: exame.data,
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": abs(`/exames/${exame.slug}`),
+            },
+            author: { "@id": abs("/#organization") },
+            publisher: { "@id": abs("/#organization") },
+            isAccessibleForFree: true,
+          }}
+        />
+      )}
 
       <PageHeader
         crumbs={[
@@ -83,43 +101,72 @@ export default async function ExamePage({ params }: Props) {
           { href: "/exames", label: "Exames" },
           { href: `/exames/${exame.slug}`, label: `${exame.edicao}º Exame` },
         ]}
-        eyebrow={`1ª fase · ${dataFormatada}`}
+        eyebrow={
+          passou
+            ? `1ª fase · ${dataFormatada}`
+            : diasParaProva === 0
+              ? `1ª fase · hoje, ${dataFormatada}`
+              : `1ª fase · ${dataFormatada} · faltam ${diasParaProva} dias`
+        }
         titulo={
           <>
             {exame.edicao}º Exame de{" "}
             <span className="text-ouro-500">Ordem</span>
           </>
         }
-        descricao={`${exame.totalQuestoes} questões objetivas. Veja como a banca distribuiu a prova entre as disciplinas.`}
+        descricao={
+          passou
+            ? `${exame.totalQuestoes} questões objetivas. Veja como a banca distribuiu a prova entre as disciplinas.`
+            : `${exame.totalQuestoes} questões objetivas, 40 acertos para passar. O gabarito da FGV e a distribuição por disciplina entram aqui assim que a banca publicar.`
+        }
       />
 
       <Container className="py-16">
-        {/* Ficha do exame: só o que veio de fonte oficial. */}
+        {/* Ficha do exame: só o que veio de fonte oficial.
+            Antes da prova, os três primeiros campos não existem — e escrever
+            "Anuladas: 0 · nenhuma nesta edição" numa prova que ninguém fez
+            é afirmar o que não se sabe. */}
         <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            [
-              "Questões no banco",
-              `${exame.questoesCarregadas || "—"}`,
-              exame.questoesCarregadas
-                ? "extraídas do caderno oficial"
-                : "edição ainda não ingerida",
-            ],
-            [
-              "Anuladas",
-              `${exame.questoesAnuladas}`,
-              exame.questoesAnuladas
-                ? "fora dos simulados, mantidas como estudo"
-                : "nenhuma nesta edição",
-            ],
-            [
-              "Gabarito",
-              exame.gabaritoDefinitivo ? "definitivo" : "preliminar",
-              exame.gabaritoDefinitivo
-                ? "publicado após os recursos"
-                : "a OAB não publicou o definitivo desta edição",
-            ],
-            ["Aplicação", dataFormatada, "conforme o edital"],
-          ].map(([rotulo, valor, nota]) => (
+          {(passou
+            ? [
+                [
+                  "Questões no banco",
+                  `${exame.questoesCarregadas || "—"}`,
+                  exame.questoesCarregadas
+                    ? "extraídas do caderno oficial"
+                    : "edição ainda não ingerida",
+                ],
+                [
+                  "Anuladas",
+                  `${exame.questoesAnuladas}`,
+                  exame.questoesAnuladas
+                    ? "fora dos simulados, mantidas como estudo"
+                    : "nenhuma nesta edição",
+                ],
+                [
+                  "Gabarito",
+                  exame.gabaritoDefinitivo ? "definitivo" : "preliminar",
+                  exame.gabaritoDefinitivo
+                    ? "publicado após os recursos"
+                    : "a OAB não publicou o definitivo desta edição",
+                ],
+                ["Aplicação", dataFormatada, "conforme o edital"],
+              ]
+            : [
+                ["Aplicação", dataFormatada, "conforme o edital"],
+                [
+                  "Questões",
+                  `${exame.totalQuestoes}`,
+                  "objetivas, quatro alternativas",
+                ],
+                ["Para passar", "40", "metade da prova, sem nota por matéria"],
+                [
+                  "Gabarito",
+                  "em breve",
+                  "preliminar dias depois, definitivo após os recursos",
+                ],
+              ]
+          ).map(([rotulo, valor, nota]) => (
             <div
               key={rotulo}
               className="flex flex-col gap-1 border-t border-line pt-4"
@@ -185,7 +232,7 @@ export default async function ExamePage({ params }: Props) {
               </table>
             </div>
           </>
-        ) : (
+        ) : passou ? (
           // A distribuição real depende de classificação confirmada por
           // revisão humana. Enquanto isso, dizer que não existe é melhor do
           // que exibir a estimativa como se fosse a prova desta edição.
@@ -201,6 +248,52 @@ export default async function ExamePage({ params }: Props) {
             </Link>{" "}
             já está disponível.
           </p>
+        ) : (
+          /* Prova ainda não aplicada. Esta é a seção que a página existe para
+             ter no domingo: quem sai do exame procura gabarito na mesma
+             tarde, e URL que o buscador nunca visitou não aparece a tempo.
+             Nada de contagem regressiva com data inventada nem de "gabarito
+             extraoficial" — o que se promete aqui é o que o pipeline
+             realmente entrega, e quando. */
+          <section className="mt-14 max-w-[68ch]">
+            <h2 className="text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[2.3rem]">
+              O gabarito do {exame.edicao}º sai aqui
+            </h2>
+            <div className="mt-5 flex flex-col gap-4 text-[1rem] leading-relaxed text-body">
+              <p>
+                A prova é aplicada em {dataFormatada}. A FGV publica primeiro o{" "}
+                <strong>gabarito preliminar</strong>, abre prazo de recurso e
+                só depois divulga o <strong>definitivo</strong> — que é o que
+                vale, e onde aparecem as anulações. Nesta edição, as duas
+                versões entram nesta página conforme saem, e a ficha acima diz
+                qual das duas você está vendo.
+              </p>
+              <p>
+                Junto com o gabarito entram as {exame.totalQuestoes} questões
+                na íntegra, extraídas do caderno oficial, e a lista de{" "}
+                <strong>artigos que o enunciado citou</strong> — cada um
+                ligado ao texto da lei. É o que{" "}
+                <Link
+                  href="/exames"
+                  className="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4"
+                >
+                  as outras {acervo.exames} edições
+                </Link>{" "}
+                já têm.
+              </p>
+              <p>
+                Enquanto isso, a{" "}
+                <Link
+                  href="/estatisticas"
+                  className="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4"
+                >
+                  distribuição típica da 1ª fase
+                </Link>{" "}
+                mostra quantas questões cada disciplina costuma render — que é
+                a informação útil de véspera, não a de depois.
+              </p>
+            </div>
+          </section>
         )}
 
         {/* Dispositivos cobrados nesta prova.
@@ -254,8 +347,16 @@ export default async function ExamePage({ params }: Props) {
         )}
 
         <PaywallCta
-          titulo={`Refaça o ${exame.edicao}º Exame cronometrado`}
-          texto="No plano você responde a prova inteira em modo simulado, com o tempo real, e recebe o relatório de acerto por disciplina no fim."
+          titulo={
+            passou
+              ? `Refaça o ${exame.edicao}º Exame cronometrado`
+              : `Treine para o ${exame.edicao}º com as provas anteriores`
+          }
+          texto={
+            passou
+              ? "No plano você responde a prova inteira em modo simulado, com o tempo real, e recebe o relatório de acerto por disciplina no fim."
+              : `No plano você responde as ${acervo.questoes.toLocaleString("pt-BR")} questões das edições anteriores, em simulado cronometrado ou uma a uma, e erra em casa em vez de errar na prova.`
+          }
         />
       </Container>
     </>

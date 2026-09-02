@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
-import { formatarData } from "@/lib/format";
+import { formatarData, jaAconteceu } from "@/lib/format";
 import { getExames } from "@/lib/content/queries";
 export const revalidate = 3600;
 export const metadata: Metadata = {
@@ -54,8 +54,12 @@ export default async function ExamesIndex() {
                         <span>{exame.questoesAnuladas} anuladas</span>
                       )}
                     </>
-                  ) : (
+                  ) : jaAconteceu(exame.data) ? (
                     <span>{exame.totalQuestoes} questões</span>
+                  ) : (
+                    /* Edição anunciada e não aplicada. Repetir "80 questões"
+                       aqui a faria parecer ingerida como as outras. */
+                    <span className="text-ouro-600">ainda não aplicada</span>
                   )}
                 </span>
               </Link>
