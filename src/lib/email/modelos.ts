@@ -79,6 +79,86 @@ Você recebeu este e-mail porque tem uma conta no OABase.`;
 export type Modelo = { assunto: string; html: string; texto: string };
 
 /**
+ * Ticket novo, para a equipe.
+ *
+ * O assunto carrega o assunto do cliente porque quem lê está na caixa de
+ * entrada com outras trinta mensagens; "Novo ticket" sozinho obriga a abrir
+ * para saber se é urgente. O corpo vem inteiro: responder do e-mail não é o
+ * caminho — o link leva ao ticket —, mas ler no e-mail é.
+ */
+export function ticketAberto(dados: {
+  assunto: string;
+  corpo: string;
+  de: string;
+  nome: string;
+  href: string;
+}): Modelo {
+  const quem = dados.nome ? `${dados.nome} (${dados.de})` : dados.de;
+  return {
+    assunto: `Suporte: ${dados.assunto}`,
+    html: moldura(
+      titulo("Novo ticket de suporte") +
+        `<p style="margin:0 0 8px 0;"><strong>${escapar(dados.assunto)}</strong></p>` +
+        `<p style="margin:0 0 16px 0;color:${SUAVE};font-size:13px;">de ${escapar(quem)}</p>` +
+        `<div style="padding:14px 16px;background:${PAPEL};border-radius:12px;white-space:pre-wrap;">${escapar(dados.corpo)}</div>` +
+        botao(dados.href, "Responder no painel"),
+      "Você recebeu este e-mail porque administra o OABase.",
+    ),
+    texto: [
+      `Novo ticket de suporte: ${dados.assunto}`,
+      `De: ${quem}`,
+      "",
+      dados.corpo,
+      "",
+      `Responder: ${dados.href}`,
+    ].join("\n"),
+  };
+}
+
+/** Resposta da equipe, para quem abriu o ticket. */
+export function ticketRespondido(dados: {
+  nome: string;
+  assunto: string;
+  corpo: string;
+  href: string;
+}): Modelo {
+  return {
+    assunto: `Respondemos: ${dados.assunto}`,
+    html: moldura(
+      titulo(dados.nome ? `${escapar(dados.nome)}, respondemos você` : "Respondemos você") +
+        `<p style="margin:0 0 16px 0;">Sobre <strong>${escapar(dados.assunto)}</strong>:</p>` +
+        `<div style="padding:14px 16px;background:${PAPEL};border-radius:12px;white-space:pre-wrap;">${escapar(dados.corpo)}</div>` +
+        botao(dados.href, "Ver a conversa"),
+      RODAPE_PADRAO,
+    ),
+    texto: [
+      `Respondemos sobre: ${dados.assunto}`,
+      "",
+      dados.corpo,
+      "",
+      `Ver a conversa: ${dados.href}`,
+    ].join("\n"),
+  };
+}
+
+/**
+ * Texto de terceiro dentro de HTML de e-mail.
+ *
+ * O corpo do ticket é escrito por quem quiser: sem escapar, um `<script>` ou
+ * um `<style>` colado ali viaja para dentro da nossa mensagem. Cliente de
+ * e-mail não executa script, mas quebra de layout e injeção de link
+ * disfarçado são bem possíveis — e o custo de escapar é uma função de cinco
+ * linhas.
+ */
+function escapar(texto: string) {
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
  * Compra confirmada.
  *
  * Disparado pelo webhook da Asaas, no mesmo instante em que a assinatura

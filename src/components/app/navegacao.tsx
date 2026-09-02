@@ -93,6 +93,15 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/suporte",
+    rotulo: "Suporte",
+    icone: (
+      <>
+        <path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H12l-4.5 3v-3H4.5A1.5 1.5 0 0 1 3 15V7a1.5 1.5 0 0 1 1.5-1.5z" />
+      </>
+    ),
+  },
+  {
     href: "/app/configuracoes",
     rotulo: "Configurações",
     icone: (
@@ -135,6 +144,7 @@ const FORA_DO_MENU: Record<string, string> = {
   "/app/redacao": "Redação de comentário",
   "/app/vinculos": "Vincular dispositivo",
   "/app/admin": "Administração",
+  "/app/admin/suporte": "Suporte · fila",
 };
 
 /** Rótulo da tela atual, para o cabeçalho. Uma lista só, uma verdade só. */

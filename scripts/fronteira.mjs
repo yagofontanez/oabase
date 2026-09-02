@@ -88,7 +88,14 @@ for (const tabela of ["leis", "artigos", "exames", "disciplinas"]) {
 // Pago: se isto quebrar, o produto está de graça e ninguém percebe.
 // ---------------------------------------------------------------------------
 
-for (const tabela of ["questoes", "comentarios", "perfis", "assinaturas"]) {
+for (const tabela of [
+  "questoes",
+  "comentarios",
+  "perfis",
+  "assinaturas",
+  "tickets",
+  "ticket_mensagens",
+]) {
   caso(`anônimo NÃO lê ${tabela}`, async () => {
     const { status, linhas } = await selecionar(tabela, "id");
     // 200 com zero linhas é o comportamento normal da RLS; 401/403 também
@@ -152,6 +159,22 @@ caso("confirmar_pagamento exige o segredo do banco", async () => {
     throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
   }
 });
+
+caso("anônimo não é admin", async () => {
+  const { corpo } = await chamar("sou_admin", {});
+  if (corpo.trim() !== "false") {
+    throw new Error(`resposta inesperada: ${corpo.slice(0, 80)}`);
+  }
+});
+
+for (const funcao of ["metricas_admin", "usuarios_admin"]) {
+  caso(`${funcao} recusa quem não é admin`, async () => {
+    const { corpo } = await chamar(funcao, {});
+    if (/"contas"|"email"/.test(corpo)) {
+      throw new Error("devolveu dado de operação");
+    }
+  });
+}
 
 caso("anônimo não é editor", async () => {
   const { corpo } = await chamar("sou_editor", {});

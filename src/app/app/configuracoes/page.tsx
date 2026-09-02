@@ -173,12 +173,20 @@ export default async function ConfiguracoesPage() {
           titulo="Administração"
           descricao="Contas, receita, atividade e o estado do acervo. Capacidade separada da de editor: acesso de escrita ao conteúdo não dá, de brinde, a lista de clientes."
         >
-          <Link
-            href="/app/admin"
-            className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
-          >
-            Abrir o painel
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/app/admin"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Abrir o painel
+            </Link>
+            <Link
+              href="/app/admin/suporte"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Fila de suporte
+            </Link>
+          </div>
         </Bloco>
       )}
 
