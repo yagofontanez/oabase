@@ -119,26 +119,21 @@ export default async function SumulasIndex() {
               tribunal e continuam sendo cobradas — sobretudo em Constitucional,
               Penal e Tributário.
             </p>
-            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Grade de números, e não cartão com enunciado — o mesmo que o
+                índice de uma lei faz com os 2.081 artigos do Código Civil.
+                Com o texto de cada uma das 717, esta página passava de 950 KB
+                (o enunciado viaja duas vezes: no HTML e no payload do React).
+                A grade dá a visão do todo, e o enunciado é o conteúdo da
+                página de cada súmula, que é onde ele deve estar. */}
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
               {comuns.map((sumula) => (
                 <li key={sumula.slug}>
                   <Link
                     href={`/sumulas/${sumula.slug}`}
-                    className="group flex h-full flex-col gap-1.5 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-brand-300"
+                    title={sumula.texto.slice(0, 120)}
+                    className="flex items-center justify-center rounded-lg border border-line bg-surface px-2 py-2.5 text-[0.85rem] font-medium text-body tabular-nums transition-colors hover:border-brand-300 hover:text-brand-700"
                   >
-                    <span className="text-[0.78rem] font-bold text-brand-600 tabular-nums">
-                      Súmula {sumula.numero}
-                    </span>
-                    {/* Cortado no servidor, não só na tela. Com o enunciado
-                        inteiro nas 717, esta página ia a 995 KB — e o texto
-                        viajava duas vezes, no HTML e no payload do React. O
-                        enunciado completo é o conteúdo da página de cada
-                        súmula; aqui ele só precisa dar para reconhecer qual é. */}
-                    <span className="line-clamp-3 text-[0.86rem] leading-relaxed text-muted group-hover:text-ink">
-                      {sumula.texto.length > 150
-                        ? `${sumula.texto.slice(0, 150).trimEnd()}…`
-                        : sumula.texto}
-                    </span>
+                    {sumula.numero}
                   </Link>
                 </li>
               ))}
