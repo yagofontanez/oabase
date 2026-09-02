@@ -30,6 +30,19 @@
 # rota, `Disallow` em robots.ts e o cabeçalho aqui. Depender de um mecanismo
 # só é como o produto pago vaza para o índice.
 # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# `/sitemap.xml` é o endereço que todo mundo tenta primeiro — o que se digita
+# no Search Console, o que a ferramenta de auditoria busca, o que o parceiro
+# pede por e-mail. O Next não pode servi-lo: com `generateSitemaps` ele
+# reserva esse caminho para a convenção de metadata e derruba o build se
+# houver uma rota ali. A reescrita resolve sem tocar no roteamento — status
+# 200, e não 301, para que o endereço na barra continue sendo o esperado.
+# ----------------------------------------------------------------------------
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap-index.xml"
+  status = 200
+
 [[headers]]
   for = "/app/*"
   [headers.values]

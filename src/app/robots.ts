@@ -27,13 +27,15 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         "/api",
       ],
     },
-    // As partições são listadas uma a uma, e é aqui que o Google as
-    // descobre. Não existe `/sitemap.xml`: com `generateSitemaps`, o Next
-    // publica em `/sitemap/0.xml` e reserva o caminho convencional para a
-    // própria convenção de metadata — uma rota ali quebra o build. Ao
-    // submeter no Search Console, use o endereço que sai deste arquivo.
-    sitemap: Array.from({ length: particoes }, (_, i) =>
-      abs(`/sitemap/${i}.xml`),
-    ),
+    // O índice primeiro, as partições depois. Não é redundância inútil: o
+    // índice vive numa reescrita do `netlify.toml` (o Next reserva
+    // `/sitemap.xml` para a convenção de metadata e quebra o build se houver
+    // rota ali), e uma configuração de hospedagem é justamente o tipo de
+    // coisa que some numa migração sem ninguém perceber. Listadas as duas
+    // formas, o Google acha o conteúdo pelos dois caminhos.
+    sitemap: [
+      abs("/sitemap.xml"),
+      ...Array.from({ length: particoes }, (_, i) => abs(`/sitemap/${i}.xml`)),
+    ],
   };
 }
