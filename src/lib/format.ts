@@ -17,6 +17,38 @@ export function formatarData(
 }
 
 /**
+ * "hoje", "ontem", "há 3 dias" — a unidade de uma conversa.
+ *
+ * Numa lista de tickets ou de tópicos, a pergunta nunca é "que dia foi": é
+ * "está parado há quanto tempo". Data absoluta obriga cada leitor a fazer
+ * essa subtração de cabeça, em toda linha.
+ *
+ * **A granularidade é de dia, e isso não é preguiça.** Estes componentes
+ * renderizam no servidor e hidratam no navegador; "há 2 minutos" calculado
+ * nos dois lugares com um segundo de diferença vira divergência de
+ * hidratação. Em dias, os dois lados concordam — exceto na virada da
+ * meia-noite, quando o pior resultado possível é um "ontem" que demora um
+ * refresh para virar "hoje".
+ */
+export function tempoRelativo(iso: string, hoje = new Date()): string {
+  const [ano, mes, dia] = iso.slice(0, 10).split("-").map(Number);
+  const alvo = new Date(ano, mes - 1, dia);
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const dias = Math.round((base.getTime() - alvo.getTime()) / 86_400_000);
+
+  if (dias <= 0) return "hoje";
+  if (dias === 1) return "ontem";
+  if (dias < 7) return `há ${dias} dias`;
+  if (dias < 30) {
+    const semanas = Math.floor(dias / 7);
+    return `há ${semanas} ${semanas === 1 ? "semana" : "semanas"}`;
+  }
+  // Passado de um mês, a distância deixa de informar e a data volta a ser
+  // mais útil do que "há 7 meses".
+  return formatarData(iso.slice(0, 10), { day: "2-digit", month: "short" });
+}
+
+/**
  * A data já passou?
  *
  * Comparação em texto ISO contra o dia local, pelo mesmo motivo de

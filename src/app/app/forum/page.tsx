@@ -24,7 +24,7 @@ export default async function ForumPage() {
     supabase
       .from("forum_topicos")
       .select(
-        "id, titulo, autor_nome, respostas, fixado, trancado, removido, criado_em, atualizado_em, disciplinas(nome)",
+        "id, titulo, corpo, autor_nome, respostas, fixado, trancado, removido, criado_em, atualizado_em, disciplinas(nome)",
       )
       .order("fixado", { ascending: false })
       .order("atualizado_em", { ascending: false })

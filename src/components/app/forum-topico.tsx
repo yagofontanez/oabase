@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseNavegador } from "@/lib/supabase/browser";
-import { formatarData } from "@/lib/format";
+import { formatarData, tempoRelativo } from "@/lib/format";
+import { Iniciais } from "./iniciais";
 import { mensagemDeErro } from "./forum";
 
 export type RespostaDoForum = {
@@ -29,9 +30,14 @@ export type TopicoAberto = {
 /**
  * Um tópico e sua conversa.
  *
+ * A pergunta ganha peso tipográfico e as respostas ficam recuadas atrás de um
+ * fio: numa discussão, saber onde a pergunta acaba e a conversa começa é
+ * metade da leitura. Sem isso, a primeira resposta parece continuação do
+ * texto de quem perguntou.
+ *
  * A moderação aparece só para admin, e o que ela faz é marcar `removido` —
- * nunca apagar a linha. Apagar some com a resposta que citava a mensagem e
- * reabre a discussão do zero; a marca esvazia o conteúdo e mantém o fio.
+ * nunca apagar. Apagar some com a resposta que citava a mensagem e reabre a
+ * discussão do zero; a marca esvazia o conteúdo e mantém o fio.
  */
 export function TopicoDoForum({
   topico,
@@ -46,6 +52,8 @@ export function TopicoDoForum({
   const [corpo, setCorpo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const fechado = topico.trancado || topico.removido;
 
   async function responder(evento: React.FormEvent) {
     evento.preventDefault();
@@ -81,39 +89,62 @@ export function TopicoDoForum({
   }
 
   return (
-    <div className="painel-conteudo flex max-w-[820px] flex-col gap-6">
+    <div className="painel-conteudo flex max-w-[840px] flex-col gap-6">
       <Link
         href="/app/forum"
-        className="self-start text-[0.9rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4"
+        className="self-start text-[0.88rem] font-semibold text-brand-700 transition-colors hover:text-brand-600"
       >
         ← Fórum
       </Link>
 
-      <header className="flex flex-col gap-2">
-        <h1 className="text-[clamp(1.5rem,2.6vw,1.95rem)] leading-[1.15] font-extrabold tracking-[-0.03em] text-ink">
-          {topico.removido ? "[removido pela moderação]" : topico.titulo}
-        </h1>
-        <p className="text-[0.85rem] text-muted">
-          {topico.autor_nome} · {formatarData(topico.criado_em.slice(0, 10))}
-          {topico.disciplina ? ` · ${topico.disciplina}` : ""}
-          {topico.trancado ? " · trancado" : ""}
-        </p>
-      </header>
-
       {erro && (
-        <p className="rounded-[12px] border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700">
+        <p
+          role="alert"
+          className="rounded-[12px] border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
+        >
           {erro}
         </p>
       )}
 
-      <article className="superficie flex flex-col gap-3 p-6">
-        <p className="text-[1rem] leading-relaxed whitespace-pre-wrap text-body">
+      {/* ---- A pergunta ---- */}
+      <article className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <span className="flex flex-wrap items-center gap-2 text-[0.79rem]">
+            {topico.disciplina && (
+              <span className="selo">{topico.disciplina}</span>
+            )}
+            {topico.trancado && (
+              <span className="rounded-full bg-sunk px-2.5 py-1 font-semibold text-muted">
+                trancado
+              </span>
+            )}
+          </span>
+          <h1 className="text-[clamp(1.5rem,2.8vw,2rem)] leading-[1.14] font-extrabold tracking-[-0.03em] text-ink">
+            {topico.removido ? "[removido pela moderação]" : topico.titulo}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Iniciais nome={topico.autor_nome} tom="marca" />
+          <span className="flex flex-col">
+            <span className="text-[0.9rem] font-semibold text-ink">
+              {topico.autor_nome}
+            </span>
+            <span className="text-[0.79rem] text-muted">
+              perguntou {tempoRelativo(topico.criado_em)} ·{" "}
+              {formatarData(topico.criado_em.slice(0, 10))}
+            </span>
+          </span>
+        </div>
+
+        <p className="text-[1.05rem] leading-relaxed whitespace-pre-wrap text-body">
           {topico.removido ? "Conteúdo removido." : topico.corpo}
         </p>
+
         {moderador && (
-          <div className="flex flex-wrap gap-2 border-t border-line pt-3">
+          <div className="flex flex-wrap gap-2">
             <BotaoDeModeracao
-              rotulo={topico.removido ? "Restaurar" : "Remover"}
+              rotulo={topico.removido ? "Restaurar tópico" : "Remover tópico"}
               onClick={() =>
                 moderar("forum_topicos", topico.id, {
                   removido: !topico.removido,
@@ -132,48 +163,90 @@ export function TopicoDoForum({
         )}
       </article>
 
-      <section className="flex flex-col gap-3">
-        {respostas.map((r) => (
-          <article
-            key={r.id}
-            className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5"
-          >
-            <span className="text-[0.8rem] font-semibold text-muted">
-              {r.autor_nome} · {formatarData(r.criado_em.slice(0, 10))}
-            </span>
-            <p className="text-[0.96rem] leading-relaxed whitespace-pre-wrap text-body">
-              {r.removido ? "Conteúdo removido." : r.corpo}
-            </p>
-            {moderador && (
-              <BotaoDeModeracao
-                rotulo={r.removido ? "Restaurar" : "Remover"}
-                onClick={() =>
-                  moderar("forum_respostas", r.id, { removido: !r.removido })
-                }
-              />
-            )}
-          </article>
-        ))}
+      {/* ---- A conversa ----
+          Recuada atrás de um fio: é o que separa a pergunta das respostas
+          sem precisar de moldura em cada uma. */}
+      <section className="flex flex-col gap-4 border-t border-line pt-6">
+        <h2 className="text-[0.82rem] font-bold tracking-[0.06em] text-muted uppercase">
+          {respostas.length === 0
+            ? "Nenhuma resposta ainda"
+            : `${respostas.length} ${respostas.length === 1 ? "resposta" : "respostas"}`}
+        </h2>
+
+        {respostas.length === 0 ? (
+          <p className="max-w-[52ch] text-[0.96rem] text-body">
+            {fechado
+              ? "Este tópico foi encerrado sem resposta."
+              : "Se você sabe alguma coisa sobre isto — mesmo que não seja a resposta inteira — escreva abaixo. Metade das dúvidas se resolve com um empurrão."}
+          </p>
+        ) : (
+          <ol className="flex flex-col gap-4 border-l border-line pl-5 sm:pl-6">
+            {respostas.map((r) => (
+              <li key={r.id} className="relative flex flex-col gap-2">
+                {/* O ponto na linha do tempo: marca cada voz sem cercar
+                    cada resposta com uma caixa. */}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-3.5 -left-[1.68rem] h-2 w-2 rounded-full bg-hairline sm:-left-[1.93rem]"
+                />
+                <span className="flex items-center gap-2.5">
+                  <Iniciais nome={r.autor_nome} />
+                  <span className="flex flex-col">
+                    <span className="text-[0.88rem] font-semibold text-ink">
+                      {r.autor_nome}
+                    </span>
+                    <span className="text-[0.76rem] text-muted">
+                      {tempoRelativo(r.criado_em)}
+                    </span>
+                  </span>
+                </span>
+                <p className="text-[0.98rem] leading-relaxed whitespace-pre-wrap text-body">
+                  {r.removido ? "Conteúdo removido." : r.corpo}
+                </p>
+                {moderador && (
+                  <BotaoDeModeracao
+                    rotulo={r.removido ? "Restaurar" : "Remover"}
+                    onClick={() =>
+                      moderar("forum_respostas", r.id, {
+                        removido: !r.removido,
+                      })
+                    }
+                  />
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
-      {topico.trancado || topico.removido ? (
-        <p className="rounded-2xl bg-paper p-6 text-[0.94rem] text-muted">
+      {fechado ? (
+        <p className="rounded-2xl bg-paper p-5 text-[0.92rem] text-muted">
           Este tópico não recebe novas respostas.
         </p>
       ) : (
-        <form onSubmit={responder} className="flex flex-col gap-2">
+        <form
+          onSubmit={responder}
+          className="flex flex-col gap-2 border-t border-line pt-6"
+        >
+          <label
+            htmlFor="resposta"
+            className="text-[0.82rem] font-bold tracking-[0.06em] text-muted uppercase"
+          >
+            Sua resposta
+          </label>
           <textarea
+            id="resposta"
             value={corpo}
             onChange={(e) => setCorpo(e.target.value)}
-            placeholder="Responder"
+            placeholder="Escreva o que você sabe. Citar o artigo ou a questão ajuda quem vier depois."
             rows={5}
             maxLength={8000}
-            className="w-full resize-none rounded-[12px] border border-line bg-surface px-4 py-3 text-[0.95rem] leading-relaxed text-ink outline-none focus:border-brand-400"
+            className="w-full resize-none rounded-[12px] border border-line bg-surface px-4 py-3 text-[0.96rem] leading-relaxed text-ink outline-none focus:border-brand-400"
           />
           <button
             type="submit"
             disabled={enviando || corpo.trim().length < 2}
-            className="self-start rounded-full bg-brand-600 px-5 py-2.5 text-[0.92rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-brand-200"
+            className="self-start rounded-full bg-brand-600 px-6 py-2.5 text-[0.92rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-brand-200"
           >
             {enviando ? "Enviando…" : "Responder"}
           </button>
@@ -194,7 +267,7 @@ function BotaoDeModeracao({
     <button
       type="button"
       onClick={onClick}
-      className="self-start rounded-full border border-line px-3.5 py-1.5 text-[0.82rem] font-semibold text-muted transition-colors hover:border-vinho-200 hover:text-vinho-600"
+      className="self-start rounded-full border border-line px-3.5 py-1.5 text-[0.8rem] font-semibold text-muted transition-colors hover:border-vinho-200 hover:text-vinho-600"
     >
       {rotulo}
     </button>
