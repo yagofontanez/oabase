@@ -12,6 +12,7 @@ import {
   getAcervo,
   getArtigosDoExame,
   getDisciplinas,
+  getDistribuicaoDoExame,
   getExame,
   getExames,
 } from "@/lib/content/queries";
@@ -53,15 +54,25 @@ export default async function ExamePage({ params }: Props) {
   const { edicao } = await params;
   const exame = await getExame(edicao);
   if (!exame) notFound();
-  const [disciplinas, dispositivos, acervo] = await Promise.all([
+  const [disciplinas, dispositivos, acervo, medida] = await Promise.all([
     getDisciplinas(),
     getArtigosDoExame(exame.slug),
     getAcervo(),
+    getDistribuicaoDoExame(exame.slug),
   ]);
   const nomes = new Map(disciplinas.map((d) => [d.slug, d.nome]));
-  const linhas = [...exame.distribuicao].sort(
-    (a, b) => b.questoes - a.questoes,
-  );
+
+  /* A distribuição publicada em `exame_disciplinas` vem da revisão editorial
+     e é a mais confiável quando existe. Faltando ela, entra a contagem das
+     questões pela classificação disponível — que hoje é automática, e a tela
+     diz isso logo abaixo da tabela em vez de calar. */
+  const revisada = exame.distribuicao.length > 0;
+  const linhas = revisada
+    ? [...exame.distribuicao].sort((a, b) => b.questoes - a.questoes)
+    : medida.map((d) => ({
+        disciplinaSlug: d.disciplinaSlug,
+        questoes: d.questoes,
+      }));
   const maior = linhas[0]?.questoes ?? 1;
   const dataFormatada = formatarData(exame.data, {
     day: "2-digit",
@@ -231,6 +242,15 @@ export default async function ExamePage({ params }: Props) {
                 </tbody>
               </table>
             </div>
+
+            {/* A procedência vem junto com o número, e não numa página de
+                metodologia: quem lê a tabela é quem precisa saber se ela foi
+                contada ou inferida. */}
+            <p className="mt-3 max-w-[62ch] text-[0.84rem] text-muted">
+              {revisada
+                ? "Distribuição revisada questão a questão."
+                : "Contagem das questões desta edição pela classificação automática por disciplina. Ainda não passou por revisão humana — o filtro por exame é exato; por disciplina, aproximado."}
+            </p>
           </>
         ) : passou ? (
           // A distribuição real depende de classificação confirmada por

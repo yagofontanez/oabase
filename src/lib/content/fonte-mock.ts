@@ -70,6 +70,10 @@ export const fonteMock: FonteDeConteudo = {
   async getSumula() {
     return null;
   },
+  // Sem banco não há questão classificada para agregar.
+  async getDistribuicaoDoExame() {
+    return [];
+  },
   // Post é texto autoral: ou alguém escreveu, ou não existe.
   async getPosts() {
     return [];

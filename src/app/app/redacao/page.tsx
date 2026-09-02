@@ -37,12 +37,16 @@ export default async function RedacaoPage() {
         .eq("indexavel", false)
         .order("incidencia", { ascending: false })
         .limit(60),
+      // Fila por `incidencia_estimada`, e não por `incidencia`: aqui o
+      // vínculo inferido por modelo vale como pista de prioridade, e errar
+      // custa uma leitura a mais. O número publicado no site continua sendo o
+      // outro, que só conta o verificável.
       supabase
         .from("artigos")
         .select(CAMPOS)
         .eq("comentario", "{}")
-        .gt("incidencia", 0)
-        .order("incidencia", { ascending: false })
+        .gt("incidencia_estimada", 0)
+        .order("incidencia_estimada", { ascending: false })
         .limit(60),
       supabase
         .from("artigos")

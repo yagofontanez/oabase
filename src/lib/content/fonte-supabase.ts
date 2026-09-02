@@ -328,6 +328,24 @@ export const fonteSupabase: FonteDeConteudo = {
     return data ? paraExame(data) : null;
   },
 
+  async getDistribuicaoDoExame(exameSlug) {
+    const { data, error } = await supabaseAnon().rpc("distribuicao_do_exame", {
+      p_exame_slug: exameSlug,
+    });
+    erro("distribuição do exame", error);
+    return (
+      (data ?? []) as {
+        disciplina_slug: string;
+        disciplina_nome: string;
+        questoes: number;
+      }[]
+    ).map((d) => ({
+      disciplinaSlug: d.disciplina_slug,
+      disciplinaNome: d.disciplina_nome,
+      questoes: Number(d.questoes),
+    }));
+  },
+
   async getSumulas(tribunal) {
     let consulta = supabaseAnon()
       .from("sumulas")

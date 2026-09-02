@@ -61,6 +61,10 @@ export const getSumula = cache((slug: string) => fonte.getSumula(slug));
 export const getPosts = cache(() => fonte.getPosts());
 export const getPost = cache((slug: string) => fonte.getPost(slug));
 
+export const getDistribuicaoDoExame = cache((exameSlug: string) =>
+  fonte.getDistribuicaoDoExame(exameSlug),
+);
+
 export const getExames = cache(() => fonte.getExames());
 
 /**

@@ -57,6 +57,14 @@ export type FonteDeConteudo = {
   /** Posts publicados, do mais recente para o mais antigo. */
   getPosts(): Promise<Post[]>;
   getPost(slug: string): Promise<Post | null>;
+  /**
+   * Distribuição por disciplina de uma edição, calculada da classificação
+   * que existir. Vem separada de `getExame` porque é a única informação da
+   * ficha que não é medição: a tela precisa poder dizer de onde ela veio.
+   */
+  getDistribuicaoDoExame(
+    exameSlug: string,
+  ): Promise<{ disciplinaSlug: string; disciplinaNome: string; questoes: number }[]>;
   getExames(): Promise<Exame[]>;
   getExame(slug: string): Promise<Exame | null>;
   getDisciplinas(): Promise<Disciplina[]>;
