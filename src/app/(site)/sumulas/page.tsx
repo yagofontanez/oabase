@@ -129,8 +129,15 @@ export default async function SumulasIndex() {
                     <span className="text-[0.78rem] font-bold text-brand-600 tabular-nums">
                       Súmula {sumula.numero}
                     </span>
+                    {/* Cortado no servidor, não só na tela. Com o enunciado
+                        inteiro nas 717, esta página ia a 995 KB — e o texto
+                        viajava duas vezes, no HTML e no payload do React. O
+                        enunciado completo é o conteúdo da página de cada
+                        súmula; aqui ele só precisa dar para reconhecer qual é. */}
                     <span className="line-clamp-3 text-[0.86rem] leading-relaxed text-muted group-hover:text-ink">
-                      {sumula.texto}
+                      {sumula.texto.length > 150
+                        ? `${sumula.texto.slice(0, 150).trimEnd()}…`
+                        : sumula.texto}
                     </span>
                   </Link>
                 </li>
