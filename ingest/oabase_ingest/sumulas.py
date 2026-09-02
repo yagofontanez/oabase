@@ -50,7 +50,16 @@ import urllib.request
 from pathlib import Path
 
 BASE = "https://portal.stf.jus.br/jurisprudencia/sumariosumulas.asp"
-INDICE = f"{BASE}?base=26"
+
+# O portal separa as duas séries por um número de base interno. São
+# numerações independentes: a Súmula Vinculante 1 e a Súmula 1 tratam de
+# assuntos diferentes, e é por isso que a chave no banco inclui `vinculante`.
+BASES = {
+    "vinculante": 26,
+    "comum": 30,
+}
+
+INDICE = f"{BASE}?base={BASES['vinculante']}"
 CERTIFICADOS = Path(__file__).resolve().parent.parent / "certs" / "stf-bundle.pem"
 
 CABECALHOS = {
@@ -64,11 +73,14 @@ CABECALHOS = {
     "Referer": INDICE,
 }
 
-LINK = re.compile(
-    r'<a[^>]+href="(sumariosumulas\.asp\?base=26&(?:amp;)?sumula=\d+)"[^>]*>'
-    r"\s*(S[úu]mula\s+Vinculante(?:&nbsp;|\s)+(\d+))(.{0,60}?)</a>",
-    re.I | re.S,
-)
+def _link(base: int) -> re.Pattern[str]:
+    return re.compile(
+        rf'<a[^>]+href="(sumariosumulas\.asp\?base={base}&(?:amp;)?sumula=\d+)"'
+        r'[^>]*>\s*(S[úu]mula(?:\s+Vinculante)?(?:&nbsp;|\s)+(\d+))(.{0,60}?)</a>',
+        re.I | re.S,
+    )
+
+
 CANCELADA = re.compile(r"cancel", re.I)
 
 
@@ -107,7 +119,7 @@ def _linhas(pagina: str) -> list[str]:
     return [linha.strip() for linha in texto.split("\n") if linha.strip()]
 
 
-def texto_da_sumula(pagina: str, numero: int) -> str | None:
+def texto_da_sumula(pagina: str, numero: int, vinculante: bool = True) -> str | None:
     """O enunciado é a linha logo abaixo do título, e só ela.
 
     O resto da página são precedentes, legislação citada e acórdãos — texto
@@ -115,7 +127,8 @@ def texto_da_sumula(pagina: str, numero: int) -> str | None:
     de julgado no lugar do enunciado, e ninguém perceberia lendo o total.
     """
     linhas = _linhas(pagina)
-    alvo = re.compile(rf"^S[úu]mula\s+Vinculante\s+{numero}\b", re.I)
+    rotulo = r"S[úu]mula\s+Vinculante" if vinculante else r"S[úu]mula"
+    alvo = re.compile(rf"^{rotulo}\s+{numero}\b", re.I)
     for i, linha in enumerate(linhas[:-1]):
         if alvo.match(linha):
             candidato = linhas[i + 1]
@@ -125,8 +138,10 @@ def texto_da_sumula(pagina: str, numero: int) -> str | None:
     return None
 
 
-def _slug(numero: int) -> str:
-    return f"sumula-vinculante-{numero}"
+def _slug(numero: int, vinculante: bool) -> str:
+    # Duas séries, dois prefixos: `sumula-vinculante-4` e `sumula-stf-473` são
+    # enunciados distintos e precisam de URLs distintas.
+    return f"sumula-vinculante-{numero}" if vinculante else f"sumula-stf-{numero}"
 
 
 def _lit(valor: str) -> str:
@@ -140,15 +155,18 @@ def _sem_acento(texto: str) -> str:
     )
 
 
-def coletar(pausa: float = 0.6) -> list[tuple[int, str]]:
+def coletar(
+    vinculante: bool = True, pausa: float = 0.6
+) -> list[tuple[int, str]]:
     contexto = _contexto()
-    indice = baixar(INDICE, contexto)
+    base = BASES["vinculante" if vinculante else "comum"]
+    indice = baixar(f"{BASE}?base={base}", contexto)
 
     entradas: list[tuple[int, str]] = []
     vistos: set[int] = set()
     canceladas: list[int] = []
 
-    for achado in LINK.finditer(indice):
+    for achado in _link(base).finditer(indice):
         caminho, _, numero_txt, cauda = achado.groups()
         numero = int(numero_txt)
         if numero in vistos:
@@ -162,7 +180,7 @@ def coletar(pausa: float = 0.6) -> list[tuple[int, str]]:
             "&amp;", "&"
         )
         pagina = baixar(url, contexto)
-        texto = texto_da_sumula(pagina, numero)
+        texto = texto_da_sumula(pagina, numero, vinculante)
         if texto:
             entradas.append((numero, texto))
             print(f"  {numero:>3}  {texto[:78]}")
@@ -175,19 +193,25 @@ def coletar(pausa: float = 0.6) -> list[tuple[int, str]]:
     return entradas
 
 
-def sql(entradas: list[tuple[int, str]]) -> str:
+def sql(entradas: list[tuple[int, str]], vinculante: bool) -> str:
+    marca = "true" if vinculante else "false"
     valores = ",\n  ".join(
-        f"('stf', {numero}, {_lit(_slug(numero))}, {_lit(texto)}, true, false)"
+        f"('stf', {numero}, {_lit(_slug(numero, vinculante))}, {_lit(texto)},"
+        f" {marca}, false)"
         for numero, texto in sorted(entradas)
     )
     return (
         "insert into public.sumulas\n"
         "  (tribunal, numero, slug, texto, vinculante, indexavel)\nvalues\n  "
         + valores
+        # A chave inclui `vinculante`: a Súmula Vinculante 1 e a Súmula 1 são
+        # enunciados diferentes, e sem isso a carga de uma série sobrescreveria
+        # a outra em silêncio, com o total continuando certo.
+        #
         # Mesma regra dos artigos: texto oficial se atualiza sozinho enquanto
         # ninguém escreveu sobre ele. A partir do comentário, a linha é
         # trabalho autoral e mudança de redação vira revisão humana.
-        + "\non conflict (tribunal, numero) do update set\n"
+        + "\non conflict (tribunal, numero, vinculante) do update set\n"
         "  texto = excluded.texto,\n"
         "  slug = excluded.slug\n"
         "where public.sumulas.comentario = '{}';\n"
@@ -199,16 +223,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sql", help="grava o SQL neste caminho em vez de aplicar")
     p.add_argument("--carregar", action="store_true", help="aplica no banco")
     p.add_argument("--pausa", type=float, default=0.6)
+    p.add_argument(
+        "--serie", choices=("vinculante", "comum"), default="vinculante",
+        help="vinculantes (62) ou súmulas comuns do STF (736)",
+    )
     args = p.parse_args(argv)
 
-    print("→ lendo as Súmulas Vinculantes do portal do STF")
-    entradas = coletar(pausa=args.pausa)
+    vinculante = args.serie == "vinculante"
+    rotulo = "Súmulas Vinculantes" if vinculante else "Súmulas do STF"
+    print(f"→ lendo as {rotulo} do portal oficial")
+    entradas = coletar(vinculante=vinculante, pausa=args.pausa)
     if not entradas:
         print("✗ nenhuma súmula lida", file=sys.stderr)
         return 1
-    print(f"\n{len(entradas)} súmulas vinculantes em vigor")
+    print(f"\n{len(entradas)} {rotulo.lower()} em vigor")
 
-    comando = sql(entradas)
+    comando = sql(entradas, vinculante)
     if args.sql:
         Path(args.sql).write_text(comando, encoding="utf-8")
         print(f"SQL gravado em {args.sql}")

@@ -77,10 +77,30 @@ coluna.
 que permitiu desenhar o site antes de existir banco. Ao adicionar uma consulta,
 adicione nas duas implementações e no contrato, nunca direto na página.
 
+## O que pode virar conteúdo aqui
+
+**Só ato oficial.** A Lei 9.610/98, art. 8º, IV, deixa fora da proteção
+autoral os textos de lei, decretos, regulamentos, decisões judiciais e demais
+atos oficiais — é por isso que legislação e súmulas podem ser reproduzidas na
+íntegra, e é o critério que decide o que entra no acervo.
+
+**Raspar material de cursinho, portal jurídico ou blog não é opção**, nem
+reescrito. É violação de direito autoral num produto que cobra dinheiro, e
+"scraped content" é política de spam nomeada do Google — a punição cairia
+justamente sobre a estratégia de busca que sustenta o projeto. O que é
+autoral aqui é escrito aqui, e o que não é vem de fonte oficial.
+
 ## Súmulas
 
-`ingest/oabase_ingest/sumulas.py` traz as **Súmulas Vinculantes do STF** do
-portal oficial. Texto curto, oficial e verificável — existe sem depender de
+`ingest/oabase_ingest/sumulas.py` traz as **Súmulas Vinculantes** (62) e as
+**súmulas comuns do STF** (717) do portal oficial — `--serie vinculante` ou
+`--serie comum`, que são bases diferentes no portal.
+
+**As duas séries têm numeração própria e colidem.** A Súmula Vinculante 1 e a
+Súmula 1 são enunciados diferentes, e a chave era `(tribunal, numero)`:
+carregar as comuns sobrescreveria as vinculantes uma a uma, em silêncio, com
+o total continuando certo. A chave agora inclui `vinculante`, e o slug
+distingue (`sumula-vinculante-4`, `sumula-stf-473`). Texto curto, oficial e verificável — existe sem depender de
 ninguém escrever comentário, ao contrário do resto do acervo autoral.
 
 **Súmula cancelada não entra.** O índice do STF as marca, e exibir enunciado

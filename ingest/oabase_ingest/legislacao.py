@@ -17,6 +17,7 @@ diferencial do produto — o texto entra com `indexavel = false` e só vai ao
 
 from __future__ import annotations
 
+import codecs
 import re
 import unicodedata
 import urllib.request
@@ -207,6 +208,164 @@ LEIS: list[Lei] = [
         "https://www.planalto.gov.br/ccivil_03/leis/l5584.htm",
         "Normas de processo do trabalho fora da CLT: alçada, honorários periciais e assistência judiciária.",
     ),
+
+    # ------------------------------------------------------------------
+    # Terceira leva: a legislação extravagante que a prova cobra.
+    #
+    # Os códigos cobrem a espinha dorsal, e a banca cobra o resto — juizados,
+    # mandado de segurança, improbidade, Maria da Penha, drogas, LGPD. São
+    # leis curtas, de leitura direta, e cada uma responde por questões
+    # inteiras de forma recorrente.
+    #
+    # Todas do texto compilado do Planalto, e todas fora da proteção autoral
+    # pelo art. 8º, IV, da Lei 9.610/98. Este é o critério que separa o que
+    # pode entrar aqui do que não pode: ato oficial entra, texto de terceiro
+    # não — nem reescrito.
+    # ------------------------------------------------------------------
+    Lei(
+        "lei-de-improbidade", "Lei de Improbidade Administrativa",
+        "Lei 8.429/92", 1992, "direito-administrativo",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8429.htm",
+        "Atos de improbidade, sanções e o dolo exigido pela reforma de 2021.",
+    ),
+    Lei(
+        "lei-dos-servidores-federais", "Regime Jurídico dos Servidores Federais",
+        "Lei 8.112/90", 1990, "direito-administrativo",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8112cons.htm",
+        "Provimento, vacância, deveres e processo disciplinar do servidor público federal.",
+    ),
+    Lei(
+        "lei-do-mandado-de-seguranca", "Lei do Mandado de Segurança",
+        "Lei 12.016/09", 2009, "direito-constitucional",
+        "https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2009/lei/l12016.htm",
+        "Cabimento, prazo decadencial e liminar no remédio constitucional mais cobrado da prova.",
+    ),
+    Lei(
+        "lei-da-adi-e-adc", "Lei da ADI e da ADC", "Lei 9.868/99", 1999,
+        "direito-constitucional",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9868.htm",
+        "Controle concentrado de constitucionalidade: legitimados, efeitos e modulação.",
+    ),
+    Lei(
+        "lei-da-adpf", "Lei da Arguição de Descumprimento de Preceito Fundamental",
+        "Lei 9.882/99", 1999, "direito-constitucional",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9882.htm",
+        "Subsidiariedade e objeto da ADPF, o par da 9.868 no controle concentrado.",
+    ),
+    Lei(
+        "lei-dos-juizados-especiais", "Lei dos Juizados Especiais",
+        "Lei 9.099/95", 1995, "direito-processual-civil",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9099.htm",
+        "Competência, procedimento sumaríssimo e recursos nos juizados cíveis e criminais.",
+    ),
+    Lei(
+        "lei-da-acao-civil-publica", "Lei da Ação Civil Pública",
+        "Lei 7.347/85", 1985, "direito-processual-civil",
+        "https://www.planalto.gov.br/ccivil_03/leis/l7347orig.htm",
+        "Tutela coletiva: legitimidade, objeto e coisa julgada na ação civil pública.",
+    ),
+    Lei(
+        "lei-da-acao-popular", "Lei da Ação Popular", "Lei 4.717/65", 1965,
+        "direito-constitucional",
+        "https://www.planalto.gov.br/ccivil_03/leis/l4717.htm",
+        "O remédio do cidadão contra ato lesivo ao patrimônio público.",
+    ),
+    Lei(
+        "lei-de-arbitragem", "Lei de Arbitragem", "Lei 9.307/96", 1996,
+        "direito-processual-civil",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9307.htm",
+        "Convenção de arbitragem, árbitros e sentença arbitral.",
+    ),
+    Lei(
+        "lei-maria-da-penha", "Lei Maria da Penha", "Lei 11.340/06", 2006,
+        "direito-penal",
+        "https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11340.htm",
+        "Violência doméstica e familiar contra a mulher: medidas protetivas e competência.",
+    ),
+    Lei(
+        "lei-de-drogas", "Lei de Drogas", "Lei 11.343/06", 2006,
+        "direito-penal",
+        "https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11343.htm",
+        "Porte para consumo, tráfico e o tráfico privilegiado do § 4º do art. 33.",
+    ),
+    Lei(
+        "lei-dos-crimes-hediondos", "Lei dos Crimes Hediondos",
+        "Lei 8.072/90", 1990, "direito-penal",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8072.htm",
+        "Rol taxativo, progressão de regime e vedações da lei dos hediondos.",
+    ),
+    Lei(
+        "lei-de-organizacao-criminosa", "Lei de Organização Criminosa",
+        "Lei 12.850/13", 2013, "direito-penal",
+        "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2013/lei/l12850.htm",
+        "Definição de organização criminosa e colaboração premiada.",
+    ),
+    Lei(
+        "lei-de-execucao-penal", "Lei de Execução Penal", "LEP", 1984,
+        "direito-processual-penal",
+        "https://www.planalto.gov.br/ccivil_03/leis/l7210compilado.htm",
+        "Direitos do preso, progressão, remição e livramento condicional.",
+    ),
+    Lei(
+        "lei-de-locacoes", "Lei do Inquilinato", "Lei 8.245/91", 1991,
+        "direito-civil",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8245.htm",
+        "Locação urbana: prazos, garantias, despejo e direito de preferência.",
+    ),
+    Lei(
+        "lei-de-registros-publicos", "Lei de Registros Públicos",
+        "Lei 6.015/73", 1973, "direito-civil",
+        "https://www.planalto.gov.br/ccivil_03/leis/l6015compilada.htm",
+        "Registro civil, de imóveis e de títulos e documentos.",
+    ),
+    Lei(
+        "lgpd", "Lei Geral de Proteção de Dados", "LGPD", 2018,
+        "direito-civil",
+        "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm",
+        "Bases legais, direitos do titular e responsabilidade pelo tratamento de dados.",
+    ),
+    Lei(
+        "marco-civil-da-internet", "Marco Civil da Internet",
+        "Lei 12.965/14", 2014, "direito-civil",
+        "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2014/lei/l12965.htm",
+        "Responsabilidade do provedor, guarda de registros e neutralidade de rede.",
+    ),
+    Lei(
+        "estatuto-da-pessoa-com-deficiencia", "Estatuto da Pessoa com Deficiência",
+        "Lei 13.146/15", 2015, "direitos-humanos",
+        "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm",
+        "Acessibilidade, capacidade civil e tomada de decisão apoiada.",
+    ),
+    Lei(
+        "estatuto-do-idoso", "Estatuto da Pessoa Idosa", "Lei 10.741/03", 2003,
+        "direitos-humanos",
+        "https://www.planalto.gov.br/ccivil_03/leis/2003/l10.741.htm",
+        "Proteção da pessoa idosa: prioridades, crimes e medidas de proteção.",
+    ),
+    Lei(
+        "lei-de-propriedade-industrial", "Lei de Propriedade Industrial",
+        "Lei 9.279/96", 1996, "direito-empresarial",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9279.htm",
+        "Patente, marca e concorrência desleal.",
+    ),
+    Lei(
+        "politica-nacional-do-meio-ambiente", "Política Nacional do Meio Ambiente",
+        "Lei 6.938/81", 1981, "direito-ambiental",
+        "https://www.planalto.gov.br/ccivil_03/leis/l6938.htm",
+        "Instrumentos da política ambiental, licenciamento e responsabilidade objetiva.",
+    ),
+    Lei(
+        "lei-de-custeio-da-previdencia", "Lei de Custeio da Seguridade Social",
+        "Lei 8.212/91", 1991, "direito-previdenciario",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8212cons.htm",
+        "Contribuintes, salário de contribuição e financiamento da seguridade.",
+    ),
+    Lei(
+        "lei-do-fgts", "Lei do FGTS", "Lei 8.036/90", 1990,
+        "direito-do-trabalho",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8036consol.htm",
+        "Depósitos, hipóteses de saque e multa rescisória do FGTS.",
+    ),
 ]
 
 # Direitos Humanos continua sem norma aqui, e é decisão, não esquecimento.
@@ -224,6 +383,20 @@ def baixar(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR})
     with urllib.request.urlopen(req, timeout=120) as r:
         bruto = r.read()
+    # A marca de ordem de bytes vem antes do `charset` do HTML e vale mais do
+    # que ele: a página da Lei Maria da Penha é UTF-16 e declara
+    # `charset=windows-1252` no cabeçalho. Decodificada pelo que ela diz ser,
+    # cada caractere vira um caractere seguido de NUL — o texto sai com 35 mil
+    # "linhas" de uma letra cada, nenhum marcador de artigo casa, e o
+    # relatório diz "nenhum artigo extraído" sem dizer por quê.
+    for marca, nome in (
+        (codecs.BOM_UTF8, "utf-8-sig"),
+        (codecs.BOM_UTF16_LE, "utf-16"),
+        (codecs.BOM_UTF16_BE, "utf-16"),
+    ):
+        if bruto.startswith(marca):
+            return bruto.decode(nome, errors="replace")
+
     m = re.search(rb"charset=([\w-]+)", bruto[:4000], re.IGNORECASE)
     codificacao = m.group(1).decode() if m else "iso-8859-1"
     try:

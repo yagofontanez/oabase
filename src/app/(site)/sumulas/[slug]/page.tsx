@@ -14,13 +14,14 @@ export const dynamicParams = true;
 type Props = { params: Promise<{ slug: string }> };
 
 /**
- * São 62 páginas — a lista inteira cabe no build sem esforço, ao contrário
- * dos 5.756 artigos. `dynamicParams` fica ligado assim mesmo: uma súmula nova
- * aprovada entre dois deploys tem de responder na hora.
+ * Só as vinculantes saem prontas do build: são 62, de observância
+ * obrigatória, e as mais procuradas. As mais de setecentas comuns ficam para
+ * `dynamicParams`, que gera na primeira visita e guarda — mesmo critério dos
+ * artigos de lei, e o que impede o build de crescer com o acervo.
  */
 export async function generateStaticParams() {
   const sumulas = await getSumulas();
-  return sumulas.map((s) => ({ slug: s.slug }));
+  return sumulas.filter((s) => s.vinculante).map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -28,7 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const sumula = await getSumula(slug);
   if (!sumula) return {};
 
-  const titulo = `Súmula Vinculante ${sumula.numero} do STF`;
+  const titulo = sumula.vinculante
+    ? `Súmula Vinculante ${sumula.numero} do STF`
+    : `Súmula ${sumula.numero} do STF`;
   return {
     title: titulo,
     description: sumula.texto.slice(0, 155),
@@ -52,8 +55,12 @@ export default async function SumulaPage({ params }: Props) {
   if (!sumula) notFound();
 
   const rotulo = sumula.vinculante
-    ? `Súmula Vinculante ${sumula.numero}`
+    ? `Súmula Vinculante ${sumula.numero} do STF`
     : `Súmula ${sumula.numero} do ${sumula.tribunal.toUpperCase()}`;
+
+  // São mais de setecentas: gerar todas no build é caro e desnecessário, já
+  // que `dynamicParams` faz a primeira visita gerar e guardar a página.
+  // As vinculantes, que são 62 e as mais procuradas, saem prontas.
 
   return (
     <>
@@ -61,7 +68,7 @@ export default async function SumulaPage({ params }: Props) {
         data={{
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: `${rotulo} do STF`,
+          headline: rotulo,
           articleBody: sumula.texto,
           inLanguage: "pt-BR",
           isAccessibleForFree: true,
@@ -77,16 +84,28 @@ export default async function SumulaPage({ params }: Props) {
         crumbs={[
           { href: "/", label: "Início" },
           { href: "/sumulas", label: "Súmulas" },
-          { href: `/sumulas/${sumula.slug}`, label: `SV ${sumula.numero}` },
+          {
+            href: `/sumulas/${sumula.slug}`,
+            label: sumula.vinculante
+              ? `SV ${sumula.numero}`
+              : `Súmula ${sumula.numero}`,
+          },
         ]}
         eyebrow={
           sumula.vinculante ? "Súmula Vinculante · STF" : "Súmula · STF"
         }
         titulo={
-          <>
-            Súmula <span className="text-ouro-500">Vinculante</span>{" "}
-            {sumula.numero}
-          </>
+          sumula.vinculante ? (
+            <>
+              Súmula <span className="text-ouro-500">Vinculante</span>{" "}
+              {sumula.numero}
+            </>
+          ) : (
+            <>
+              Súmula <span className="text-ouro-500">{sumula.numero}</span> do
+              STF
+            </>
+          )
         }
         descricao="Texto oficial publicado pelo Supremo Tribunal Federal."
       />

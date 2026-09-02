@@ -30,6 +30,8 @@ export const metadata: Metadata = {
  */
 export default async function SumulasIndex() {
   const sumulas = await getSumulas("stf");
+  const vinculantes = sumulas.filter((s) => s.vinculante);
+  const comuns = sumulas.filter((s) => !s.vinculante);
 
   return (
     <>
@@ -56,39 +58,85 @@ export default async function SumulasIndex() {
             Súmulas <span className="text-ouro-500">Vinculantes</span>
           </>
         }
-        descricao={`As ${sumulas.length} Súmulas Vinculantes do STF em vigor, com o texto oficial de cada enunciado. As canceladas ficam de fora — enunciado revogado em material de estudo é armadilha, não acervo.`}
+        descricao={`${vinculantes.length} Súmulas Vinculantes e ${comuns.length.toLocaleString("pt-BR")} súmulas do STF em vigor, com o texto oficial de cada enunciado. As canceladas ficam de fora — enunciado revogado em material de estudo é armadilha, não acervo.`}
       />
 
-      <Container className="py-16">
-        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-          {sumulas.map((sumula) => (
-            <li key={sumula.slug}>
-              <Link
-                href={`/sumulas/${sumula.slug}`}
-                className="group flex flex-col gap-2 p-6 transition-colors hover:bg-paper sm:flex-row sm:gap-7"
-              >
-                <span className="shrink-0 text-[0.86rem] font-bold text-brand-600 tabular-nums sm:w-[5.5rem]">
-                  SV {sumula.numero}
-                </span>
-                <span className="flex flex-col gap-1.5">
-                  <span className="text-[0.98rem] leading-relaxed text-ink group-hover:text-brand-700">
-                    {sumula.texto}
-                  </span>
-                  {sumula.comentario.length > 0 && (
-                    <span className="text-[0.8rem] font-semibold text-ouro-600">
-                      comentada
-                    </span>
-                  )}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
+      <Container className="flex flex-col gap-14 py-16">
         {sumulas.length === 0 && (
           <p className="rounded-2xl bg-paper p-8 text-body">
             As súmulas ainda não foram carregadas nesta instalação.
           </p>
+        )}
+
+        {/* As vinculantes primeiro, e com o enunciado inteiro: são 62, todas
+            de observância obrigatória, e é a lista que se lê de ponta a
+            ponta na véspera. As comuns são mais de setecentas — ali o
+            enunciado inteiro viraria meio megabyte de HTML numa página de
+            índice, então cada uma leva ao seu próprio endereço. */}
+        {vinculantes.length > 0 && (
+          <section className="flex flex-col gap-5">
+            <h2 className="text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[2.3rem]">
+              Súmulas Vinculantes
+            </h2>
+            <p className="max-w-[62ch] text-[0.98rem] text-body">
+              Vinculam todo o Judiciário e a administração pública direta e
+              indireta. São as que mais aparecem na prova.
+            </p>
+            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+              {vinculantes.map((sumula) => (
+                <li key={sumula.slug}>
+                  <Link
+                    href={`/sumulas/${sumula.slug}`}
+                    className="group flex flex-col gap-2 p-6 transition-colors hover:bg-paper sm:flex-row sm:gap-7"
+                  >
+                    <span className="shrink-0 text-[0.86rem] font-bold text-brand-600 tabular-nums sm:w-[5.5rem]">
+                      SV {sumula.numero}
+                    </span>
+                    <span className="flex flex-col gap-1.5">
+                      <span className="text-[0.98rem] leading-relaxed text-ink group-hover:text-brand-700">
+                        {sumula.texto}
+                      </span>
+                      {sumula.comentario.length > 0 && (
+                        <span className="text-[0.8rem] font-semibold text-ouro-600">
+                          comentada
+                        </span>
+                      )}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {comuns.length > 0 && (
+          <section className="flex flex-col gap-5">
+            <h2 className="text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[2.3rem]">
+              Súmulas do STF
+            </h2>
+            <p className="max-w-[62ch] text-[0.98rem] text-body">
+              Não vinculam formalmente, mas consolidam a jurisprudência do
+              tribunal e continuam sendo cobradas — sobretudo em Constitucional,
+              Penal e Tributário.
+            </p>
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {comuns.map((sumula) => (
+                <li key={sumula.slug}>
+                  <Link
+                    href={`/sumulas/${sumula.slug}`}
+                    className="group flex h-full flex-col gap-1.5 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-brand-300"
+                  >
+                    <span className="text-[0.78rem] font-bold text-brand-600 tabular-nums">
+                      Súmula {sumula.numero}
+                    </span>
+                    <span className="line-clamp-3 text-[0.86rem] leading-relaxed text-muted group-hover:text-ink">
+                      {sumula.texto}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <PaywallCta
