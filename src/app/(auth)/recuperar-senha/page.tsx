@@ -3,6 +3,8 @@ import Link from "next/link";
 import { MolduraAuth } from "@/components/auth/moldura";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
 import { FormularioRecuperar } from "./formulario";
+/* Ver a nota em /entrar: acervo e contagem regressiva envelhecem no build. */
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Recuperar senha",
   robots: { index: false, follow: true },

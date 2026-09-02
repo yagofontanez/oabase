@@ -42,7 +42,14 @@ class Questao:
     def problemas(self) -> list[str]:
         """Validação por questão — o pipeline recusa carregar com problema."""
         erros = []
-        if len(self.enunciado) < 60:
+        # O limiar era 60, calibrado só nas provas modernas. As antigas usam
+        # muito o enunciado de complemento, em que a frase termina nas
+        # alternativas — "A dação em pagamento é" tem 22 caracteres e está
+        # inteiro. Medido nas 3.360 questões das 42 provas que parseiam: o
+        # menor enunciado legítimo tem 22, e os vinte mais curtos foram
+        # conferidos um a um contra o PDF. Quem pega truncamento de verdade é
+        # a checagem das alternativas logo abaixo, que exige as quatro.
+        if len(self.enunciado) < 20:
             erros.append(f"enunciado curto demais ({len(self.enunciado)} chars)")
         faltando = sorted({"A", "B", "C", "D"} - set(self.alternativas))
         if faltando:
@@ -64,14 +71,51 @@ def _juntar(partes: list[str]) -> str:
     return re.sub(r"\s+", " ", " ".join(partes)).strip()
 
 
+# O espaço entre a palavra e o número é opcional: na 25ª edição a questão 29
+# sai como "Questão29" da extração, e exigir o espaço custava a prova inteira.
+# O `*` depois do número marca questão anulada no próprio caderno (19ª, q22);
+# a anulação já vem do gabarito, aqui ele só não pode impedir o casamento.
+ANCORA_ROTULADA = re.compile(r"^\s*Quest[ãa]o\s*(\d+)\s*\*?\s*$", re.IGNORECASE)
+
+
+def _usa_rotulo(linhas: list[str], total: int) -> bool:
+    """A âncora da questão mudou de forma entre as edições.
+
+    Da 32ª em diante o número aparece sozinho numa linha; até a 31ª vem
+    precedido de "Questão". As duas formas **não** podem ser aceitas ao mesmo
+    tempo: nas provas antigas o rodapé traz o número da página sozinho numa
+    linha, e o parser casaria com ele antes de chegar à questão. Foi o que
+    acontecia — as dez "questões" encontradas na 20ª eram números de página,
+    e só o total errado impediu que virassem conteúdo.
+
+    Por isso o estilo é decidido para o documento inteiro, e não linha a
+    linha. Metade das questões rotuladas basta para não haver dúvida: nas
+    modernas esse número é zero, nas antigas é oitenta.
+    """
+    rotuladas = {
+        int(m.group(1))
+        for linha in linhas
+        if (m := ANCORA_ROTULADA.match(linha))
+    }
+    return len(rotuladas & set(range(1, total + 1))) >= total // 2
+
+
+def _e_ancora(linha: str, numero: int, rotulada: bool) -> bool:
+    if rotulada:
+        m = ANCORA_ROTULADA.match(linha)
+        return m is not None and int(m.group(1)) == numero
+    return linha.strip() == str(numero)
+
+
 def _dividir_blocos(texto: str, total: int) -> dict[int, list[str]]:
     linhas = texto.splitlines()
+    rotulada = _usa_rotulo(linhas, total)
     blocos: dict[int, list[str]] = {}
     esperado = 1
     atual: list[str] | None = None
 
     for linha in linhas:
-        if esperado <= total and linha.strip() == str(esperado):
+        if esperado <= total and _e_ancora(linha, esperado, rotulada):
             atual = []
             blocos[esperado] = atual
             esperado += 1

@@ -5,7 +5,11 @@ import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 const SENHA_MINIMA = 8;
-export function FormularioCriarConta() {
+export function FormularioCriarConta({
+  checkoutAtivo,
+}: {
+  checkoutAtivo: boolean;
+}) {
   const router = useRouter();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -115,7 +119,9 @@ export function FormularioCriarConta() {
 
       <p className="text-[0.82rem] text-muted">
         Criar conta é grátis. A cobrança só existe quando você escolher um plano
-        — e hoje o checkout ainda não está ativo.
+        {checkoutAtivo
+          ? " — e você tem 7 dias para desistir e receber de volta."
+          : " — e hoje o checkout ainda não está ativo."}
       </p>
     </form>
   );

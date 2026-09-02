@@ -43,6 +43,44 @@ class ErroDeGabarito(RuntimeError):
     pass
 
 
+# A 12ª edição não publica grade por tipo: o arquivo traz só a TABELA DE
+# CORRESPONDÊNCIA, quatro colunas com o número que a questão recebeu em cada
+# tipo e a resposta na quinta. É a mesma tabela que as outras edições trazem
+# no fim e que `_tipo_do_cabecalho` descarta de propósito — aqui ela é tudo
+# o que existe, e é uma fonte tão oficial quanto a grade.
+#
+#     TIPO 1 TIPO 2 TIPO 3 TIPO 4 Gabarito     TIPO 1 TIPO 2 TIPO 3 TIPO 4 Gabarito
+#        1      6      4      1      D            41     42     38     39      C
+#
+# São dois blocos lado a lado, então a linha traz cinco ou dez campos.
+LINHA_DA_TABELA = re.compile(
+    r"^\s*(?:\d+\s+\d+\s+\d+\s+\d+\s+[A-D*]\s*){1,2}$"
+)
+CABECALHO_DA_TABELA = re.compile(r"TIPO\s+1\b.*TIPO\s+4\b", re.IGNORECASE)
+
+
+def _ler_tabela_de_correspondencia(
+    linhas: list[str], tipo: int
+) -> dict[int, str | None]:
+    """Lê o gabarito da tabela de correspondência, quando é o que há."""
+    if not any(CABECALHO_DA_TABELA.search(l) for l in linhas):
+        return {}
+
+    gabarito: dict[int, str | None] = {}
+    for linha in linhas:
+        if not LINHA_DA_TABELA.match(linha):
+            continue
+        campos = linha.split()
+        # Cada registro tem cinco campos; a linha pode trazer dois blocos.
+        for i in range(0, len(campos), 5):
+            registro = campos[i : i + 5]
+            if len(registro) != 5:
+                continue
+            numero, letra = registro[tipo - 1], registro[4]
+            gabarito[int(numero)] = None if letra == "*" else letra
+    return gabarito
+
+
 def ler_gabarito(pdf: Path, tipo: int = 1) -> dict[int, str | None]:
     linhas = texto_simples(pdf).splitlines()
 
@@ -58,6 +96,9 @@ def ler_gabarito(pdf: Path, tipo: int = 1) -> dict[int, str | None]:
             fim = i
             break
     if inicio is None:
+        # Sem grade por tipo, a tabela de correspondência é a única fonte.
+        if tabela := _ler_tabela_de_correspondencia(linhas, tipo):
+            return tabela
         raise ErroDeGabarito(f"não encontrei a seção do tipo {tipo} em {pdf.name}")
 
     trecho = linhas[inicio : fim if fim is not None else len(linhas)]

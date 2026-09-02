@@ -9,10 +9,25 @@
  * nesse defeito.
  */
 
+import { dadosPendentes } from "@/lib/legal";
+
 export type Ambiente = "sandbox" | "producao";
 
 export const ambienteAsaas: Ambiente =
   process.env.ASAAS_AMBIENTE === "producao" ? "producao" : "sandbox";
+
+/**
+ * Existe cobrança de verdade hoje?
+ *
+ * Duas condições, e as duas são de fato necessárias: ambiente de produção e
+ * `legal.ts` completo — sem razão social, CNPJ e endereço publicados a oferta
+ * a distância não cumpre o CDC. Fica aqui, e não solto em cada tela, para que
+ * a resposta seja a mesma na rota que cria a cobrança e no texto que promete
+ * (ou não promete) cobrança à pessoa que está criando a conta. Uma frase de
+ * interface que envelhece sozinha vira mentira no dia do lançamento.
+ */
+export const cobrancaLiberada =
+  ambienteAsaas === "producao" && dadosPendentes.length === 0;
 
 const BASE =
   ambienteAsaas === "producao"

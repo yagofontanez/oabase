@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Container } from "@/components/container";
 import { Contagem } from "@/components/contagem";
+import { getAcervo } from "@/lib/content/queries";
 import { formatarData } from "@/lib/format";
 
 /**
@@ -13,7 +14,7 @@ import { formatarData } from "@/lib/format";
  * Numa jornada em que a única urgência real é o calendário, essa é a
  * informação que merece ocupar metade da tela.
  */
-export function MolduraAuth({
+export async function MolduraAuth({
   eyebrow,
   titulo,
   descricao,
@@ -30,6 +31,8 @@ export function MolduraAuth({
   proximoExame: { edicao: number; data: string };
   dias: number;
 }) {
+  const acervo = await getAcervo();
+
   return (
     <section className="relative overflow-hidden">
       <div
@@ -85,7 +88,14 @@ export function MolduraAuth({
 
           <dl className="flex flex-col divide-y divide-white/12 border-y border-white/12">
             {[
-              ["Banco de questões", "1.120 questões reais, comentadas"],
+              /* O número vem do acervo e a linha não diz "comentadas": o
+                 comentário de questão é trabalho autoral e ainda não existe.
+                 Prometer na tela de cadastro o que o produto não entrega é
+                 pior aqui do que na landing — a pessoa já decidiu pagar. */
+              [
+                "Banco de questões",
+                `${acervo.questoes.toLocaleString("pt-BR")} questões reais, com o gabarito oficial da FGV`,
+              ],
               ["Caderno de erros", "montado sozinho, a cada erro seu"],
               ["Simulados", "80 questões, cinco horas, como na prova"],
               ["Revisão espaçada", "a questão volta na hora de voltar"],

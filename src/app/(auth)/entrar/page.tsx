@@ -3,6 +3,10 @@ import Link from "next/link";
 import { MolduraAuth } from "@/components/auth/moldura";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
 import { FormularioEntrar } from "./formulario";
+/* A moldura mostra o tamanho do acervo e a contagem até a prova: sem
+   revalidação a página ficaria congelada na data do build, e a contagem
+   regressiva do HTML inicial é o que a pessoa vê antes de o JS rodar. */
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Entrar",
   robots: { index: false, follow: true },

@@ -7,9 +7,11 @@ número que não pode ser palpite: ele ordena o que estudar primeiro.
 
 O que este módulo NÃO faz, de propósito: adivinhar o artigo de uma questão que
 não cita nenhum. A prova da FGV narra um caso e pede a alternativa correta;
-**só 61 das 1.120 questões carregadas citam artigo**. As outras 1.059 ficam
-sem vínculo até alguém escrever o comentário — e é assim que tem de ser, ou a
-incidência volta a ser ficção com cara de medição.
+**só 133 das 3.460 questões carregadas citam artigo** — 155 vínculos, em 106
+artigos. As outras 3.327 ficam sem vínculo até alguém escrever o comentário —
+e é assim que tem de ser, ou a incidência volta a ser ficção com cara de
+medição. A proporção não melhora com mais edições: era 61 em 1.120 e é 133 em
+3.460, praticamente o mesmo 4%.
 
 Uso:
     python3 -m oabase_ingest.dispositivos --sql /tmp/v.sql   # ensaio

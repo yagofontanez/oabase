@@ -11,8 +11,8 @@ import { corPorPosicao } from "@/lib/paleta";
 import { planos } from "@/lib/planos";
 import {
   diasAte,
+  getAcervo,
   getDisciplinas,
-  getExames,
   getLeis,
   getProximoExame,
 } from "@/lib/content/queries";
@@ -21,7 +21,7 @@ const metodo = [
   {
     titulo: "Responda",
     texto:
-      "Questões reais dos exames unificados, na íntegra, com o gabarito definitivo da FGV. Cada comentário explica a alternativa correta e, principalmente, por que cada uma das outras três está errada — que é onde a banca esconde a pegadinha.",
+      "Questões reais dos exames unificados, na íntegra, com o gabarito oficial da FGV — inclusive as anulações. Você responde, o sistema corrige na hora e registra o acerto no seu histórico; o comentário autoral de cada questão está sendo escrito e aparece à medida que fica pronto.",
   },
   {
     titulo: "Erre",
@@ -89,7 +89,7 @@ const perguntas = [
   },
   {
     q: "As questões são as originais da FGV?",
-    a: "Sim, extraídas dos cadernos oficiais publicados pela própria banca, com o gabarito definitivo — inclusive as anulações. O comentário autoral — a explicação de por que cada alternativa está certa ou errada — está sendo escrito questão a questão, e ainda não cobre o acervo inteiro.",
+    a: "Sim, extraídas dos cadernos oficiais publicados pela própria banca, com o gabarito definitivo — inclusive as anulações. O comentário autoral — a explicação de por que cada alternativa está certa ou errada — é escrito à mão, questão a questão, e ainda está no começo: a tela diz com todas as letras quando a questão ainda não tem comentário, em vez de preencher o espaço com texto gerado por IA.",
   },
   {
     q: "Serve para a 2ª fase?",
@@ -101,9 +101,9 @@ const perguntas = [
   },
 ];
 export default async function Home() {
-  const [disciplinas, exames, leis, proximo] = await Promise.all([
+  const [disciplinas, acervo, leis, proximo] = await Promise.all([
     getDisciplinas(),
-    getExames(),
+    getAcervo(),
     getLeis(),
     getProximoExame(),
   ]);
@@ -129,11 +129,7 @@ export default async function Home() {
       cor: corPorPosicao(NOMEADAS),
     },
   ];
-  const ingeridos = exames.filter((e) => e.questoesCarregadas > 0);
-  const questoesNoBanco = ingeridos.reduce(
-    (s, e) => s + e.questoesCarregadas,
-    0,
-  );
+  const questoesNoBanco = acervo.questoes;
   return (
     <>
       {/*
@@ -254,7 +250,7 @@ export default async function Home() {
             <dl className="mt-1 flex flex-wrap items-center gap-x-8 gap-y-3 text-[0.92rem]">
               {[
                 [questoesNoBanco.toLocaleString("pt-BR"), "questões no banco"],
-                [`${ingeridos.length}`, "exames ingeridos"],
+                [`${acervo.exames}`, "exames ingeridos"],
                 ["FGV", "gabarito oficial"],
               ].map(([valor, rotulo]) => (
                 <div key={rotulo} className="flex items-baseline gap-2">
@@ -299,7 +295,7 @@ export default async function Home() {
               [
                 questoesNoBanco.toLocaleString("pt-BR"),
                 "questões no acervo",
-                `de ${ingeridos.length} exames já ingeridos`,
+                `de ${acervo.exames} exames já ingeridos`,
               ],
             ].map(([valor, rotulo, nota]) => (
               <div key={rotulo} className="rounded-[18px] bg-brand-50/60 p-6">
@@ -510,7 +506,9 @@ export default async function Home() {
               </h3>
               <ul className="flex flex-col divide-y divide-vinho-100">
                 {[
-                  "Banco completo de questões comentadas",
+                  /* Não "comentadas": `comentarios` está vazia. O que o plano
+                     entrega hoje é o acervo inteiro liberado para treino. */
+                  "Banco completo de questões, com gabarito oficial",
                   "Simulados cronometrados de 80 questões",
                   "Caderno de erros automático",
                   "Revisão espaçada",

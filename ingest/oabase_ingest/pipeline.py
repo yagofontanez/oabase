@@ -46,7 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--ano", type=int, required=True)
     p.add_argument("--data", required=True, help="data da prova, YYYY-MM-DD")
     p.add_argument("--tipo", type=int, default=1, help="tipo/cor do caderno")
-    p.add_argument("--total", type=int, default=80)
+    p.add_argument(
+        "--total", type=int, default=None,
+        help="questões da prova; por padrão vem do gabarito",
+    )
     p.add_argument(
         "--gabarito-preliminar", action="store_true",
         help="o gabarito usado é o preliminar, não o definitivo",
@@ -58,11 +61,17 @@ def main(argv: list[str] | None = None) -> int:
     print(f"→ extraindo {args.prova.name} (2 colunas, ordem de leitura)")
     texto = texto_em_ordem_de_leitura(args.prova)
 
-    print(f"→ segmentando {args.total} questões")
-    questoes = parsear_prova(texto, total=args.total)
-
+    # O gabarito é lido antes de segmentar porque é ele que diz quantas
+    # questões a prova tem. O padrão era 80 fixo, e os primeiros exames
+    # unificados tiveram 100 — o 3º entrava com as vinte últimas
+    # descartadas, sem erro nenhum, porque parar em 80 é exatamente o que o
+    # parser fora mandado fazer. Número de origem oficial, não suposto.
     print(f"→ lendo gabarito definitivo do tipo {args.tipo}")
     gabarito = ler_gabarito(args.gabarito, tipo=args.tipo)
+
+    total = args.total or max(gabarito)
+    print(f"→ segmentando {total} questões")
+    questoes = parsear_prova(texto, total=total)
 
     faltando = [q.numero for q in questoes if q.numero not in gabarito]
     if faltando:
@@ -137,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
     classificadas = sum(1 for r in registros if r.disciplina_slug)
     corrigidas = sum(1 for p in palpites if p.origem != "lexico")
     print(f"\n── {args.edicao}º Exame ─────────────────────────")
-    print(f"   questões parseadas   {len(registros)}/{args.total}")
+    print(f"   questões parseadas   {len(registros)}/{total}")
     print(f"   anuladas             {len(anuladas)} {anuladas or ''}")
     print(f"   só pelo léxico       {so_lexico}/{len(registros)}")
     print(f"   após a sequência     {classificadas}/{len(registros)} (+{corrigidas} ajustes)")
@@ -162,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
     executar(
         conexao,
         sql_do_exame(
-            args.edicao, args.ano, args.data, args.total,
+            args.edicao, args.ano, args.data, total,
             gabarito_definitivo=not args.gabarito_preliminar,
             carregadas=len(registros),
             anuladas=len(anuladas),

@@ -93,10 +93,11 @@ dependências). Ver `ingest/README.md`.
 
 | Real, de fonte oficial | Placeholder |
 |---|---|
-| `questoes` do 43º Exame (80, das quais 2 anuladas) | `disciplinas.media_por_prova` |
-| `exames.data_prova` do 43º (27/04/2025) | `artigos.incidencia` |
-| gabarito definitivo, tipo 1 | |
+| `questoes`: 3.460, do 3º ao 46º Exame (43 edições, 16 anuladas) | `disciplinas.media_por_prova` |
+| `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` (léxico + sequência, nenhuma confirmada) |
+| gabarito, tipo 1 — definitivo em 13 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
 | `leis` e `artigos`: 8 códigos, 5.756 artigos do Planalto | |
+| `artigos.incidencia`: 155 vínculos em 106 artigos, só de citação explícita | |
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
@@ -198,7 +199,7 @@ preencher o espaço: gerar explicação jurídica por IA é o pior defeito
 possível aqui, porque quem estuda a regra alucinada só descobre no dia da
 prova.
 
-**A classificação por disciplina é aproximada.** 880 das 1.120 questões têm
+**A classificação por disciplina é aproximada.** 2.751 das 3.460 questões têm
 `disciplina_id`, nenhuma tem `disciplina_confirmada = true`. O filtro por
 disciplina funciona e a tela avisa que é aproximado; filtro por exame é
 exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
@@ -318,6 +319,15 @@ da data do próximo exame, que mora em `src/lib/content/data.ts`. Duplicar essa
 data numa tabela de configuração criaria duas verdades que sairiam de
 sincronia no primeiro edital novo — então o banco responde qual plano foi
 comprado e a rota calcula os dias.
+
+**O calendário é uma lista, não uma data.** `aplicacoes` em `data.ts` guarda
+as próximas aplicações em ordem e `getProximoExame()` devolve a primeira que
+ainda não aconteceu. Com uma data só, o dia seguinte à prova travava a
+contagem regressiva em zero e o `ate-a-prova` passava a vender acesso até
+ontem — e o conserto era um deploy na manhã seguinte ao exame. Datas do
+cronograma do Conselho Federal (`oab.org.br/noticia/64207`); quando a lista
+acabar, a última fica valendo e a contagem trava, que é seguro mas não é
+certo — acrescente a próxima assim que o cronograma sair.
 
 **A Asaas responde 404 com corpo vazio.** `await resposta.json()` estoura no
 parse e o status HTTP se perde; `chamar()` lê `text()` primeiro. Importa
@@ -453,8 +463,17 @@ de assinatura e no FAQ de `/precos`, não só escondido num link.
 **Os dados do operador vivem em `src/lib/legal.ts`.** Enquanto razão social,
 documento, endereço e comarca estiverem vazios, as duas páginas legais exibem
 um aviso no topo dizendo que estão incompletas. Publicar Termos com CNPJ em
-branco é pior do que não publicar: parece cumprido e não é. O aviso some
-sozinho quando o arquivo for preenchido.
+branco é pior do que não publicar: parece cumprido e não é. Estão preenchidos
+desde 02/09/2026, e `vigencia` foi movida junto — documento legal que muda de
+conteúdo sem mudar de data impede a pessoa de saber qual versão aceitou.
+
+**A mesma checagem fecha o caixa.** `dadosPendentes` não serve só ao aviso:
+`/api/assinar` devolve 503 em produção enquanto faltar qualquer um dos quatro
+campos, e `cobrancaLiberada` (em `pagamento/asaas.ts`) é produção **e**
+`legal.ts` completo. O aviso alcança quem lê os Termos; quem está no checkout
+não passa por lá. É também `cobrancaLiberada` que decide a frase sobre
+cobrança na tela de cadastro — texto de interface que envelhece sozinho vira
+mentira no dia do lançamento.
 
 **A política descreve o schema real.** Cada dado listado existe numa coluna, e
 cada operador citado é um serviço que o projeto de fato chama. Ao acrescentar

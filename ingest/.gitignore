@@ -1,0 +1,9 @@
+# Bytecode: aparecia como arquivo modificado a cada execução do pipeline e
+# sujava todo `git status` com ruído binário.
+__pycache__/
+*.pyc
+
+# Saída do pipeline: 45 JSONs derivados dos PDFs em `provas/`, que estão
+# versionados. Reproduzível com um comando, e o que importa de verdade já
+# está no banco.
+saida/

@@ -232,7 +232,22 @@ export const exames: Exame[] = [
 ];
 
 /**
- * Próxima aplicação — alimenta a contagem regressiva do hero.
- * 47º Exame: 1ª fase em 06/09/2026, conforme edital da FGV.
+ * Calendário oficial das próximas aplicações da 1ª fase.
+ *
+ * Era um valor único, e valor único de calendário tem data de validade: no
+ * dia seguinte à prova a contagem regressiva do hero congela em zero e o
+ * plano `ate-a-prova` passa a vender acesso até uma data que já passou. Uma
+ * lista em ordem, de onde `getProximoExame()` tira a primeira aplicação que
+ * ainda não aconteceu, resolve a virada sozinha — sem deploy no dia seguinte
+ * ao exame.
+ *
+ * Datas do cronograma publicado pela própria OAB (Conselho Federal), não de
+ * cursinho: https://www.oab.org.br/noticia/64207 — 47º em 06/09/2026, 48º em
+ * 10/01/2027. **Acrescentar a próxima assim que o cronograma sair**: quando a
+ * lista acaba, a última fica valendo e a contagem trava em zero, que é o
+ * comportamento seguro (nada de data inventada), mas não é o correto.
  */
-export const proximoExame = { edicao: 47, data: "2026-09-06" };
+export const aplicacoes = [
+  { edicao: 47, data: "2026-09-06" },
+  { edicao: 48, data: "2027-01-10" },
+] as const;

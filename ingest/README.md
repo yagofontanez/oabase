@@ -36,10 +36,9 @@ python3 -m oabase_ingest.lote --de 32 --ate 46 --carregar
 
 | Faixa | Situação |
 |---|---|
-| 32º–46º | **14 ingeridas** (o 35º falha, ver abaixo) |
-| 3º–31º | Acessíveis. **Exigem HTTPS** — ver abaixo. |
+| 3º–46º | **43 ingeridas**, 3.460 questões — todas as publicadas menos o 35º |
 | 2º | O arquivo não publica gabarito desta edição. |
-| 35º | A página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
+| 35º | Único buraco: a página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
 | 47º | Prova ainda não aplicada. |
 
 São **44 edições com par prova+gabarito publicado** (de 46 listadas; faltam o
@@ -84,6 +83,22 @@ Cada uma destas quebrou o parser e foi corrigida com dado real na mão:
   prova", e é o caderno da **2ª fase**, um por área de opção. O filtro exige
   ausência de parêntese no rótulo.
 - **Marcação da alternativa**: `(A)` nas provas recentes, `A)` nas antigas.
+- **Âncora da questão**: da 32ª em diante o número aparece sozinho numa linha;
+  até a 31ª vem como `Questão 5`. As duas formas **não** podem ser aceitas ao
+  mesmo tempo — nas provas antigas o rodapé traz o número da página sozinho
+  numa linha, e o parser casava com ele antes de chegar à questão. Era assim
+  que a 20ª "encontrava" dez questões que eram números de página; só o total
+  errado impediu que virassem conteúdo. Por isso `_usa_rotulo()` decide o
+  estilo para o documento inteiro antes de segmentar, e não linha a linha.
+  O espaço depois de "Questão" é opcional: na 25ª a questão 29 sai como
+  `Questão29`, e exigir o espaço custava a prova toda.
+- **Enunciado de complemento**: as provas antigas usam muito a frase que
+  termina nas alternativas — `A dação em pagamento é` tem 22 caracteres e
+  está inteiro. O mínimo de 60, calibrado nas modernas, reprovava questão
+  boa. Medido nas 3.360 questões das 42 provas que parseiam: o menor
+  legítimo tem 22, e os vinte mais curtos foram conferidos contra o PDF.
+  Baixou para 20 — quem pega truncamento de verdade é a exigência das
+  quatro alternativas, não o comprimento do enunciado.
 - **Cabeçalho do gabarito**: `PROVA TIPO 1`, `UNIFICADO - TIPO 1` e `PROVA 1`
   aparecem em edições diferentes. A regra que funciona é aceitar a linha com
   **uma única** ocorrência de tipo — a tabela de conversão do fim do arquivo
@@ -95,6 +110,20 @@ Cada uma destas quebrou o parser e foi corrigida com dado real na mão:
   alternativas da questão 80.
 - **Alternativa de uma palavra**: "Francesa.", "Abono." são legítimas; a
   validação de comprimento mínimo precisou baixar de 8 para 3 caracteres.
+- **Número de questões**: a prova nem sempre tem 80. Os primeiros exames
+  unificados tiveram **100** — o 3º é um deles. O `--total` era 80 fixo, e o
+  3º entrava com as vinte últimas descartadas **sem erro nenhum**, porque
+  parar em 80 é exatamente o que o parser fora mandado fazer. Agora o total
+  sai de `max(gabarito)`, que é fonte oficial; o argumento continua existindo
+  para forçar à mão.
+- **Gabarito só como tabela de correspondência**: a 12ª não publica grade por
+  tipo. O arquivo traz apenas a `TABELA DE CORRESPONDÊNCIA`, com o número que
+  a questão recebeu em cada um dos quatro tipos e a resposta na quinta
+  coluna — a mesma tabela que as outras edições trazem no fim e que o parser
+  descarta de propósito. Quando não há grade, ela é lida como fonte.
+- **Asterisco na âncora**: `Questão 22*` marca anulada no próprio caderno
+  (19ª). A anulação vem do gabarito; aqui o `*` só não pode impedir o
+  casamento da âncora.
 - **Gabarito preliminar**: até o 32º, o arquivo só publica o preliminar. A
   procedência fica registrada em `exames.gabarito_definitivo`.
 

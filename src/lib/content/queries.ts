@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { supabaseAnon, supabaseConfigurado } from "@/lib/supabase/client";
-import { proximoExame } from "./data";
+import { aplicacoes } from "./data";
 import { fonteMock } from "./fonte-mock";
 import { fonteSupabase } from "./fonte-supabase";
 
@@ -54,6 +54,23 @@ export const getArtigosRelacionados = cache(
 );
 
 export const getExames = cache(() => fonte.getExames());
+
+/**
+ * Tamanho do acervo, medido — nunca escrito à mão.
+ *
+ * Existe porque o número já apareceu em duas telas com valores diferentes:
+ * a landing somava os exames ingeridos e a moldura das telas de conta trazia
+ * "1.120" fixo, que envelheceu no dia em que a ingestão passou a cobrir da 3ª
+ * edição em diante. Número de vitrine que não sai do dado é promessa com
+ * prazo de validade.
+ */
+export const getAcervo = cache(async () => {
+  const ingeridos = (await getExames()).filter((e) => e.questoesCarregadas > 0);
+  return {
+    exames: ingeridos.length,
+    questoes: ingeridos.reduce((s, e) => s + e.questoesCarregadas, 0),
+  };
+});
 export const getExame = cache((slug: string) => fonte.getExame(slug));
 export const getDisciplinas = cache(() => fonte.getDisciplinas());
 
@@ -78,8 +95,25 @@ export const getDisciplina = cache((slug: string) => fonte.getDisciplina(slug));
  * A próxima prova é data de calendário, não conteúdo: ela existe antes de
  * o exame acontecer e não tem distribuição para registrar. Fica como
  * configuração do app até virar uma edição de verdade na tabela.
+ *
+ * "Próxima" é decidida na leitura, contra o dia de hoje, e não escrita à mão:
+ * a edição sai de cena sozinha no dia seguinte à aplicação. Compara-se em
+ * texto ISO de propósito — `new Date("YYYY-MM-DD")` é UTC e voltaria um dia
+ * em fuso brasileiro, que é exatamente o erro que faria a prova "acontecer"
+ * na véspera.
  */
-export const getProximoExame = cache(async () => proximoExame);
+export const getProximoExame = cache(async (hoje = new Date()) => {
+  const dia = [
+    hoje.getFullYear(),
+    String(hoje.getMonth() + 1).padStart(2, "0"),
+    String(hoje.getDate()).padStart(2, "0"),
+  ].join("-");
+  // Sem próxima aplicação publicada, a última continua valendo: a contagem
+  // trava em zero e fica visível que o calendário precisa ser atualizado.
+  return (
+    aplicacoes.find((e) => e.data >= dia) ?? aplicacoes[aplicacoes.length - 1]
+  );
+});
 
 /** Dias até a próxima prova, sem deixar o fuso interferir na contagem. */
 export function diasAte(iso: string, hoje = new Date()): number {

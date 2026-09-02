@@ -6,27 +6,28 @@
  * em um lugar e certa em outro é o tipo de inconsistência que aparece
  * justamente quando alguém vai reclamar.
  *
- * **Os campos marcados como pendentes precisam ser preenchidos antes de
- * cobrar de qualquer pessoa.** Enquanto estiverem assim, as duas páginas
- * exibem um aviso no topo — melhor a falha ser visível do que publicar um
- * documento com "CNPJ 00.000.000/0001-00" e ninguém perceber.
+ * **Nenhum campo pode voltar a ficar vazio.** `dadosPendentes` continua aqui
+ * porque a checagem é que importa, não o estado de hoje: enquanto faltar
+ * qualquer um deles, as duas páginas exibem um aviso no topo e
+ * `/api/assinar` recusa cobrança em produção. Melhor a falha ser visível do
+ * que publicar um documento com "CNPJ 00.000.000/0001-00" e ninguém
+ * perceber — ou, pior, cobrar por trás dele.
  */
-
-const PENDENTE = "";
 
 export const operador = {
   /** Razão social ou nome completo de quem emite a cobrança. */
-  razaoSocial: PENDENTE,
+  razaoSocial: "57.162.203 Yago Henrique Fontanez",
   /** CNPJ, ou CPF se a operação for como pessoa física. */
-  documento: PENDENTE,
+  documento: "57.162.203/0001-00",
   /** Endereço completo — exigido pelo CDC na oferta a distância. */
-  endereco: PENDENTE,
+  endereco:
+    "Rua Coronel Simões, nº 452, fundos, Centro, Dois Córregos/SP, CEP 17300-061",
   /** Canal de atendimento. Aparece nos dois documentos. */
   email: "contato@oabase.com.br",
   /** Encarregado pelo tratamento de dados (LGPD, art. 41). */
   encarregado: "contato@oabase.com.br",
   /** Comarca do foro eleito. */
-  comarca: PENDENTE,
+  comarca: "Dois Córregos, Estado de São Paulo",
 } as const;
 
 /** Falta alguma coisa para estes documentos valerem? */
@@ -49,8 +50,10 @@ export const dadosPendentes: string[] = (
  * `new Date()` seria mentira automática a cada deploy.
  */
 export const vigencia = {
-  termos: "2026-09-01",
-  privacidade: "2026-09-01",
+  // Revisão de 02/09/2026: identificação do operador (razão social, CNPJ,
+  // endereço e comarca), que até então saía nas duas páginas como pendente.
+  termos: "2026-09-02",
+  privacidade: "2026-09-02",
 } as const;
 
 /**

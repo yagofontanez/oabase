@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseServidor } from "@/lib/supabase/servidor";
+import { dadosPendentes } from "@/lib/legal";
 import { planos } from "@/lib/planos";
 import { cpfValido, digitos, telefoneValido } from "@/lib/validacao";
 import {
   ErroAsaas,
   ambienteAsaas,
+  cobrancaLiberada,
   criarCobranca,
   criarOuAtualizarCliente,
 } from "@/lib/pagamento/asaas";
@@ -15,8 +17,25 @@ import {
  * O valor **nunca** vem do cliente: chega só a chave do plano, e o preço é
  * lido de `planos.ts` aqui no servidor. Aceitar valor do navegador deixaria
  * qualquer pessoa comprar o plano anual por um real.
+ *
+ * Em produção a rota se recusa a cobrar enquanto `legal.ts` estiver
+ * incompleto. O aviso no topo dos Termos e da Política avisa quem lê; quem
+ * está no checkout não passa por lá. Cobrar sem razão social, CNPJ e endereço
+ * publicados contraria o CDC na oferta a distância — e o dia em que isso
+ * acontecer vai ser justamente o dia em que ninguém está olhando o aviso.
+ * Em sandbox nada muda: é lá que se testa antes de ter os documentos.
  */
 export async function POST(request: Request) {
+  if (ambienteAsaas === "producao" && !cobrancaLiberada) {
+    console.error(
+      `Cobrança em produção bloqueada: falta ${dadosPendentes.join(", ")} em legal.ts.`,
+    );
+    return NextResponse.json(
+      { erro: "O pagamento está temporariamente indisponível." },
+      { status: 503 },
+    );
+  }
+
   const supabase = await supabaseServidor();
   const {
     data: { user },
