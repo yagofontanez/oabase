@@ -34,7 +34,10 @@ export default async function AppLayout({
   ]);
   if (!usuario) redirect("/entrar?proximo=/app");
 
-  const [disciplinasRes, assinaturaRes] = await Promise.all([
+  // Quem opera o produto vê as abas de operação no trilho. A checagem é de
+  // porta, como a do proxy: quem decide de verdade é `sou_admin()` /
+  // `sou_editor()` dentro de cada função do banco.
+  const [disciplinasRes, assinaturaRes, adminRes, editorRes] = await Promise.all([
     supabase
       .from("disciplinas")
       .select("id, slug, nome")
@@ -45,6 +48,8 @@ export default async function AppLayout({
       .eq("status", "ativa")
       .order("fim", { ascending: false })
       .limit(1),
+    supabase.rpc("sou_admin"),
+    supabase.rpc("sou_editor"),
   ]);
 
   const assinatura = assinaturaRes.data?.[0] ?? null;
@@ -75,6 +80,8 @@ export default async function AppLayout({
             : null,
           validoAte: assinatura ? String(assinatura.fim).slice(0, 10) : null,
         }}
+        admin={Boolean(adminRes.data)}
+        editor={Boolean(editorRes.data)}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -120,7 +127,11 @@ export default async function AppLayout({
           </div>
 
           <div className="border-t border-line px-5 py-2.5 sm:px-7 lg:hidden">
-            <NavegacaoApp orientacao="linha" />
+            <NavegacaoApp
+              orientacao="linha"
+              admin={Boolean(adminRes.data)}
+              editor={Boolean(editorRes.data)}
+            />
           </div>
         </header>
 

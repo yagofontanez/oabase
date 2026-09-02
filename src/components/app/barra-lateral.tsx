@@ -33,11 +33,16 @@ export function BarraLateral({
   email,
   inicial,
   plano,
+  admin = false,
+  editor = false,
 }: {
   nome: string;
   email: string;
   inicial: string;
   plano: ResumoDoPlano;
+  /** Quem opera o produto vê as abas de operação. Ver `navegacao.tsx`. */
+  admin?: boolean;
+  editor?: boolean;
 }) {
   const [recolhida, setRecolhida] = useState(false);
   const [pronta, setPronta] = useState(false);
@@ -135,7 +140,12 @@ export function BarraLateral({
         <span className={recolhida ? "sr-only" : undefined}>Modo foco</span>
       </button>
 
-      <NavegacaoApp orientacao="trilho" recolhida={recolhida} />
+      <NavegacaoApp
+        orientacao="trilho"
+        recolhida={recolhida}
+        admin={admin}
+        editor={editor}
+      />
 
       <div className="mt-auto flex flex-col gap-3">
         {!recolhida && (

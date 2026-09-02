@@ -301,6 +301,13 @@ razão de o segredo do cron ser separado do segredo do webhook.
 `with check (auth.uid() = id)` — uma coluna `admin` ali seria uma coluna que a
 própria pessoa marca como verdadeira, do navegador, com a chave anônima.
 
+**As abas de operação aparecem no trilho, sob o rótulo "Operação".** O layout
+de `/app` chama `sou_admin()` e `sou_editor()` e passa o resultado à
+navegação; para quem não é, as abas não existem. A checagem é de porta, como
+a do proxy — quem decide é a função dentro do banco. Elas ficam depois das
+abas de estudo e atrás de um fio: emendadas na mesma lista, "Redação" lê como
+se fosse mais uma tela de estudo.
+
 ## Suporte
 
 `/app/suporte` para quem abre, `/app/admin/suporte` para a fila — a **mesma

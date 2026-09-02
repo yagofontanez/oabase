@@ -144,25 +144,89 @@ function Icone({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Abas de quem opera o produto.
+ *
+ * Ficam numa lista separada porque a navegação padrão é de quem estuda: um
+ * item que 100% das pessoas não podem abrir é ruído para 100% delas. Mas
+ * esconder de quem **pode** é pior — quem administra precisa da aba, não de
+ * um link no fundo de Configurações. O layout diz quem é, e só aí elas
+ * entram.
+ */
+const ITENS_ADMIN = [
+  {
+    href: "/app/admin",
+    rotulo: "Administração",
+    icone: (
+      <>
+        <path d="M3 20h18M6 20v-7M11 20V7M16 20v-4M21 20V4" />
+      </>
+    ),
+  },
+  {
+    href: "/app/admin/suporte",
+    rotulo: "Fila de suporte",
+    icone: (
+      <>
+        <rect x="3" y="4.5" width="5" height="15" rx="1.5" />
+        <rect x="9.5" y="4.5" width="5" height="10" rx="1.5" />
+        <rect x="16" y="4.5" width="5" height="6" rx="1.5" />
+      </>
+    ),
+  },
+];
+
+const ITENS_EDITOR = [
+  {
+    href: "/app/redacao",
+    rotulo: "Redação",
+    icone: (
+      <>
+        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+        <path d="M13.5 6.5l4 4" />
+      </>
+    ),
+  },
+  {
+    href: "/app/revisao",
+    rotulo: "Triagem",
+    icone: (
+      <>
+        <path d="M4 7.5h11M4 12h11M4 16.5h7" />
+        <path d="M17.5 16l2 2 3.5-4" />
+      </>
+    ),
+  },
+  {
+    href: "/app/vinculos",
+    rotulo: "Vínculos",
+    icone: (
+      <>
+        <path d="M10 13.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5L11 7.5" />
+        <path d="M14 10.5a3.5 3.5 0 0 0-5 0L6.5 13a3.5 3.5 0 0 0 5 5l1.5-1.5" />
+      </>
+    ),
+  },
+];
+
 /** Telas que existem sem ficar na navegação — chegam por botão, não por menu. */
 const FORA_DO_MENU: Record<string, string> = {
   "/app/assinar": "Assinar",
-  // Ferramentas de editor. Fora do menu porque a navegação é de quem estuda,
-  // e um item que 100% das pessoas não podem abrir é ruído para 100% delas.
-  // O caminho até elas está em Configurações, e só para quem é editor.
-  "/app/revisao": "Triagem de disciplina",
-  "/app/redacao": "Redação de comentário",
-  "/app/vinculos": "Vincular dispositivo",
-  "/app/admin": "Administração",
-  "/app/admin/suporte": "Suporte · fila",
 };
 
-/** Rótulo da tela atual, para o cabeçalho. Uma lista só, uma verdade só. */
+/**
+ * Rótulo da tela atual, para o cabeçalho.
+ *
+ * Procura em todas as listas, inclusive nas de operação: o título não depende
+ * de permissão — quem chegou na tela já passou pela porta, e um cabeçalho em
+ * branco é pior do que um rótulo a mais.
+ */
 export function TituloDaSecao() {
   const caminho = usePathname();
+  const todos = [...ITENS, ...ITENS_ADMIN, ...ITENS_EDITOR];
   const rotulo =
     FORA_DO_MENU[caminho] ??
-    [...ITENS].reverse().find((i) => estaAtivo(caminho, i.href))?.rotulo;
+    [...todos].reverse().find((i) => estaAtivo(caminho, i.href))?.rotulo;
   if (!rotulo) return null;
   return <span className="text-[0.95rem] font-semibold text-ink">{rotulo}</span>;
 }
@@ -170,12 +234,24 @@ export function TituloDaSecao() {
 export function NavegacaoApp({
   orientacao,
   recolhida = false,
+  admin = false,
+  editor = false,
 }: {
   orientacao: "trilho" | "linha";
   recolhida?: boolean;
+  admin?: boolean;
+  editor?: boolean;
 }) {
   const caminho = usePathname();
   const ativo = (href: string) => estaAtivo(caminho, href);
+
+  // As abas de operação vêm depois das de estudo, e nunca no meio: mesmo para
+  // quem administra, o produto continua sendo o de cima. E vêm separadas —
+  // emendadas na mesma lista, "Redação" lê como se fosse uma tela de estudo.
+  const operacao = [
+    ...(editor ? ITENS_EDITOR : []),
+    ...(admin ? ITENS_ADMIN : []),
+  ];
 
   if (orientacao === "linha") {
     return (
@@ -198,42 +274,86 @@ export function NavegacaoApp({
             {item.rotulo}
           </Link>
         ))}
+
+        {operacao.length > 0 && (
+          <span
+            aria-hidden="true"
+            className="mx-1.5 my-1.5 w-px shrink-0 bg-hairline"
+          />
+        )}
+
+        {operacao.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={ativo(item.href) ? "page" : undefined}
+            className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[0.9rem] font-medium whitespace-nowrap transition-colors ${
+              ativo(item.href)
+                ? "bg-ouro-500 text-white"
+                : "text-muted hover:bg-sunk hover:text-ink"
+            }`}
+          >
+            <Icone>{item.icone}</Icone>
+            {item.rotulo}
+          </Link>
+        ))}
       </nav>
     );
   }
 
+  const NoTrilho = ({ item }: { item: (typeof ITENS)[number] }) => (
+    <Link
+      href={item.href}
+      aria-current={ativo(item.href) ? "page" : undefined}
+      // Recolhido, o rótulo sai do fluxo mas continua no HTML: leitor de
+      // tela e busca por texto continuam achando o item.
+      title={recolhida ? item.rotulo : undefined}
+      className={`relative flex items-center rounded-[11px] py-2.5 text-[0.94rem] font-medium transition-colors ${
+        recolhida ? "justify-center px-0" : "gap-3 px-3"
+      } ${
+        ativo(item.href)
+          ? "bg-white/[0.13] text-white"
+          : "text-white/62 hover:bg-white/[0.07] hover:text-white"
+      }`}
+    >
+      {/* Marca ativa em âmbar: no trilho inteiro é o único traço quente,
+          e por isso o olho acha a tela atual sem ler rótulo. */}
+      {ativo(item.href) && (
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-ouro-400"
+        />
+      )}
+      <Icone>{item.icone}</Icone>
+      <span className={recolhida ? "sr-only" : undefined}>{item.rotulo}</span>
+    </Link>
+  );
+
   return (
     <nav aria-label="Seções da conta" className="flex flex-col gap-0.5">
       {ITENS.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          aria-current={ativo(item.href) ? "page" : undefined}
-          // Recolhido, o rótulo sai do fluxo mas continua no HTML: leitor de
-          // tela e busca por texto continuam achando o item.
-          title={recolhida ? item.rotulo : undefined}
-          className={`relative flex items-center rounded-[11px] py-2.5 text-[0.94rem] font-medium transition-colors ${
-            recolhida ? "justify-center px-0" : "gap-3 px-3"
-          } ${
-            ativo(item.href)
-              ? "bg-white/[0.13] text-white"
-              : "text-white/62 hover:bg-white/[0.07] hover:text-white"
-          }`}
-        >
-          {/* Marca ativa em âmbar: no trilho inteiro é o único traço quente,
-              e por isso o olho acha a tela atual sem ler rótulo. */}
-          {ativo(item.href) && (
-            <span
-              aria-hidden="true"
-              className="absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-ouro-400"
-            />
-          )}
-          <Icone>{item.icone}</Icone>
-          <span className={recolhida ? "sr-only" : undefined}>
-            {item.rotulo}
-          </span>
-        </Link>
+        <NoTrilho key={item.href} item={item} />
       ))}
+
+      {operacao.length > 0 && (
+        <>
+          {/* Um fio e uma palavra separam as duas naturezas de tela. Sem
+              isso, "Redação" entra na lista lendo como mais uma tela de
+              estudo — e a pessoa que administra é a mesma que estuda. */}
+          <span
+            aria-hidden="true"
+            className={`my-3 block h-px bg-white/12 ${recolhida ? "" : "mx-1"}`}
+          />
+          {!recolhida && (
+            <span className="px-3 pb-1 text-[0.68rem] font-bold tracking-[0.14em] text-white/35 uppercase">
+              Operação
+            </span>
+          )}
+          {operacao.map((item) => (
+            <NoTrilho key={item.href} item={item} />
+          ))}
+        </>
+      )}
     </nav>
   );
 }
