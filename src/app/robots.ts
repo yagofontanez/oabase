@@ -27,14 +27,16 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         "/api",
       ],
     },
-    // O índice primeiro, as partições depois. Não é redundância inútil: o
-    // índice vive numa reescrita do `netlify.toml` (o Next reserva
-    // `/sitemap.xml` para a convenção de metadata e quebra o build se houver
-    // rota ali), e uma configuração de hospedagem é justamente o tipo de
-    // coisa que some numa migração sem ninguém perceber. Listadas as duas
-    // formas, o Google acha o conteúdo pelos dois caminhos.
+    // O índice primeiro, as partições depois — e nenhum `/sitemap.xml`:
+    // aquele caminho responde 404 e não há como mudar isso (ver a nota no
+    // `netlify.toml`; foi tentado). Anunciar endereço que não responde é
+    // pior do que anunciar um só.
+    //
+    // O índice é o endereço para enviar ao Search Console: quando a base
+    // passar de 50 mil URLs e nascer o `1.xml`, ele passa a listar as duas
+    // partições sozinho, sem reenviar nada.
     sitemap: [
-      abs("/sitemap.xml"),
+      abs("/sitemap-index.xml"),
       ...Array.from({ length: particoes }, (_, i) => abs(`/sitemap/${i}.xml`)),
     ],
   };

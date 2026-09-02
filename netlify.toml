@@ -31,22 +31,16 @@
 # só é como o produto pago vaza para o índice.
 # ----------------------------------------------------------------------------
 # ----------------------------------------------------------------------------
-# `/sitemap.xml` é o endereço que todo mundo tenta primeiro — o que se digita
-# no Search Console, o que a ferramenta de auditoria busca, o que o parceiro
-# pede por e-mail. O Next não pode servi-lo: com `generateSitemaps` ele
-# reserva esse caminho para a convenção de metadata e derruba o build se
-# houver uma rota ali. A reescrita resolve sem tocar no roteamento — status
-# 200, e não 301, para que o endereço na barra continue sendo o esperado.
+# NÃO tente servir `/sitemap.xml` daqui. Já foi tentado, das duas formas:
+# reescrita simples e com `force = true`. As duas resultam em 404 em
+# produção — o runtime do Next reivindica esse caminho porque ele pertence à
+# convenção de metadata, e a regra da Netlify nem chega a ser consultada.
+# Uma rota do Next ali também não resolve: o build cai com "Conflicting route
+# and metadata at /sitemap.xml".
+#
+# O endereço estável do índice é `/sitemap-index.xml`, e é ele que o
+# robots.txt anuncia junto com as partições.
 # ----------------------------------------------------------------------------
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/sitemap-index.xml"
-  status = 200
-  # `force` não é zelo: sem ele a regra não vale nada aqui. O runtime do Next
-  # reivindica `/sitemap.xml` (é caminho da convenção de metadata, mesmo sem
-  # arquivo servindo) e responde 404 antes de a reescrita ser consultada.
-  # Verificado em produção: sem `force`, 404; com `force`, o índice.
-  force = true
 
 [[headers]]
   for = "/app/*"
