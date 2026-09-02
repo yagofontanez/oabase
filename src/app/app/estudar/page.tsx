@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import {
+  Estudar,
+  type AtalhoDeEstudo,
+  type FaixaDeEstudo,
+} from "@/components/app/estudar";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import {
   contarArtigos,
@@ -7,6 +11,7 @@ import {
   getDisciplinas,
   getExames,
   getLeis,
+  getSumulas,
 } from "@/lib/content/queries";
 
 export const metadata: Metadata = {
@@ -25,11 +30,11 @@ export const metadata: Metadata = {
 const FAIXAS = [
   {
     titulo: "O núcleo",
-    texto: "Metade da prova sai daqui. Sem estas, a conta não fecha.",
+    texto: "Metade da prova sai daqui.",
   },
   {
     titulo: "O corpo",
-    texto: "Onde a nota se decide depois de o núcleo estar garantido.",
+    texto: "Onde a nota se decide depois do núcleo.",
   },
   {
     titulo: "A cauda",
@@ -37,27 +42,143 @@ const FAIXAS = [
   },
 ];
 
+const ICONES: Record<AtalhoDeEstudo["chave"], React.ReactNode> = {
+  novas: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      className="h-[18px] w-[18px]"
+      aria-hidden="true"
+    >
+      <path d="M9.2 9a2.8 2.8 0 1 1 3.8 2.6c-.7.3-1 .9-1 1.6v.4M12 17.6h.01" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  ),
+  revisao: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      className="h-[18px] w-[18px]"
+      aria-hidden="true"
+    >
+      <path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4" />
+    </svg>
+  ),
+  erros: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      className="h-[18px] w-[18px]"
+      aria-hidden="true"
+    >
+      <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v15H5.5A1.5 1.5 0 0 0 4 19.5zM4 19.5A1.5 1.5 0 0 1 5.5 21H19" />
+      <path d="M10.5 8.5l4 4M14.5 8.5l-4 4" />
+    </svg>
+  ),
+  simulado: (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      className="h-[18px] w-[18px]"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9.5V13l2.4 1.7M9 2h6" />
+    </svg>
+  ),
+};
+
 export default async function EstudarPage() {
-  const [disciplinas, artigos, leis, exames] = await Promise.all([
+  const [disciplinas, artigos, leis, exames, sumulas] = await Promise.all([
     getDisciplinas(),
     getArtigosIndexaveis(),
     getLeis(),
     getExames(),
+    getSumulas(),
   ]);
 
   const supabase = await supabaseServidor();
-  const { data: assinaturas } = await supabase
-    .from("assinaturas")
-    .select("plano")
-    .eq("status", "ativa")
-    .limit(1);
-  const temPlano = Boolean(assinaturas?.[0]);
 
-  const acervo = exames.reduce((s, e) => s + e.questoesCarregadas, 0);
-  const total = disciplinas.reduce((s, d) => s + d.mediaPorProva, 0);
-  const maior = disciplinas[0]?.mediaPorProva ?? 1;
+  // `meu_desempenho` conta por questão, não por tentativa — e é ela que sabe
+  // quantas voltaram para revisão hoje. Sem plano, a RLS devolve zero linhas
+  // e a tela mostra o acervo em vez de números vazios.
+  const [assinaturaRes, desempenhoRes] = await Promise.all([
+    supabase.from("assinaturas").select("plano").eq("status", "ativa").limit(1),
+    supabase.rpc("meu_desempenho"),
+  ]);
 
-  const siglaPorLei = new Map(leis.map((l) => [l.slug, l.sigla]));
+  const temPlano = Boolean(assinaturaRes.data?.[0]);
+  const desempenho = (
+    Array.isArray(desempenhoRes.data) ? desempenhoRes.data[0] : desempenhoRes.data
+  ) as
+    | { respondidas: number; acertos: number; erros: number; revisao_hoje: number }
+    | undefined;
+
+  const respondidas = desempenho?.respondidas ?? 0;
+  const erros = desempenho?.erros ?? 0;
+  const revisaoHoje = desempenho?.revisao_hoje ?? 0;
+
+  const acervoQuestoes = exames.reduce((s, e) => s + e.questoesCarregadas, 0);
+  const ingeridos = exames.filter((e) => e.questoesCarregadas > 0).length;
+
+  const contagens = await Promise.all(leis.map((l) => contarArtigos(l.slug)));
+  const contagemPorLei = new Map(leis.map((l, i) => [l.slug, contagens[i]]));
+  const totalDeArtigos = contagens.reduce((s, n) => s + n, 0);
+
+  const atalhos: AtalhoDeEstudo[] = [
+    {
+      chave: "novas",
+      rotulo: "Questões novas",
+      quantidade: Math.max(0, acervoQuestoes - respondidas),
+      unidade: "ainda sem resposta sua",
+      porque: "da prova mais recente para trás",
+      vazio: "Você já passou por todas. Vá para a revisão.",
+      href: "/app/questoes?modo=novas",
+      icone: ICONES.novas,
+    },
+    {
+      chave: "revisao",
+      rotulo: "Revisão de hoje",
+      quantidade: revisaoHoje,
+      unidade: "marcadas para hoje",
+      porque: "o intervalo em que você está prestes a esquecer",
+      vazio: "Nada marcado para hoje. A fila volta sozinha.",
+      href: "/app/questoes?modo=revisao",
+      icone: ICONES.revisao,
+    },
+    {
+      chave: "erros",
+      rotulo: "Caderno de erros",
+      quantidade: erros,
+      unidade: "erradas na última tentativa",
+      porque: "sai da lista sozinha quando você acerta",
+      vazio: "Nenhum erro em aberto.",
+      href: "/app/questoes?modo=erros",
+      icone: ICONES.erros,
+    },
+    {
+      chave: "simulado",
+      rotulo: "Simulado",
+      quantidade: null,
+      unidade: "80 questões, cinco horas",
+      porque: "sem gabarito até entregar, como na prova",
+      vazio: "",
+      href: "/app/simulado",
+      icone: ICONES.simulado,
+    },
+  ];
 
   // A "porta de entrada" de cada disciplina sai do próprio acervo: o artigo
   // mais cobrado que já tem comentário publicado. Nada é escolhido à mão —
@@ -75,10 +196,7 @@ export default async function EstudarPage() {
     }
   }
 
-  // Sem artigo comentado, a norma da disciplina. Antes daqui a tela dizia
-  // "sem material ainda" em metade da prova enquanto o banco tinha o CTN
-  // inteiro, o ECA inteiro e a Lei de Licitações inteira — material de estudo
-  // é o texto oficial da lei, e o comentário é o que se acrescenta a ele.
+  const siglaPorLei = new Map(leis.map((l) => [l.slug, l.sigla]));
   const leiDaDisciplina = new Map<string, (typeof leis)[number]>();
   for (const lei of leis) {
     if (lei.disciplinaSlug && !leiDaDisciplina.has(lei.disciplinaSlug)) {
@@ -86,13 +204,11 @@ export default async function EstudarPage() {
     }
   }
 
-  // O tamanho de cada norma, para a linha dizer o que está oferecendo. São
-  // consultas de contagem (`head`), sem trazer artigo nenhum.
-  const contagens = await Promise.all(leis.map((l) => contarArtigos(l.slug)));
-  const contagemPorLei = new Map(leis.map((l, i) => [l.slug, contagens[i]]));
+  const total = disciplinas.reduce((s, d) => s + d.mediaPorProva, 0);
+  const maior = disciplinas[0]?.mediaPorProva ?? 1;
 
-  // `disciplinas` já vem ordenada por peso, então a fatia acumulada até
-  // cada posição é o que define em que faixa a disciplina cai.
+  // `disciplinas` já vem ordenada por peso, então a fatia acumulada até cada
+  // posição é o que define em que faixa a disciplina cai.
   const comFaixa = disciplinas.map((d, i) => {
     const acumulado = disciplinas
       .slice(0, i + 1)
@@ -101,8 +217,34 @@ export default async function EstudarPage() {
     return { ...d, faixa: fatia <= 0.52 ? 0 : fatia <= 0.85 ? 1 : 2 };
   });
 
-  const grupos = FAIXAS.map((faixa, i) => {
-    const itens = comFaixa.filter((d) => d.faixa === i);
+  const faixas: FaixaDeEstudo[] = FAIXAS.map((faixa, i) => {
+    const itens = comFaixa
+      .filter((d) => d.faixa === i)
+      .map((d) => {
+        const artigo = portaDeEntrada.get(d.slug);
+        const lei = leiDaDisciplina.get(d.slug);
+        return {
+          slug: d.slug,
+          nome: d.nome,
+          mediaPorProva: d.mediaPorProva,
+          fatia: (d.mediaPorProva / maior) * 100,
+          comentados: comentados.get(d.slug) ?? 0,
+          artigo: artigo
+            ? {
+                href: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
+                rotulo: `Art. ${artigo.numero} ${siglaPorLei.get(artigo.leiSlug) ?? ""}`.trim(),
+              }
+            : null,
+          lei: lei
+            ? {
+                href: `/legislacao/${lei.slug}`,
+                sigla: lei.sigla,
+                artigos: contagemPorLei.get(lei.slug) ?? 0,
+              }
+            : null,
+        };
+      });
+
     return {
       ...faixa,
       itens,
@@ -111,136 +253,19 @@ export default async function EstudarPage() {
   }).filter((g) => g.itens.length > 0);
 
   return (
-    <div className="painel-conteudo flex flex-col gap-8">
-      <header className="flex max-w-[62ch] flex-col gap-2">
-        <h1 className="text-[clamp(1.75rem,3vw,2.15rem)] leading-[1.08] font-extrabold tracking-[-0.035em] text-ink">
-          Estudar
-        </h1>
-        <p className="text-body">
-          A ordem importa mais do que o volume. As disciplinas abaixo estão
-          agrupadas pela fatia que ocupam na prova — e, quando já existe
-          comentário publicado, com o artigo por onde começar em cada uma.
-        </p>
-      </header>
-
-      {/* Banco de questões: o estado real, sem fingir que já está pronto. */}
-      <section className="superficie flex flex-wrap items-center justify-between gap-6 p-6">
-        <div className="flex max-w-[56ch] flex-col gap-1">
-          <span className="rotulo">Banco de questões</span>
-          <p className="text-[1.2rem] font-bold text-ink">
-            {acervo.toLocaleString("pt-BR")} questões reais, com gabarito
-            oficial
-          </p>
-          <p className="text-[0.92rem] text-muted">
-            {temPlano
-              ? "Liberado no seu plano. Errar registra no caderno de erros e agenda a revisão sozinho."
-              : "A resolução de questões faz parte do plano. Enquanto isso, tudo abaixo já está aberto."}
-          </p>
-        </div>
-        <Link
-          href={temPlano ? "/app/questoes" : "/app/assinar"}
-          className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.92rem] font-semibold text-white transition-colors hover:bg-brand-700"
-        >
-          {temPlano ? "Começar a resolver" : "Ver planos"}
-        </Link>
-      </section>
-
-      <section className="flex flex-col gap-7">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-[1.3rem] font-bold text-ink">Por onde começar</h2>
-          <p className="text-[0.9rem] text-muted">
-            Média de questões por prova, em {exames.length} exames
-          </p>
-        </div>
-
-        {grupos.map((grupo) => (
-          <div key={grupo.titulo} className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h3 className="flex items-baseline gap-2.5 font-bold text-ink">
-                {grupo.titulo}
-                <span className="text-[0.84rem] font-semibold text-brand-600 tabular-nums">
-                  ≈{grupo.questoes}q · {Math.round((grupo.questoes / total) * 100)}
-                  % da prova
-                </span>
-              </h3>
-              <p className="text-[0.88rem] text-muted">{grupo.texto}</p>
-            </div>
-
-            <ul className="superficie divide-y divide-line overflow-hidden">
-              {grupo.itens.map((d) => {
-                const artigo = portaDeEntrada.get(d.slug);
-                const lei = leiDaDisciplina.get(d.slug);
-                const publicados = comentados.get(d.slug) ?? 0;
-                const artigosDaLei = lei ? (contagemPorLei.get(lei.slug) ?? 0) : 0;
-                const fatia = Math.round((d.mediaPorProva / total) * 100);
-
-                return (
-                  <li
-                    key={d.slug}
-                    className="grid items-center gap-x-6 gap-y-2.5 p-5 sm:grid-cols-[1.4fr_1fr_auto]"
-                  >
-                    <span className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-ink">{d.nome}</span>
-                      <span className="text-[0.82rem] text-muted">
-                        {publicados > 0
-                          ? `${publicados} ${publicados === 1 ? "artigo comentado" : "artigos comentados"}`
-                          : artigosDaLei > 0
-                            ? `${artigosDaLei.toLocaleString("pt-BR")} artigos · ${lei!.sigla}`
-                            : "sem norma central no acervo"}
-                      </span>
-                    </span>
-
-                    {/* A barra transforma a média em comparação: dá para ver o
-                        peso relativo antes de ler o número. */}
-                    <span className="flex items-center gap-3">
-                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunk">
-                        <span
-                          className="block h-full rounded-full bg-brand-400"
-                          style={{
-                            width: `${(d.mediaPorProva / maior) * 100}%`,
-                          }}
-                        />
-                      </span>
-                      <span className="shrink-0 text-[0.86rem] text-muted tabular-nums">
-                        {d.mediaPorProva}q · {fatia}%
-                      </span>
-                    </span>
-
-                    {/* Comentário primeiro, texto de lei depois. A ordem é a
-                        do valor: o artigo comentado leva direto ao ponto que
-                        a banca cobra; a lei inteira é onde se estuda quando
-                        esse trabalho ainda não foi feito. */}
-                    {artigo ? (
-                      <Link
-                        href={`/legislacao/${artigo.leiSlug}/${artigo.slug}`}
-                        className="justify-self-start rounded-full bg-brand-50 px-4 py-1.5 text-[0.86rem] font-semibold whitespace-nowrap text-brand-700 transition-colors hover:bg-brand-100 sm:justify-self-end"
-                      >
-                        Art. {artigo.numero} {siglaPorLei.get(artigo.leiSlug)} →
-                      </Link>
-                    ) : lei ? (
-                      <Link
-                        href={`/legislacao/${lei.slug}`}
-                        className="justify-self-start rounded-full border border-line px-4 py-1.5 text-[0.86rem] font-semibold whitespace-nowrap text-ink transition-colors hover:border-brand-300 hover:text-brand-700 sm:justify-self-end"
-                      >
-                        Ler {lei.sigla} →
-                      </Link>
-                    ) : (
-                      <span className="justify-self-start text-[0.84rem] text-muted sm:justify-self-end">
-                        sem material ainda
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-
-        <p className="text-[0.88rem] text-muted">
-          A média por disciplina ainda é estimativa: ela vira dado medido quando
-          a classificação das questões do acervo for revisada.
-        </p>
-      </section>
-    </div>
+    <Estudar
+      atalhos={atalhos}
+      acervo={{
+        questoes: acervoQuestoes,
+        exames: ingeridos,
+        artigos: totalDeArtigos,
+        normas: leis.length,
+        sumulas: sumulas.length,
+        comentados: artigos.length,
+      }}
+      faixas={faixas}
+      temPlano={temPlano}
+      respondidas={respondidas}
+    />
   );
 }
