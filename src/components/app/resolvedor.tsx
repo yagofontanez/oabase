@@ -58,6 +58,77 @@ type Resultado = {
  * quem está treinando com o cronômetro na cabeça não deve esperar por
  * navegação entre uma questão e a seguinte.
  */
+/**
+ * Reportar erro na questão.
+ *
+ * Abre um chamado de suporte já preenchido com exame, número e a alternativa
+ * que a pessoa marcou. O ticket existe desde antes; o que faltava era o
+ * caminho até ele a partir do lugar onde o erro é visto.
+ *
+ * O estado "enviado" fica no próprio botão e não some: quem reporta precisa
+ * saber que reportou, e um aviso que desaparece em três segundos é um aviso
+ * que metade das pessoas não vê.
+ */
+function ReportarErro({
+  questao,
+  escolhida,
+}: {
+  questao: QuestaoDaFila;
+  escolhida: Letra | null;
+}) {
+  const [estado, setEstado] = useState<"parado" | "enviando" | "enviado" | "erro">(
+    "parado",
+  );
+
+  async function reportar() {
+    if (estado !== "parado") return;
+    setEstado("enviando");
+    const resposta = await fetch("/api/suporte", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assunto: `Erro na questão ${questao.numero} do ${questao.exameEdicao}º Exame`,
+        mensagem: [
+          `Exame: ${questao.exameEdicao}º (${questao.exameSlug})`,
+          `Questão: ${questao.numero}`,
+          `Disciplina no acervo: ${questao.disciplina ?? "sem classificação"}`,
+          escolhida ? `Alternativa que marquei: ${escolhida}` : null,
+          "",
+          "O que está errado:",
+          "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      }),
+    });
+    setEstado(resposta.ok ? "enviado" : "erro");
+  }
+
+  if (estado === "enviado") {
+    return (
+      <span className="text-[0.76rem] font-semibold text-brand-700">
+        chamado aberto · responda no suporte
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void reportar()}
+      disabled={estado === "enviando"}
+      title="Abrir um chamado sobre esta questão"
+      className="text-[0.76rem] font-medium text-muted underline decoration-line underline-offset-4 transition-colors hover:text-vinho-600"
+    >
+      {estado === "enviando"
+        ? "abrindo…"
+        : estado === "erro"
+          ? "não consegui abrir"
+          : "reportar erro"}
+    </button>
+  );
+}
+
 export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
   const [indice, setIndice] = useState(0);
   // A alternativa marcada é guardada por questão, e não numa variável que
@@ -221,6 +292,11 @@ export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
               </span>
             )}
             {questao.disciplina ?? "sem classificação"}
+            {/* 3.460 questões extraídas de PDF, e quem lê cada uma é quem
+                está resolvendo. O caminho até a equipe tem de estar aqui, na
+                questão — pedir para a pessoa procurar o suporte e digitar de
+                novo o exame e o número é pedir para ela não avisar. */}
+            <ReportarErro questao={questao} escolhida={escolhida} />
           </span>
         </div>
 

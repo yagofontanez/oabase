@@ -64,15 +64,33 @@ export default async function DesempenhoPage() {
   // Por questão, não por tentativa: a mesma questão respondida quatro vezes
   // é uma questão no numerador, e é a última tentativa que conta. `distinct
   // on` vive no banco porque o PostgREST não expressa essa consulta.
-  const [desempenhoRes, percentilRes, ultimaRes] = await Promise.all([
-    supabase.rpc("meu_desempenho"),
-    supabase.rpc("meu_percentil"),
-    supabase
-      .from("respostas")
-      .select("respondido_em")
-      .order("respondido_em", { ascending: false })
-      .limit(1),
-  ]);
+  const [desempenhoRes, percentilRes, ultimaRes, porDisciplinaRes] =
+    await Promise.all([
+      supabase.rpc("meu_desempenho"),
+      supabase.rpc("meu_percentil"),
+      supabase
+        .from("respostas")
+        .select("respondido_em")
+        .order("respondido_em", { ascending: false })
+        .limit(1),
+      supabase.rpc("meu_desempenho_por_disciplina"),
+    ]);
+
+  const porDisciplina = (porDisciplinaRes.data ?? []) as {
+    disciplina_slug: string;
+    disciplina_nome: string;
+    respondidas: number;
+    acertos: number;
+    automatica: number;
+  }[];
+  const totalClassificadas = porDisciplina.reduce(
+    (s, d) => s + Number(d.respondidas),
+    0,
+  );
+  const automaticas = porDisciplina.reduce(
+    (s, d) => s + Number(d.automatica),
+    0,
+  );
 
   const desempenho = (Array.isArray(desempenhoRes.data)
     ? desempenhoRes.data[0]
@@ -249,6 +267,80 @@ export default async function DesempenhoPage() {
           </div>
         )}
       </section>
+
+      {/* ---- Por disciplina ----
+          A pergunta que a pessoa faz depois de ver a taxa geral é sempre a
+          mesma: onde eu erro mais. A tela prometia esta resposta no estado
+          vazio e não a dava, porque nenhuma questão tinha classificação. */}
+      {porDisciplina.length > 0 && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 className="text-[1.3rem] font-bold text-ink">
+              Onde você erra mais
+            </h2>
+            <p className="text-[0.9rem] text-muted">
+              Última tentativa de cada questão
+            </p>
+          </div>
+
+          <ul className="superficie divide-y divide-line overflow-hidden">
+            {porDisciplina.map((d) => {
+              const taxaDisciplina = Math.round(
+                (d.acertos / Math.max(1, d.respondidas)) * 100,
+              );
+              return (
+                <li
+                  key={d.disciplina_slug}
+                  className="grid items-center gap-x-5 gap-y-2 p-4 sm:grid-cols-[1.1fr_1fr_auto] sm:p-5"
+                >
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-semibold text-ink">
+                      {d.disciplina_nome}
+                    </span>
+                    <span className="text-[0.8rem] text-muted tabular-nums">
+                      {d.respondidas}{" "}
+                      {d.respondidas === 1 ? "questão" : "questões"} ·{" "}
+                      {d.acertos} {d.acertos === 1 ? "acerto" : "acertos"}
+                    </span>
+                  </span>
+
+                  {/* Barra em vinho quando abaixo da linha de corte: é a
+                      mesma cor que marca os 40 acertos na régua acima, e
+                      aqui ela diz a mesma coisa — esta matéria ainda não
+                      passa. */}
+                  <span className="flex items-center gap-3">
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-sunk">
+                      <span
+                        className={`block h-full rounded-full ${
+                          taxaDisciplina >= 50 ? "bg-brand-500" : "bg-vinho-400"
+                        }`}
+                        style={{ width: `${Math.max(taxaDisciplina, 3)}%` }}
+                      />
+                    </span>
+                  </span>
+
+                  <span
+                    className={`text-[1.05rem] font-bold tabular-nums sm:justify-self-end ${
+                      taxaDisciplina >= 50 ? "text-brand-600" : "text-vinho-600"
+                    }`}
+                  >
+                    {taxaDisciplina}%
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* A procedência vem junto com o número, como na ficha do exame. */}
+          {automaticas > 0 && (
+            <p className="text-[0.86rem] text-muted">
+              {automaticas === totalClassificadas
+                ? "A disciplina de cada questão foi atribuída por classificação automática, ainda sem revisão humana — o agrupamento é aproximado."
+                : `Em ${automaticas} das ${totalClassificadas} questões a disciplina veio de classificação automática, ainda sem revisão humana.`}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
