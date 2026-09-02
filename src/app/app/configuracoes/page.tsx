@@ -43,7 +43,10 @@ export default async function ConfiguracoesPage() {
 
   // As ferramentas de edição não têm item de menu: a navegação é de quem
   // estuda. Este é o único caminho até elas, e só aparece para editor.
-  const { data: editor } = await supabase.rpc("sou_editor");
+  const [{ data: editor }, { data: admin }] = await Promise.all([
+    supabase.rpc("sou_editor"),
+    supabase.rpc("sou_admin"),
+  ]);
 
   const { data: assinaturas } = await supabase
     .from("assinaturas")
@@ -164,6 +167,20 @@ export default async function ConfiguracoesPage() {
           </div>
         )}
       </Bloco>
+
+      {admin && (
+        <Bloco
+          titulo="Administração"
+          descricao="Contas, receita, atividade e o estado do acervo. Capacidade separada da de editor: acesso de escrita ao conteúdo não dá, de brinde, a lista de clientes."
+        >
+          <Link
+            href="/app/admin"
+            className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+          >
+            Abrir o painel
+          </Link>
+        </Bloco>
+      )}
 
       {editor && (
         <Bloco

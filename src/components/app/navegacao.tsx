@@ -134,6 +134,7 @@ const FORA_DO_MENU: Record<string, string> = {
   "/app/revisao": "Triagem de disciplina",
   "/app/redacao": "Redação de comentário",
   "/app/vinculos": "Vincular dispositivo",
+  "/app/admin": "Administração",
 };
 
 /** Rótulo da tela atual, para o cabeçalho. Uma lista só, uma verdade só. */
