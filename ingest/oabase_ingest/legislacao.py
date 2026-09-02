@@ -43,8 +43,12 @@ NAVEGADOR = (
 # O ordinal vem em `<sup>o</sup>` e, sem a tag, sobra um "o" separado por
 # espaço. Daí o `\s?` antes dele; e ele só conta se não for seguido de letra,
 # senão engoliria a primeira palavra de um caput que comece com "o".
+# O ponto depois de "Art" é opcional: as leis dos anos 60 e 70 escrevem
+# "Art 1º" sem ele — na Lei 5.584/70 isso derrubava 20 dos 21 artigos. Exigir
+# o dígito logo em seguida é o que impede que "Artigo incluído pela Lei..."
+# das notas de alteração seja lido como começo de artigo.
 INICIO_ARTIGO = re.compile(
-    r"^Art\.\s*(\d+(?:\.\d{3})*)"
+    r"^Art\.?\s*(\d+(?:\.\d{3})*)"
     r"(?:\.|\s?[ºo°](?![A-Za-zÀ-ÿ])|-([A-Z])(?![a-zà-ÿ]))?"
 )
 # O parágrafo abre frase nova, então vem seguido de maiúscula, travessão ou
@@ -128,7 +132,92 @@ LEIS: list[Lei] = [
         "https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452compilado.htm",
         "Contrato de trabalho, jornada, rescisão e FGTS — a base do bloco trabalhista.",
     ),
+
+    # ------------------------------------------------------------------
+    # Segunda leva.
+    #
+    # Os oito códigos acima cobrem sete disciplinas e deixavam **nove sem
+    # artigo nenhum** no banco — Tributário sem CTN, Previdenciário sem a
+    # 8.213, Empresarial sem nada. Na tela de estudo isso aparecia como "sem
+    # material ainda" em metade da prova, o que era verdade e não devia ser.
+    #
+    # O critério para entrar aqui é o mesmo do resto do projeto: norma que a
+    # 1ª fase cobra de forma recorrente e que existe em texto compilado no
+    # Planalto. Disciplina sem norma central — Filosofia do Direito — não
+    # ganha entrada de mentira só para preencher a lista.
+    # ------------------------------------------------------------------
+    Lei(
+        "codigo-tributario-nacional", "Código Tributário Nacional", "CTN", 1966,
+        "direito-tributario",
+        "https://www.planalto.gov.br/ccivil_03/leis/l5172compilado.htm",
+        "Obrigação, crédito e lançamento tributário. Junto com o art. 150 da Constituição, responde por quase toda a incidência de Tributário.",
+    ),
+    Lei(
+        "estatuto-da-crianca-e-do-adolescente",
+        "Estatuto da Criança e do Adolescente", "ECA", 1990,
+        "estatuto-da-crianca-e-do-adolescente",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8069.htm",
+        "Proteção integral, medidas socioeducativas e conselho tutelar — bloco curto, de leitura direta e cobrança previsível.",
+    ),
+    Lei(
+        "lei-das-sa", "Lei das Sociedades por Ações", "Lei 6.404/76", 1976,
+        "direito-empresarial",
+        "https://www.planalto.gov.br/ccivil_03/leis/l6404compilada.htm",
+        "Companhia, ações, órgãos de administração e direitos do acionista: a parte societária do bloco empresarial.",
+    ),
+    Lei(
+        "lei-de-recuperacao-e-falencia", "Lei de Recuperação e Falência",
+        "Lei 11.101/05", 2005, "direito-empresarial",
+        "https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2005/lei/l11101.htm",
+        "Recuperação judicial, extrajudicial e falência. Em Empresarial, é onde a banca mais gosta de montar caso concreto.",
+    ),
+    Lei(
+        "lei-de-beneficios-da-previdencia", "Lei de Benefícios da Previdência Social",
+        "Lei 8.213/91", 1991, "direito-previdenciario",
+        "https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm",
+        "Segurados, carência e benefícios do RGPS — a norma que sustenta praticamente todo o bloco previdenciário.",
+    ),
+    Lei(
+        "lei-de-crimes-ambientais", "Lei de Crimes Ambientais", "Lei 9.605/98",
+        1998, "direito-ambiental",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9605.htm",
+        "Responsabilidade penal e administrativa por dano ambiental, inclusive da pessoa jurídica.",
+    ),
+    Lei(
+        "lei-do-processo-administrativo", "Lei do Processo Administrativo Federal",
+        "Lei 9.784/99", 1999, "direito-administrativo",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9784.htm",
+        "Princípios da administração, motivação, invalidação e prazos do processo administrativo.",
+    ),
+    Lei(
+        "lei-de-licitacoes", "Lei de Licitações e Contratos", "Lei 14.133/21",
+        2021, "direito-administrativo",
+        "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14133.htm",
+        "Modalidades, critérios de julgamento e contratos administrativos na lei que substituiu a 8.666.",
+    ),
+    Lei(
+        "lindb", "Lei de Introdução às Normas do Direito Brasileiro", "LINDB",
+        1942, "direito-internacional",
+        "https://www.planalto.gov.br/ccivil_03/decreto-lei/del4657compilado.htm",
+        "Vigência, conflito de leis no tempo e no espaço. É a porta de entrada tanto de Internacional quanto da parte geral do Civil.",
+    ),
+    Lei(
+        "lei-do-processo-do-trabalho", "Lei do Processo do Trabalho",
+        "Lei 5.584/70", 1970, "direito-processual-do-trabalho",
+        "https://www.planalto.gov.br/ccivil_03/leis/l5584.htm",
+        "Normas de processo do trabalho fora da CLT: alçada, honorários periciais e assistência judiciária.",
+    ),
 ]
+
+# Direitos Humanos continua sem norma aqui, e é decisão, não esquecimento.
+# O Pacto de São José está no Decreto 678/1992, cuja página traz **duas
+# numerações na mesma URL**: os três artigos do decreto e, logo abaixo, os
+# oitenta e dois "ARTIGO N" do tratado — que colidiriam com os primeiros na
+# chave (lei, artigo). Resolver isso exige um "começar_em" que ainda não
+# existe, e meia convenção carregada é pior do que nenhuma.
+#
+# Filosofia do Direito não tem norma central por definição. A tela de estudo
+# diz isso em vez de fingir que tem.
 
 
 def baixar(url: str) -> str:
@@ -148,11 +237,21 @@ def em_linhas(html_bruto: str) -> list[str]:
     import html as escape
 
     t = re.sub(r"(?is)<(script|style).*?</\1>", " ", html_bruto)
-    t = re.sub(r"(?i)</p>|<br\s*/?>|</tr>|</div>", "\n", t)
+    # A quebra estrutural vira um marcador que não existe em texto de lei, e
+    # não "\n". A diferença parece cosmética e não é: o HTML do Planalto
+    # quebra linha no meio do texto, na largura do editor de quem digitou —
+    # no CTN, "Art." fica numa linha e "3º Tributo é toda prestação..." na
+    # seguinte. Tratando a quebra de origem como estrutura, o marcador do
+    # artigo se parte ao meio e o artigo inteiro desaparece: eram 124 dos 218
+    # do Código Tributário, e nada no relatório dizia que faltava — só o
+    # total, que ninguém compara com o número real da lei.
+    t = re.sub(r"(?i)</p>|<br\s*/?>|</tr>|</div>", "\x00", t)
     t = escape.unescape(re.sub(r"<[^>]+>", "", t))
     # Espaço não separável aparece muito e atrapalha os marcadores.
     t = t.replace("\xa0", " ")
-    cruas = [linha for linha in (" ".join(l.split()) for l in t.split("\n")) if linha]
+    cruas = [
+        linha for linha in (" ".join(l.split()) for l in t.split("\x00")) if linha
+    ]
 
     # "Art. 1º" costuma ser escrito `Art. 1<sup>o</sup>`, e a superscrita cai
     # numa linha só dela. Solta, ela viraria a primeira palavra do caput
@@ -278,12 +377,20 @@ def _array(valores: list[str]) -> str:
 
 
 def sql_da_lei(lei: Lei) -> str:
+    # A disciplina vai na própria linha da lei, e não só repetida em cada
+    # artigo: é a pergunta que a tela de estudo faz ("qual é a norma central
+    # de Tributário?") e que uma agregação sobre 7.654 linhas responderia caro.
+    disciplina = (
+        "(select id from public.disciplinas where slug = "
+        f"{_lit(lei.disciplina)})"
+    )
     return (
-        "insert into public.leis (slug, nome, sigla, ano, resumo) values ("
-        f"{_lit(lei.slug)},{_lit(lei.nome)},{_lit(lei.sigla)},{lei.ano},"
-        f"{_lit(lei.resumo)})\n"
+        "insert into public.leis (slug, nome, sigla, ano, resumo, disciplina_id)"
+        f" values ({_lit(lei.slug)},{_lit(lei.nome)},{_lit(lei.sigla)},{lei.ano},"
+        f"{_lit(lei.resumo)},{disciplina})\n"
         "on conflict (slug) do update set nome = excluded.nome,"
-        " sigla = excluded.sigla, ano = excluded.ano, resumo = excluded.resumo;\n"
+        " sigla = excluded.sigla, ano = excluded.ano, resumo = excluded.resumo,"
+        " disciplina_id = excluded.disciplina_id;\n"
     )
 
 

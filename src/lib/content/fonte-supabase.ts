@@ -77,6 +77,30 @@ async function todasAsPaginas<T>(
   }
 }
 
+const CAMPOS_LEI = "slug, nome, sigla, ano, resumo, disciplinas(slug)";
+
+type LinhaLei = {
+  slug: string;
+  nome: string;
+  sigla: string;
+  ano: number;
+  resumo: string;
+  // O supabase-js tipa relação embutida ora como objeto, ora como lista.
+  disciplinas: { slug: string } | { slug: string }[] | null;
+};
+
+const paraLei = (l: LinhaLei): Lei => {
+  const d = Array.isArray(l.disciplinas) ? l.disciplinas[0] : l.disciplinas;
+  return {
+    slug: l.slug,
+    nome: l.nome,
+    sigla: l.sigla,
+    ano: l.ano,
+    resumo: l.resumo,
+    disciplinaSlug: d?.slug ?? null,
+  };
+};
+
 type LinhaPost = {
   slug: string;
   titulo: string;
@@ -97,20 +121,20 @@ export const fonteSupabase: FonteDeConteudo = {
   async getLeis() {
     const { data, error } = await supabaseAnon()
       .from("leis")
-      .select("slug, nome, sigla, ano, resumo")
+      .select(CAMPOS_LEI)
       .order("ano", { ascending: false });
     erro("leis", error);
-    return (data ?? []) as Lei[];
+    return ((data ?? []) as unknown as LinhaLei[]).map(paraLei);
   },
 
   async getLei(slug) {
     const { data, error } = await supabaseAnon()
       .from("leis")
-      .select("slug, nome, sigla, ano, resumo")
+      .select(CAMPOS_LEI)
       .eq("slug", slug)
       .maybeSingle();
     erro("lei", error);
-    return (data as Lei) ?? null;
+    return data ? paraLei(data as unknown as LinhaLei) : null;
   },
 
   async getArtigosDaLei(leiSlug) {

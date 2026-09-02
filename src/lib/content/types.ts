@@ -17,6 +17,8 @@ export type Lei = {
   ano: number;
   /** Frase de contexto usada no hub e na meta description */
   resumo: string;
+  /** Disciplina a que a norma pertence. Nulo quando ninguém declarou. */
+  disciplinaSlug: string | null;
 };
 
 /** O bastante para montar o link de "artigo anterior / próximo". */

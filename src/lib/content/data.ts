@@ -86,6 +86,7 @@ export const leis: Lei[] = [
     ano: 1988,
     resumo:
       "A norma mais cobrada do exame. Direitos fundamentais, organização do Estado e controle de constitucionalidade aparecem em toda edição.",
+    disciplinaSlug: "direito-constitucional",
   },
   {
     slug: "codigo-civil",
@@ -94,6 +95,7 @@ export const leis: Lei[] = [
     ano: 2002,
     resumo:
       "Base de Direito Civil na prova: responsabilidade civil, contratos, direitos reais e família concentram a maior parte das questões.",
+    disciplinaSlug: "direito-civil",
   },
   {
     slug: "codigo-penal",
@@ -102,6 +104,7 @@ export const leis: Lei[] = [
     ano: 1940,
     resumo:
       "Parte geral e crimes contra a pessoa e o patrimônio dominam a incidência em Direito Penal.",
+    disciplinaSlug: "direito-penal",
   },
 ];
 

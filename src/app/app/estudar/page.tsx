@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import {
+  contarArtigos,
   getArtigosIndexaveis,
   getDisciplinas,
   getExames,
@@ -73,6 +74,22 @@ export default async function EstudarPage() {
       portaDeEntrada.set(artigo.disciplinaSlug, artigo);
     }
   }
+
+  // Sem artigo comentado, a norma da disciplina. Antes daqui a tela dizia
+  // "sem material ainda" em metade da prova enquanto o banco tinha o CTN
+  // inteiro, o ECA inteiro e a Lei de Licitações inteira — material de estudo
+  // é o texto oficial da lei, e o comentário é o que se acrescenta a ele.
+  const leiDaDisciplina = new Map<string, (typeof leis)[number]>();
+  for (const lei of leis) {
+    if (lei.disciplinaSlug && !leiDaDisciplina.has(lei.disciplinaSlug)) {
+      leiDaDisciplina.set(lei.disciplinaSlug, lei);
+    }
+  }
+
+  // O tamanho de cada norma, para a linha dizer o que está oferecendo. São
+  // consultas de contagem (`head`), sem trazer artigo nenhum.
+  const contagens = await Promise.all(leis.map((l) => contarArtigos(l.slug)));
+  const contagemPorLei = new Map(leis.map((l, i) => [l.slug, contagens[i]]));
 
   // `disciplinas` já vem ordenada por peso, então a fatia acumulada até
   // cada posição é o que define em que faixa a disciplina cai.
@@ -152,7 +169,9 @@ export default async function EstudarPage() {
             <ul className="superficie divide-y divide-line overflow-hidden">
               {grupo.itens.map((d) => {
                 const artigo = portaDeEntrada.get(d.slug);
+                const lei = leiDaDisciplina.get(d.slug);
                 const publicados = comentados.get(d.slug) ?? 0;
+                const artigosDaLei = lei ? (contagemPorLei.get(lei.slug) ?? 0) : 0;
                 const fatia = Math.round((d.mediaPorProva / total) * 100);
 
                 return (
@@ -165,7 +184,9 @@ export default async function EstudarPage() {
                       <span className="text-[0.82rem] text-muted">
                         {publicados > 0
                           ? `${publicados} ${publicados === 1 ? "artigo comentado" : "artigos comentados"}`
-                          : "comentários em produção"}
+                          : artigosDaLei > 0
+                            ? `${artigosDaLei.toLocaleString("pt-BR")} artigos · ${lei!.sigla}`
+                            : "sem norma central no acervo"}
                       </span>
                     </span>
 
@@ -185,12 +206,23 @@ export default async function EstudarPage() {
                       </span>
                     </span>
 
+                    {/* Comentário primeiro, texto de lei depois. A ordem é a
+                        do valor: o artigo comentado leva direto ao ponto que
+                        a banca cobra; a lei inteira é onde se estuda quando
+                        esse trabalho ainda não foi feito. */}
                     {artigo ? (
                       <Link
                         href={`/legislacao/${artigo.leiSlug}/${artigo.slug}`}
                         className="justify-self-start rounded-full bg-brand-50 px-4 py-1.5 text-[0.86rem] font-semibold whitespace-nowrap text-brand-700 transition-colors hover:bg-brand-100 sm:justify-self-end"
                       >
                         Art. {artigo.numero} {siglaPorLei.get(artigo.leiSlug)} →
+                      </Link>
+                    ) : lei ? (
+                      <Link
+                        href={`/legislacao/${lei.slug}`}
+                        className="justify-self-start rounded-full border border-line px-4 py-1.5 text-[0.86rem] font-semibold whitespace-nowrap text-ink transition-colors hover:border-brand-300 hover:text-brand-700 sm:justify-self-end"
+                      >
+                        Ler {lei.sigla} →
                       </Link>
                     ) : (
                       <span className="justify-self-start text-[0.84rem] text-muted sm:justify-self-end">
