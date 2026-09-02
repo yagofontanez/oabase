@@ -5,6 +5,8 @@ import { CartaoResposta, type Grupo } from "@/components/cartao-resposta";
 import { Contagem } from "@/components/contagem";
 import { QuestaoVitrine } from "@/components/questao-vitrine";
 import { Reveal } from "@/components/reveal";
+import { JsonLd } from "@/lib/jsonld";
+import { abs, site } from "@/lib/site";
 import { corPorPosicao } from "@/lib/paleta";
 import { planos } from "@/lib/planos";
 import {
@@ -79,7 +81,7 @@ const guia = [
 const perguntas = [
   {
     q: "O conteúdo aberto é mesmo aberto, ou tem limite de leitura?",
-    a: "Aberto de verdade: sem cadastro, sem contador, sem tela de bloqueio depois do terceiro artigo. Legislação comentada, súmulas, glossário, fichas dos exames e as estatísticas de incidência ficam livres para qualquer pessoa. O plano cobre o banco de questões e as ferramentas de treino — o que depende do seu progresso individual.",
+    a: "Aberto de verdade: sem cadastro, sem contador, sem tela de bloqueio depois do terceiro artigo. Legislação artigo por artigo, fichas dos exames e as estatísticas de incidência ficam livres para qualquer pessoa. O plano cobre o banco de questões e as ferramentas de treino — o que depende do seu progresso individual.",
   },
   {
     q: "Por que o plano acaba no dia da prova em vez de ser mensal?",
@@ -87,7 +89,7 @@ const perguntas = [
   },
   {
     q: "As questões são as originais da FGV?",
-    a: "Sim, extraídas dos cadernos oficiais publicados pela própria banca, com o gabarito definitivo — inclusive as anulações. O que é autoral é o comentário: a explicação de por que a alternativa correta está correta e por que cada uma das outras não está.",
+    a: "Sim, extraídas dos cadernos oficiais publicados pela própria banca, com o gabarito definitivo — inclusive as anulações. O comentário autoral — a explicação de por que cada alternativa está certa ou errada — está sendo escrito questão a questão, e ainda não cobre o acervo inteiro.",
   },
   {
     q: "Serve para a 2ª fase?",
@@ -134,6 +136,55 @@ export default async function Home() {
   );
   return (
     <>
+      {/*
+        FAQPage e Course.
+
+        As perguntas já estavam na página em HTML; o schema só as torna
+        legíveis para o buscador, que passa a poder exibi-las direto no
+        resultado. É a diferença entre ocupar uma linha e ocupar meia tela
+        para a mesma posição.
+
+        `Course` descreve o que o site é para quem procura "curso OAB 1ª
+        fase". `isAccessibleForFree` fica em `false` no nível do curso porque
+        o treino depende de plano — declarar grátis o que é pago é o tipo de
+        marcação que rende penalidade manual.
+      */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "FAQPage",
+              "@id": abs("/#faq"),
+              mainEntity: perguntas.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              })),
+            },
+            {
+              "@type": "Course",
+              "@id": abs("/#curso"),
+              name: "Preparação para a 1ª fase do Exame de Ordem",
+              description: site.description,
+              inLanguage: "pt-BR",
+              provider: { "@id": abs("/#organization") },
+              isAccessibleForFree: false,
+              educationalLevel: "Ensino superior",
+              about: {
+                "@type": "Thing",
+                name: "Exame de Ordem dos Advogados do Brasil",
+              },
+              hasCourseInstance: {
+                "@type": "CourseInstance",
+                courseMode: "online",
+                courseWorkload: "PT200H",
+              },
+            },
+          ],
+        }}
+      />
+
       {/* ═══════════════════════ Hero ═══════════════════════ */}
       <section className="relative overflow-hidden">
         <div
@@ -160,9 +211,18 @@ export default async function Home() {
                 Responda uma questão real agora
                 <span className="-ml-[0.055em]">.</span>
               </span>
-              <span className="max-w-[26ch] text-[clamp(1.05rem,1.8vw,1.35rem)] leading-[1.4] font-medium text-body">
-                Depois, mais <span className="grifo">três mil</span> — todas
-                comentadas, uma a uma.
+              {/* O número sai do acervo, não de uma promessa escrita à mão:
+                  "três mil" fixo já esteve na mesma tela que "1.120 questões
+                  no banco", logo abaixo. E o texto não diz "comentadas"
+                  enquanto o comentário de questão não existir — prometer na
+                  primeira dobra o que o produto não entrega é o defeito mais
+                  caro que uma landing pode ter. */}
+              <span className="max-w-[28ch] text-[clamp(1.05rem,1.8vw,1.35rem)] leading-[1.4] font-medium text-body">
+                Depois, mais{" "}
+                <span className="grifo">
+                  {questoesNoBanco.toLocaleString("pt-BR")}
+                </span>{" "}
+                — todas com o gabarito oficial da FGV.
               </span>
             </h1>
 

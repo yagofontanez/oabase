@@ -81,8 +81,8 @@ adicione nas duas implementações e no contrato, nunca direto na página.
 
 Não linke para rota que ainda não existe. Link interno para 404 gasta orçamento
 de rastreamento, e num site cuja aquisição é 100% orgânica isso é custo direto.
-Pendentes da camada aberta: `/sumulas`, `/glossario`, `/blog`, `/sobre`,
-`/termos`, `/privacidade`.
+Pendentes da camada aberta: `/sumulas`, `/glossario`, `/blog`.
+`/sobre`, `/termos` e `/privacidade` já existem e estão no rodapé.
 
 ## Ingestão de provas
 
@@ -105,6 +105,21 @@ assim que convivem na mesma tabela.
 A distribuição por disciplina exibida na landing e em `/estatisticas` ainda sai
 de `media_por_prova`, que é estimativa. Ela só pode ser calculada dos dados
 reais quando houver questões com `disciplina_confirmada = true` em volume.
+
+**O arquivo da OAB só serve da 32ª edição em diante.** Medido edição por
+edição: 32º responde 200; 31º, 28º, 24º, 20º, 17º, 14º, 10º, 6º e 3º devolvem
+502. O corte é exato e não cede a espaçamento, User-Agent, Referer nem GET no
+lugar de HEAD — é falha de origem, com cara de migração de armazenamento que
+deixou os objetos antigos para trás. `baixar_arquivo` cai para a cópia do
+Internet Archive quando a origem falha; o Archive tem só parte delas e limita
+por IP com agressividade.
+
+**O rótulo do caderno muda com a época** — `Caderno de Prova - Tipo 1` do 18º
+em diante, `Caderno de Prova 01` até o 17º. A descoberta aceitava só a
+primeira forma, e por isso dezesseis edições apareciam como "sem prova"
+quando o link estava na página. Ao mexer nesse filtro, lembre que
+`Caderno de Prova (Direito Civil)` também casa com "caderno de prova" e é o
+caderno da **2ª fase** — a exclusão é pela ausência de parêntese.
 
 ## Ingestão de legislação
 
@@ -421,3 +436,53 @@ sempre, escrita à mão.
 `dados_da_compra`, `fim` era os dois ao mesmo tempo e o Postgres recusava a
 consulta por ambiguidade — dentro do `try/catch` do webhook, isso virava
 compra confirmada sem e-mail e só log. Qualifique a coluna.
+
+
+## Páginas legais e procedência
+
+`/termos`, `/privacidade` e `/sobre` existem, e as três são pré-requisito de
+cobrar dinheiro — não formalidade. O checkout coleta CPF e telefone, e a LGPD
+exige a política; o CDC exige informação clara na oferta, incluindo o
+**direito de arrependimento de 7 dias** (art. 49), que aparece no formulário
+de assinatura e no FAQ de `/precos`, não só escondido num link.
+
+**Os dados do operador vivem em `src/lib/legal.ts`.** Enquanto razão social,
+documento, endereço e comarca estiverem vazios, as duas páginas legais exibem
+um aviso no topo dizendo que estão incompletas. Publicar Termos com CNPJ em
+branco é pior do que não publicar: parece cumprido e não é. O aviso some
+sozinho quando o arquivo for preenchido.
+
+**A política descreve o schema real.** Cada dado listado existe numa coluna, e
+cada operador citado é um serviço que o projeto de fato chama. Ao acrescentar
+um fornecedor que trate dado pessoal, `subprocessadores` em `legal.ts` precisa
+mudar junto — política que omite tratamento que acontece não protege ninguém.
+
+**Nada de promessa que o produto não entrega.** A landing dizia "mais três mil
+— todas comentadas" na mesma tela em que dizia "1.120 questões no banco", e
+`comentarios` tem zero linha. O número agora sai do acervo e o texto não
+afirma comentário que não existe. Vale para `/precos`, para os itens de
+`planos.ts` e para a descrição em `site.ts`: promessa em página de preço é o
+que a pessoa paga para ter.
+
+## SEO
+
+O básico já existia — canonical por rota, `metadataBase`, BreadcrumbList em
+todas as trilhas, sitemap particionado alimentado só por conteúdo indexável.
+O que foi acrescentado:
+
+- **FAQPage** na landing e em `/precos`, sobre perguntas que já estavam no
+  HTML. **Course** na landing e **Dataset** em `/estatisticas`, com
+  `variableMeasured` por disciplina.
+- **`/sobre`** — método, fontes e o que ainda é estimativa. Em conteúdo
+  jurídico o buscador avalia procedência antes de posição, e site que comenta
+  lei sem dizer de onde tira o texto ranqueia como fazenda de conteúdo.
+- **Ligação nos dois sentidos entre exame e artigo.** A página do artigo já
+  dizia "onde já caiu"; a do exame não apontava para artigo nenhum, e o
+  rastreador entrava e saía sem achar as páginas profundas.
+  `artigos_do_exame` fecha o ciclo.
+- **`trailingSlash: false`** e cabeçalhos de segurança em `next.config.ts`.
+
+**O gargalo de posicionamento não é técnico.** São 4 artigos indexáveis de
+5.756, porque o portão de qualidade — correto — só anuncia o que tem
+comentário revisado. Nenhuma marcação compensa isso: o caminho é escrever
+comentário, e `artigos.incidencia`, agora medida, diz por onde começar.

@@ -16,6 +16,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       // dois deve ser o único mecanismo.
       disallow: ["/app", "/entrar", "/criar-conta", "/checkout", "/api"],
     },
+    // As partições são listadas uma a uma, e é aqui que o Google as
+    // descobre. Não existe `/sitemap.xml`: com `generateSitemaps`, o Next
+    // publica em `/sitemap/0.xml` e reserva o caminho convencional para a
+    // própria convenção de metadata — uma rota ali quebra o build. Ao
+    // submeter no Search Console, use o endereço que sai deste arquivo.
     sitemap: Array.from({ length: particoes }, (_, i) =>
       abs(`/sitemap/${i}.xml`),
     ),

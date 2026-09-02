@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
+import { JsonLd } from "@/lib/jsonld";
+import { abs } from "@/lib/site";
 import { PaywallCta } from "@/components/paywall-cta";
 import { getDisciplinas, getExames } from "@/lib/content/queries";
 export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "O que mais cai na OAB: distribuição por disciplina",
   description:
-    "Quantas questões de cada disciplina caem no Exame de Ordem, com base na distribuição real de todos os exames unificados já aplicados.",
+    "Quantas questões de cada disciplina caem na 1ª fase do Exame de Ordem: a média por prova das 18 disciplinas do edital, do bloco que decide a aprovação à cauda longa.",
   alternates: { canonical: "/estatisticas" },
 };
 export default async function EstatisticasPage() {
@@ -19,6 +21,35 @@ export default async function EstatisticasPage() {
   const total = disciplinas.reduce((s, d) => s + d.mediaPorProva, 0);
   return (
     <>
+      {/*
+        `Dataset` porque é o que a página é: uma tabela de disciplina por
+        média de questões. É o tipo que o Google entende para consulta de
+        dado — "quantas questões de direito civil caem na OAB" — e o que
+        permite a página aparecer com a tabela no resultado.
+
+        `creditText` e a ressalva de estimativa não são enfeite: declarar
+        medição onde há média histórica é o mesmo erro que a página combate.
+      */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          "@id": abs("/estatisticas#dados"),
+          name: "Distribuição de questões por disciplina no Exame de Ordem",
+          description:
+            "Média de questões por prova de cada uma das 18 disciplinas do edital da 1ª fase do Exame de Ordem Unificado. Estimativa a partir do histórico das provas aplicadas.",
+          inLanguage: "pt-BR",
+          license: "https://creativecommons.org/licenses/by/4.0/",
+          isAccessibleForFree: true,
+          creator: { "@id": abs("/#organization") },
+          variableMeasured: disciplinas.map((d) => ({
+            "@type": "PropertyValue",
+            name: d.nome,
+            value: d.mediaPorProva,
+            unitText: "questões por prova",
+          })),
+        }}
+      />
       <PageHeader
         crumbs={[
           { href: "/", label: "Início" },

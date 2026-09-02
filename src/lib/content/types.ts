@@ -64,3 +64,14 @@ export type IncidenciaEmExame = {
   data: string;
   questoes: number;
 };
+
+/** Dispositivos que uma prova cobrou. Relação e contagem, nunca enunciado. */
+export type DispositivoDoExame = {
+  leiSlug: string;
+  leiSigla: string;
+  artigoSlug: string;
+  numero: string;
+  caput: string;
+  questoes: number;
+  temComentario: boolean;
+};

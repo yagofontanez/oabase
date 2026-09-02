@@ -3,8 +3,8 @@ import { Container } from "./container";
 import { Wordmark } from "./wordmark";
 import { site } from "@/lib/site";
 
-/* Apenas rotas publicadas. Conforme /sumulas, /glossario, /blog, /sobre,
-   /termos e /privacidade forem ao ar, entram aqui. */
+/* Apenas rotas publicadas. Conforme /sumulas, /glossario e /blog forem ao
+   ar, entram aqui. */
 const colunas = [
   {
     titulo: "Conteúdo aberto",
@@ -22,12 +22,20 @@ const colunas = [
       { href: "/entrar", label: "Entrar" },
     ],
   },
+  {
+    titulo: "Legal",
+    links: [
+      { href: "/sobre", label: "Sobre e fontes" },
+      { href: "/termos", label: "Termos de Uso" },
+      { href: "/privacidade", label: "Privacidade" },
+    ],
+  },
 ];
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-hairline bg-sunk">
       <Container className="py-16">
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="flex flex-col gap-3">
             <Wordmark />
             <p className="max-w-[32ch] text-[0.92rem] text-muted">

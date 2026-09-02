@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Legislação comentada para a OAB",
   description:
-    "Constituição, códigos e o Estatuto da OAB artigo por artigo, com o texto oficial atualizado, comentário voltado ao Exame de Ordem e a incidência real de cada dispositivo.",
+    "Constituição, códigos e Estatuto da OAB artigo por artigo, com texto oficial atualizado e a incidência real de cada dispositivo no Exame de Ordem.",
   alternates: { canonical: "/legislacao" },
 };
 export default async function LegislacaoIndex() {

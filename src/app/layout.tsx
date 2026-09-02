@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { JsonLd } from "@/lib/jsonld";
+import { operador } from "@/lib/legal";
 import { abs, site } from "@/lib/site";
 import "./globals.css";
 
@@ -82,6 +83,24 @@ export default function RootLayout({
                 url: site.url,
                 description: site.description,
                 logo: abs("/mascote.jpg"),
+                // Quem responde e por onde falar. Em conteúdo jurídico o
+                // buscador avalia procedência antes de posição — organização
+                // sem contato e sem página de "quem somos" é indistinguível
+                // de fazenda de conteúdo.
+                email: operador.email,
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  contactType: "customer support",
+                  email: operador.email,
+                  availableLanguage: ["pt-BR"],
+                },
+                areaServed: "BR",
+                knowsAbout: [
+                  "Exame de Ordem",
+                  "OAB",
+                  "Direito brasileiro",
+                  "Legislação brasileira",
+                ],
               },
               {
                 "@type": "WebSite",

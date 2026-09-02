@@ -96,3 +96,7 @@ export const getIncidenciaDoArtigo = cache(
   (leiSlug: string, artigoSlug: string) =>
     fonte.getIncidenciaDoArtigo(leiSlug, artigoSlug),
 );
+
+export const getArtigosDoExame = cache((exameSlug: string) =>
+  fonte.getArtigosDoExame(exameSlug),
+);

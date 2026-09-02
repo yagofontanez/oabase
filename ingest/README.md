@@ -37,15 +37,36 @@ python3 -m oabase_ingest.lote --de 32 --ate 46 --carregar
 | Faixa | Situação |
 |---|---|
 | 32º–46º | **14 ingeridas** (o 35º falha, ver abaixo) |
-| 18º–31º | Bloqueadas: `s.oab.org.br` devolve **502 persistente** nesses arquivos — falha na origem, não rate limit. Confirmado com GET direto: o 32º responde 200, o 31º não. |
-| 2º–17º | O arquivo não usa o rótulo "Caderno de Prova - Tipo 1" nessa época; a descoberta não os encontra. |
+| 3º–31º | **Bloqueadas na origem.** `s.oab.org.br` devolve **502 em todas**. Medido edição por edição: o 32º responde 200 e o 31º, 28º, 24º, 20º, 17º, 14º, 10º, 6º e 3º devolvem 502. O corte é exatamente entre o 31º e o 32º — tem cara de migração de armazenamento em que os objetos antigos não foram junto. Não é rate limit: espaçar, trocar User-Agent, mandar Referer e usar GET em vez de HEAD não muda nada. |
+| 30º e 31º | Únicas duas com cópia no Internet Archive (das demais o Wayback não guardou nada — verificado uma a uma). **Ainda não recuperadas:** o Archive responde 429 a este IP de forma persistente, inclusive depois de cinco minutos sem nenhuma requisição. Insistir prolonga o bloqueio; a tentativa se faz de outra rede, ou noutro dia. |
+| 2º | O arquivo não publica gabarito desta edição. |
 | 35º | A página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
 | 47º | Prova ainda não aplicada. |
+
+A descoberta já resolve as **44 edições que têm par prova+gabarito publicado**
+(de 46 listadas; faltam o 2º, sem gabarito, e o 47º, não aplicado), com as
+datas corretas vindas do edital. O que falta é só o arquivo do outro lado
+responder. No dia em que responder, um comando fecha o serviço:
+
+```bash
+python3 -m oabase_ingest.lote --de 2 --ate 46 --carregar
+```
+
+O `lote` não aborta na primeira falha: cada edição que não baixa entra em
+`pendentes` no resumo final, com o motivo. Rodar de novo é seguro — a carga é
+idempotente por edição.
 
 ## Variações reais entre edições
 
 Cada uma destas quebrou o parser e foi corrigida com dado real na mão:
 
+- **Rótulo do caderno**: `Caderno de Prova - Tipo 1` do 18º em diante,
+  `Caderno de Prova 01` até o 17º. Aceitar só a primeira forma deixava as
+  dezesseis edições mais antigas invisíveis na descoberta — elas apareciam no
+  manifesto como "sem prova" quando na verdade o link estava lá. Cuidado ao
+  afrouxar: `Caderno de Prova (Direito Civil)` também casa com "caderno de
+  prova", e é o caderno da **2ª fase**, um por área de opção. O filtro exige
+  ausência de parêntese no rótulo.
 - **Marcação da alternativa**: `(A)` nas provas recentes, `A)` nas antigas.
 - **Cabeçalho do gabarito**: `PROVA TIPO 1`, `UNIFICADO - TIPO 1` e `PROVA 1`
   aparecem em edições diferentes. A regra que funciona é aceitar a linha com

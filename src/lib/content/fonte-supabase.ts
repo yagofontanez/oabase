@@ -231,6 +231,32 @@ export const fonteSupabase: FonteDeConteudo = {
     }));
   },
 
+  async getArtigosDoExame(exameSlug) {
+    const { data, error } = await supabaseAnon().rpc("artigos_do_exame", {
+      p_exame_slug: exameSlug,
+    });
+    erro("artigos do exame", error);
+
+    type Linha = {
+      lei_slug: string;
+      lei_sigla: string;
+      artigo_slug: string;
+      numero: string;
+      caput: string;
+      questoes: number;
+      tem_comentario: boolean;
+    };
+    return ((data ?? []) as Linha[]).map((l) => ({
+      leiSlug: l.lei_slug,
+      leiSigla: l.lei_sigla,
+      artigoSlug: l.artigo_slug,
+      numero: l.numero,
+      caput: l.caput,
+      questoes: l.questoes,
+      temComentario: l.tem_comentario,
+    }));
+  },
+
   async getExames() {
     const { data, error } = await supabaseAnon()
       .from("exames")

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState } from "react";
 import type { Plano } from "@/lib/planos";
 import {
@@ -218,6 +220,30 @@ export function FormularioAssinatura({
         <p className="text-[0.86rem] text-muted">
           Você escolhe Pix, cartão ou boleto na tela seguinte, que é da Asaas —
           o OABase não recebe os dados do seu cartão.
+        </p>
+
+        {/* Informação obrigatória antes da compra: o CDC exige que o
+            arrependimento e as condições estejam claros na oferta, não
+            escondidos num link que ninguém abre depois de pagar. */}
+        <p className="text-[0.86rem] text-muted">
+          Sem renovação automática — o acesso vale pelo período contratado e
+          acaba nele. Você tem <strong className="font-semibold text-ink">7
+          dias</strong> para desistir e receber o valor de volta, sem precisar
+          justificar (art. 49 do CDC). Ao continuar, você aceita os{" "}
+          <Link
+            href="/termos"
+            className="font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4"
+          >
+            Termos de Uso
+          </Link>{" "}
+          e a{" "}
+          <Link
+            href="/privacidade"
+            className="font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4"
+          >
+            Política de Privacidade
+          </Link>
+          .
         </p>
 
         {sandbox && (

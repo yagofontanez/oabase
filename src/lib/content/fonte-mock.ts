@@ -57,6 +57,10 @@ export const fonteMock: FonteDeConteudo = {
   async getIncidenciaDoArtigo() {
     return [];
   },
+  // Sem banco não há vínculo questão-artigo para listar.
+  async getArtigosDoExame() {
+    return [];
+  },
   async getExames() {
     return [...exames].sort((a, b) => b.edicao - a.edicao);
   },

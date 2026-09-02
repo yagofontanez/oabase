@@ -16,6 +16,11 @@ const ESTATICAS: {
   { path: "/exames", priority: 0.9, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
+  // `/sobre` é sinal de procedência: conteúdo jurídico é avaliado por quem
+  // assina e com base em quê. Prioridade acima das outras institucionais.
+  { path: "/sobre", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/termos", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/privacidade", priority: 0.2, changeFrequency: "yearly" },
 ];
 
 /**

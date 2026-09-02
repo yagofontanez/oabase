@@ -2,6 +2,7 @@ import type {
   Artigo,
   Disciplina,
   Exame,
+  DispositivoDoExame,
   IncidenciaEmExame,
   Lei,
   Vizinho,
@@ -38,6 +39,12 @@ export type FonteDeConteudo = {
     leiSlug: string,
     artigoSlug: string,
   ): Promise<IncidenciaEmExame[]>;
+  /**
+   * Artigos cobrados numa edição. É o caminho inverso de
+   * `getIncidenciaDoArtigo` — sem ele, a ficha do exame não leva a lugar
+   * nenhum e as páginas profundas ficam sem caminho de rastreio.
+   */
+  getArtigosDoExame(exameSlug: string): Promise<DispositivoDoExame[]>;
   getExames(): Promise<Exame[]>;
   getExame(slug: string): Promise<Exame | null>;
   getDisciplinas(): Promise<Disciplina[]>;

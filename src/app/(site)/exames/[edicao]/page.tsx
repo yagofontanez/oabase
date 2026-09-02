@@ -7,7 +7,12 @@ import { PaywallCta } from "@/components/paywall-cta";
 import { JsonLd } from "@/lib/jsonld";
 import { formatarData } from "@/lib/format";
 import { abs } from "@/lib/site";
-import { getDisciplinas, getExame, getExames } from "@/lib/content/queries";
+import {
+  getArtigosDoExame,
+  getDisciplinas,
+  getExame,
+  getExames,
+} from "@/lib/content/queries";
 export const revalidate = 3600;
 export const dynamicParams = true;
 type Props = { params: Promise<{ edicao: string }> };
@@ -39,7 +44,10 @@ export default async function ExamePage({ params }: Props) {
   const { edicao } = await params;
   const exame = await getExame(edicao);
   if (!exame) notFound();
-  const disciplinas = await getDisciplinas();
+  const [disciplinas, dispositivos] = await Promise.all([
+    getDisciplinas(),
+    getArtigosDoExame(exame.slug),
+  ]);
   const nomes = new Map(disciplinas.map((d) => [d.slug, d.nome]));
   const linhas = [...exame.distribuicao].sort(
     (a, b) => b.questoes - a.questoes,
@@ -193,6 +201,56 @@ export default async function ExamePage({ params }: Props) {
             </Link>{" "}
             já está disponível.
           </p>
+        )}
+
+        {/* Dispositivos cobrados nesta prova.
+            Duas funções ao mesmo tempo: é conteúdo que só existe porque
+            temos o acervo — nenhuma outra ficha de exame diz qual artigo
+            caiu — e é o caminho que leva o rastreador da página do exame
+            para as páginas de artigo, que antes só apontavam para cá e
+            nunca recebiam link de volta. */}
+        {dispositivos.length > 0 && (
+          <section className="mt-20">
+            <h2 className="text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[2.3rem]">
+              Dispositivos cobrados nesta prova
+            </h2>
+            <p className="mt-3 max-w-[62ch] text-[0.98rem] text-body">
+              Artigos que o enunciado desta edição citou de forma expressa.
+              Não é a lista completa do que a prova exigiu — a banca costuma
+              narrar o caso sem nomear o dispositivo —, mas cada um destes é
+              verificável relendo a questão.
+            </p>
+
+            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+              {dispositivos.map((d) => (
+                <li key={`${d.leiSlug}-${d.artigoSlug}`}>
+                  <Link
+                    href={`/legislacao/${d.leiSlug}/${d.artigoSlug}`}
+                    className="group flex h-full flex-col gap-1.5 rounded-xl border border-line bg-surface p-5 transition-colors hover:border-brand-300"
+                  >
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-ink group-hover:text-brand-700">
+                        Art. {d.numero} {d.leiSigla}
+                      </span>
+                      {d.questoes > 1 && (
+                        <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.74rem] font-semibold text-brand-700 tabular-nums">
+                          {d.questoes} questões
+                        </span>
+                      )}
+                      {d.temComentario && (
+                        <span className="rounded-full bg-ouro-100 px-2 py-0.5 text-[0.74rem] font-semibold text-ouro-700">
+                          comentado
+                        </span>
+                      )}
+                    </span>
+                    <span className="line-clamp-2 text-[0.88rem] text-muted">
+                      {d.caput}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <PaywallCta

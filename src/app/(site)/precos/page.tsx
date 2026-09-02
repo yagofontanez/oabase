@@ -13,10 +13,17 @@ export const metadata: Metadata = {
     "Acesso ao banco completo de questões comentadas, simulados, caderno de erros e revisão espaçada. Plano que dura até o dia da sua prova.",
   alternates: { canonical: "/precos" },
 };
+/* As perguntas descrevem o que existe hoje. Citar recurso que ainda não foi
+   ao ar numa página de preço não é otimismo — é promessa que a pessoa paga
+   para ter. */
 const perguntas = [
   {
     q: "O que continua de graça?",
-    a: "Toda a legislação comentada, as súmulas, o glossário, as fichas dos exames e as estatísticas de incidência. Sem cadastro e sem limite de leitura.",
+    a: "Toda a legislação comentada, as fichas dos exames e as estatísticas de incidência. Sem cadastro e sem limite de leitura.",
+  },
+  {
+    q: "Posso desistir depois de pagar?",
+    a: "Pode, em até 7 dias corridos, sem precisar justificar — é o direito de arrependimento do art. 49 do Código de Defesa do Consumidor. Basta escrever para o nosso contato e o valor volta integral.",
   },
   {
     q: "O que acontece quando eu faço a prova?",
@@ -24,7 +31,7 @@ const perguntas = [
   },
   {
     q: "Como eu pago?",
-    a: "Pix ou cartão. No Pix a liberação é imediata e não há recorrência — você paga uma vez pelo período contratado.",
+    a: "Pix, cartão ou boleto, pela Asaas. Não há recorrência — você paga uma vez pelo período contratado, e o OABase não recebe os dados do seu cartão.",
   },
 ];
 export default async function PrecosPage() {
@@ -32,6 +39,19 @@ export default async function PrecosPage() {
   const dias = diasAte(proximo.data);
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "@id": abs("/precos#faq"),
+          mainEntity: perguntas.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: { "@type": "Answer", text: item.a },
+          })),
+        }}
+      />
+
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -139,9 +159,23 @@ export default async function PrecosPage() {
           </dl>
         </section>
 
-        <p className="mt-14 max-w-[62ch] text-[0.85rem] text-muted">
-          Preços de referência para o desenho do produto — ainda não há checkout
-          ativo.
+        <p className="mt-14 max-w-[68ch] text-[0.85rem] text-muted">
+          Pagamento por Pix, cartão ou boleto, processado pela Asaas. Sem
+          renovação automática. Ao assinar você aceita os{" "}
+          <Link
+            href="/termos"
+            className="font-medium text-brand-600 underline decoration-brand-200 underline-offset-4"
+          >
+            Termos de Uso
+          </Link>{" "}
+          e a{" "}
+          <Link
+            href="/privacidade"
+            className="font-medium text-brand-600 underline decoration-brand-200 underline-offset-4"
+          >
+            Política de Privacidade
+          </Link>
+          .
         </p>
       </Container>
     </>

@@ -13,9 +13,11 @@ da página índice. A data da prova vem do rótulo do caderno, e não de palpite
 from __future__ import annotations
 
 import html
+import json
 import re
 import time
 import unicodedata
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -151,7 +153,22 @@ def detalhar(edicao: Edicao, pausa: float = 0.7) -> Edicao:
                 and "caderno de prova" not in normalizado:
             continue
 
-        if "caderno de prova" in normalizado and "tipo 1" in normalizado:
+        # O rótulo do caderno muda com a época:
+        #   até o 17º ....... "Caderno de Prova 01"  (numerado)
+        #   do 18º em diante  "Caderno de Prova - Tipo 1"
+        # Sem aceitar as duas formas, as dezesseis primeiras edições ficam
+        # invisíveis — foi por isso que elas constavam como "sem prova".
+        #
+        # O que NÃO pode entrar: "Caderno de Prova (Direito Civil)" e
+        # semelhantes. Esses são os cadernos da 2ª fase, publicados na mesma
+        # página, um por área de opção — prova discursiva, não objetiva.
+        eh_caderno = "caderno de prova" in normalizado and "(" not in rotulo
+        tipo_um = (
+            "tipo 1" in normalizado
+            or re.search(r"caderno de prova\s*0?1\b", normalizado) is not None
+        )
+
+        if eh_caderno and tipo_um:
             edicao.prova_url = url
             if data:
                 edicao.data_prova = _para_iso(data)
@@ -169,5 +186,50 @@ def detalhar(edicao: Edicao, pausa: float = 0.7) -> Edicao:
     return edicao
 
 
+def _copia_no_arquivo(url: str) -> str | None:
+    """URL da cópia do Internet Archive, se existir.
+
+    O `id_` no caminho pede os bytes originais, sem a barra de navegação que
+    o Wayback injeta em página HTML. Sem ele, um PDF volta embrulhado e
+    `pdftotext` recusa.
+    """
+    consulta = (
+        "https://archive.org/wayback/available?url="
+        + urllib.parse.quote(url, safe="")
+    )
+    try:
+        req = urllib.request.Request(consulta, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=45) as r:
+            dados = json.load(r)
+    except Exception:
+        return None
+
+    instantaneo = (dados.get("archived_snapshots") or {}).get("closest")
+    if not instantaneo or not instantaneo.get("available"):
+        return None
+    return re.sub(r"/web/(\d+)/", r"/web/\1id_/", instantaneo["url"], count=1)
+
+
 def baixar_arquivo(url: str, destino) -> None:
-    destino.write_bytes(_obter(url, timeout=180))
+    """Baixa da OAB; se a origem falhar de vez, tenta o Internet Archive.
+
+    Não é redundância decorativa. Todas as edições de 3º a 31º devolvem 502
+    permanente em `s.oab.org.br` — o corte é exato entre o 31º e o 32º, e
+    parece migração de armazenamento que deixou os objetos antigos para trás.
+    São documentos públicos, e o Archive tem cópia de parte deles.
+
+    A cópia arquivada é o **mesmo arquivo** publicado pela banca, não uma
+    transcrição: a procedência do enunciado continua sendo a fonte oficial.
+    """
+    try:
+        destino.write_bytes(_obter(url, timeout=180))
+        return
+    except Exception as erro_origem:
+        alternativa = _copia_no_arquivo(url)
+        if not alternativa:
+            raise
+        print(f"    origem falhou ({erro_origem}); usando cópia do Internet Archive")
+        # Sem `tentativas` alto aqui: o Archive limita por IP e responde 429
+        # em série. Insistir muito numa execução em lote atrasa todas as
+        # outras edições sem aumentar a chance desta.
+        destino.write_bytes(_obter(alternativa, timeout=240, tentativas=3))

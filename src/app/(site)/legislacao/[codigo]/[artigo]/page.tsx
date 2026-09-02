@@ -31,9 +31,25 @@ export async function generateStaticParams() {
   return populares.map((a) => ({ codigo: a.leiSlug, artigo: a.slug }));
 }
 
-/** Texto usado em <title>, meta description e OG — escrito uma vez só. */
+/**
+ * Texto usado em <title>, meta description e OG — escrito uma vez só.
+ *
+ * O corte é pelo total, não por um número fixo de caracteres do caput: o
+ * prefixo varia de "do Código Penal" a "do Código de Processo Civil", e um
+ * `slice(0, 120)` fixo estourava o limite justamente nas leis de nome longo.
+ * O buscador trunca por volta de 160 caracteres, e descrição cortada no meio
+ * de uma palavra é a primeira coisa que a pessoa lê do resultado.
+ */
+const LIMITE_DA_DESCRICAO = 155;
+
 function resumoDoArtigo(nomeLei: string, numero: string, caput: string) {
-  return `Art. ${formatarNumeroDeArtigo(numero)} ${daLei(nomeLei)} ${nomeLei} comentado para a OAB: ${caput.slice(0, 120)}…`;
+  const prefixo = `Art. ${formatarNumeroDeArtigo(numero)} ${daLei(nomeLei)} ${nomeLei} comentado para a OAB: `;
+  const sobra = LIMITE_DA_DESCRICAO - prefixo.length - 1; // 1 para a reticência
+  if (caput.length <= sobra) return prefixo + caput;
+  const cortado = caput.slice(0, Math.max(sobra, 0));
+  const espaco = cortado.lastIndexOf(" ");
+  const trecho = espaco > 40 ? cortado.slice(0, espaco) : cortado;
+  return `${prefixo}${trecho.trimEnd()}…`;
 }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { codigo, artigo: artigoSlug } = await params;

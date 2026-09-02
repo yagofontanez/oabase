@@ -28,7 +28,7 @@ export const planos: Plano[] = [
     resumo: "Acesso completo para ver se o método funciona pra você.",
     itens: [
       "Banco de questões completo",
-      "Comentário em todas as questões",
+      "Gabarito oficial da FGV em todas elas",
       "Cancela sozinho, sem cobrança automática",
     ],
     destaque: false,
@@ -64,7 +64,7 @@ export const planos: Plano[] = [
       "Caderno de erros automático",
       "Revisão espaçada",
       "Cronograma até a data do exame",
-      "Estatísticas de desempenho por tema",
+      "Estatísticas de desempenho por disciplina",
     ],
     destaque: true,
     cta: "Assinar até a prova",
