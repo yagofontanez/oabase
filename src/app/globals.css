@@ -165,6 +165,47 @@
     color: #ffffff;
   }
 
+  /* ---- Bloco de carregamento.
+       Uma forma cinza no lugar exato do conteúdo que está vindo, e não um
+       giro no meio da tela: a segunda diz "espere", a primeira diz "é aqui
+       que vai aparecer" — e a diferença aparece na percepção de tempo, não
+       no tempo. O brilho passa da esquerda para a direita, no mesmo ritmo do
+       `oab-brilho` que a marca já usa. ---- */
+  .carregando {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    /* `sunk` sobre `paper` são quase a mesma cor: os blocos sumiam no fundo e
+       a tela lia como página desbotada, não como carregamento. `line` é o
+       primeiro degrau que se enxerga de longe sem virar mancha escura. */
+    background: var(--color-line);
+  }
+  .carregando::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: oab-varredura 1.4s ease-in-out infinite;
+  }
+
+  /* ---- Ponto de navegação pendente: aparece no item clicado enquanto a
+       rota nova não chega. Só existe quando a fronteira de carregamento
+       ainda não tomou a tela — em navegação instantânea ninguém o vê. ---- */
+  .ponto-pendente {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: oab-pulso 1.1s ease-in-out infinite;
+  }
+
   /* ---- Tecla: atalho de teclado nas ferramentas de edição.
        Elas são feitas para a mão não sair do teclado, e um atalho que não
        aparece na tela é um atalho que ninguém usa. ---- */
@@ -435,6 +476,15 @@
   }
   to {
     background-position: -200% 0;
+  }
+}
+
+@keyframes oab-varredura {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
   }
 }
 

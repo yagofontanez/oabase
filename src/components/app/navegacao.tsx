@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
 /**
@@ -125,6 +125,22 @@ const ITENS = [
 
 function estaAtivo(caminho: string, href: string) {
   return href === "/app" ? caminho === "/app" : caminho.startsWith(href);
+}
+
+/**
+ * Ponto no item que a pessoa acabou de clicar.
+ *
+ * `useLinkStatus` só reporta pendência dentro do próprio `<Link>`. Isto cobre
+ * a janela em que a fronteira de carregamento ainda não apareceu — rede lenta,
+ * prefetch incompleto — e some sozinho quando a rota chega. Em navegação
+ * instantânea ninguém chega a ver.
+ */
+function PontoPendente() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span aria-hidden="true" className="ponto-pendente ml-auto shrink-0" />
+  );
 }
 
 function Icone({ children }: { children: React.ReactNode }) {
@@ -326,6 +342,7 @@ export function NavegacaoApp({
       )}
       <Icone>{item.icone}</Icone>
       <span className={recolhida ? "sr-only" : undefined}>{item.rotulo}</span>
+      {!recolhida && <PontoPendente />}
     </Link>
   );
 
