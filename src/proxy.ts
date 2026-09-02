@@ -37,7 +37,13 @@ export async function proxy(request: NextRequest) {
 
   const rota = request.nextUrl.pathname;
 
-  if (!user && rota.startsWith("/app")) {
+  // `startsWith("/app")` também casa com `/apple-icon.png` — e mandava para
+  // o login justamente o ícone que o iPhone busca ao adicionar o site à tela
+  // de início, sem sessão nenhuma. A fronteira é o segmento `/app`, não o
+  // prefixo textual: ou a rota é exatamente `/app`, ou desce a partir dela.
+  const noProduto = rota === "/app" || rota.startsWith("/app/");
+
+  if (!user && noProduto) {
     const destino = request.nextUrl.clone();
     destino.pathname = "/entrar";
     destino.searchParams.set("proximo", rota);

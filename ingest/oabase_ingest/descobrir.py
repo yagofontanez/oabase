@@ -48,6 +48,19 @@ class Edicao:
         return bool(self.prova_url and self.gabarito_url and self.data_prova)
 
 
+def _em_https(url: str) -> str:
+    """Sobe para HTTPS antes de pedir o arquivo.
+
+    Os links saem da página do arquivo em `http://`, e em `http://` o
+    servidor devolve **502 para tudo publicado até o 31º Exame** — só o que é
+    recente responde. Em `https://` o mesmo endereço devolve 200 e o PDF
+    inteiro. Foi por isso que vinte e nove edições pareceram perdidas: o
+    502 não vinha de banda nem de bloqueio, vinha do esquema da URL. Trocar
+    o esquema custa nada e é o que torna a faixa antiga acessível.
+    """
+    return url.replace("http://", "https://", 1) if url.startswith("http://") else url
+
+
 def _obter(url: str, timeout: int = 90, tentativas: int = 6) -> bytes:
     """GET com recuo exponencial.
 
@@ -55,6 +68,7 @@ def _obter(url: str, timeout: int = 90, tentativas: int = 6) -> bytes:
     seguidas — é limitação de banda, não bloqueio: esperar e repetir resolve.
     Tratar isso como falha definitiva descartaria metade do arquivo.
     """
+    url = _em_https(url)
     espera = 5.0
     for tentativa in range(1, tentativas + 1):
         try:

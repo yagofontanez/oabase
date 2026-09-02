@@ -14,7 +14,18 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       // A fronteira do produto, repetida aqui de propósito: metadata da
       // rota e robots.txt bloqueiam de formas diferentes, e nenhum dos
       // dois deve ser o único mecanismo.
-      disallow: ["/app", "/entrar", "/criar-conta", "/checkout", "/api"],
+      //
+      // `Disallow: /app` casaria por prefixo e levaria junto
+      // `/apple-icon.png`. São duas regras: a rota exata, ancorada com `$`,
+      // e tudo que desce dela.
+      disallow: [
+        "/app$",
+        "/app/",
+        "/entrar",
+        "/criar-conta",
+        "/checkout",
+        "/api",
+      ],
     },
     // As partições são listadas uma a uma, e é aqui que o Google as
     // descobre. Não existe `/sitemap.xml`: com `generateSitemaps`, o Next

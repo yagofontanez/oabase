@@ -106,13 +106,17 @@ A distribuição por disciplina exibida na landing e em `/estatisticas` ainda sa
 de `media_por_prova`, que é estimativa. Ela só pode ser calculada dos dados
 reais quando houver questões com `disciplina_confirmada = true` em volume.
 
-**O arquivo da OAB só serve da 32ª edição em diante.** Medido edição por
-edição: 32º responde 200; 31º, 28º, 24º, 20º, 17º, 14º, 10º, 6º e 3º devolvem
-502. O corte é exato e não cede a espaçamento, User-Agent, Referer nem GET no
-lugar de HEAD — é falha de origem, com cara de migração de armazenamento que
-deixou os objetos antigos para trás. `baixar_arquivo` cai para a cópia do
-Internet Archive quando a origem falha; o Archive tem só parte delas e limita
-por IP com agressividade.
+**O arquivo da OAB exige HTTPS para tudo até o 31º Exame.** Os links saem da
+página em `http://`, e em `http://` o `s.oab.org.br` devolve **502 em toda a
+faixa antiga** — 32º responde 200, 31º para trás não. O mesmo endereço em
+`https://` devolve 200 e o PDF inteiro. O corte por edição é tão limpo que a
+leitura natural é migração de armazenamento que deixou os objetos antigos
+para trás, e foi essa leitura que custou vinte e nove edições dadas como
+perdidas: espaçamento, User-Agent, Referer, GET no lugar de HEAD e Internet
+Archive foram todos testados antes dos quatro caracteres que resolviam.
+`_em_https()` sobe o esquema dentro de `_obter`, então vale também para
+manifesto já salvo. Erro de servidor com fronteira exata demais é suspeita
+contra o cliente, não contra o servidor.
 
 **O rótulo do caderno muda com a época** — `Caderno de Prova - Tipo 1` do 18º
 em diante, `Caderno de Prova 01` até o 17º. A descoberta aceitava só a

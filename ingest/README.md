@@ -37,16 +37,13 @@ python3 -m oabase_ingest.lote --de 32 --ate 46 --carregar
 | Faixa | Situação |
 |---|---|
 | 32º–46º | **14 ingeridas** (o 35º falha, ver abaixo) |
-| 3º–31º | **Bloqueadas na origem.** `s.oab.org.br` devolve **502 em todas**. Medido edição por edição: o 32º responde 200 e o 31º, 28º, 24º, 20º, 17º, 14º, 10º, 6º e 3º devolvem 502. O corte é exatamente entre o 31º e o 32º — tem cara de migração de armazenamento em que os objetos antigos não foram junto. Não é rate limit: espaçar, trocar User-Agent, mandar Referer e usar GET em vez de HEAD não muda nada. |
-| 30º e 31º | Únicas duas com cópia no Internet Archive (das demais o Wayback não guardou nada — verificado uma a uma). **Ainda não recuperadas:** o Archive responde 429 a este IP de forma persistente, inclusive depois de cinco minutos sem nenhuma requisição. Insistir prolonga o bloqueio; a tentativa se faz de outra rede, ou noutro dia. |
+| 3º–31º | Acessíveis. **Exigem HTTPS** — ver abaixo. |
 | 2º | O arquivo não publica gabarito desta edição. |
 | 35º | A página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
 | 47º | Prova ainda não aplicada. |
 
-A descoberta já resolve as **44 edições que têm par prova+gabarito publicado**
-(de 46 listadas; faltam o 2º, sem gabarito, e o 47º, não aplicado), com as
-datas corretas vindas do edital. O que falta é só o arquivo do outro lado
-responder. No dia em que responder, um comando fecha o serviço:
+São **44 edições com par prova+gabarito publicado** (de 46 listadas; faltam o
+2º, sem gabarito, e o 47º, não aplicado). Um comando faz todas:
 
 ```bash
 python3 -m oabase_ingest.lote --de 2 --ate 46 --carregar
@@ -54,7 +51,26 @@ python3 -m oabase_ingest.lote --de 2 --ate 46 --carregar
 
 O `lote` não aborta na primeira falha: cada edição que não baixa entra em
 `pendentes` no resumo final, com o motivo. Rodar de novo é seguro — a carga é
-idempotente por edição.
+idempotente por edição, e o download é pulado quando o PDF já está em
+`provas/`.
+
+### O 502 era o esquema da URL, não o servidor
+
+Os links saem da página do arquivo em `http://`. Em `http://`, o
+`s.oab.org.br` devolve **502 para tudo publicado até o 31º Exame** e 200 para
+o que é recente — o corte é exato entre o 31º e o 32º. O mesmo endereço em
+`https://` devolve 200 e o PDF inteiro, em toda a faixa.
+
+Isso custou uma investigação inteira na direção errada: como o corte era
+limpo por edição, a explicação óbvia era migração de armazenamento que tinha
+deixado os objetos antigos para trás, e as 29 edições foram dadas como
+perdidas. Espaçamento, User-Agent, Referer, GET no lugar de HEAD e cópia no
+Internet Archive foram todos testados — menos trocar quatro caracteres na
+URL. Quando um erro de servidor se distribui com fronteira exata demais,
+desconfie do cliente antes de desconfiar do servidor.
+
+`_em_https()` em `descobrir.py` sobe o esquema dentro de `_obter`, então vale
+também para os manifestos já salvos com `http://`.
 
 ## Variações reais entre edições
 
