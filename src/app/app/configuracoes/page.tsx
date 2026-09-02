@@ -183,6 +183,12 @@ export default async function ConfiguracoesPage() {
             >
               Redação de comentário
             </Link>
+            <Link
+              href="/app/vinculos"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Vincular dispositivo
+            </Link>
           </div>
         </Bloco>
       )}

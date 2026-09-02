@@ -133,6 +133,7 @@ const FORA_DO_MENU: Record<string, string> = {
   // O caminho até elas está em Configurações, e só para quem é editor.
   "/app/revisao": "Triagem de disciplina",
   "/app/redacao": "Redação de comentário",
+  "/app/vinculos": "Vincular dispositivo",
 };
 
 /** Rótulo da tela atual, para o cabeçalho. Uma lista só, uma verdade só. */
