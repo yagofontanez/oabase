@@ -93,6 +93,16 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/forum",
+    rotulo: "Fórum",
+    icone: (
+      <>
+        <path d="M8 4.5h11A1.5 1.5 0 0 1 20.5 6v7A1.5 1.5 0 0 1 19 14.5h-2v3l-3.5-3H8A1.5 1.5 0 0 1 6.5 13V6A1.5 1.5 0 0 1 8 4.5z" />
+        <path d="M6.5 8H5a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 5 18h1v2.5l3-2.5" />
+      </>
+    ),
+  },
+  {
     href: "/app/suporte",
     rotulo: "Suporte",
     icone: (

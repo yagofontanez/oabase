@@ -282,6 +282,65 @@ recusa `indexavel = true` sem comentário. Estava certo no código do sitemap e
 na cabeça de quem escreveu; agora é impossível de violar por engano — que é a
 diferença entre uma regra e um combinado.
 
+## Papéis internos
+
+São três capacidades, e a separação é deliberada — cada uma mora numa tabela
+própria em `interno`, sem política e sem grant, e se concede por SQL:
+
+| Tabela | Dá acesso a | Função |
+|---|---|---|
+| `interno.editores` | `/app/revisao`, `/app/redacao`, `/app/vinculos` | `sou_editor()` |
+| `interno.admins` | `/app/admin`, fila de suporte, moderação do fórum | `sou_admin()` |
+| `interno.segredos` | webhook e cron, por segredo em variável de ambiente | — |
+
+**Editor não é admin.** Acesso de escrita ao conteúdo não pode dar, de
+brinde, a lista de clientes: e-mail, plano e quanto cada um pagou. É a mesma
+razão de o segredo do cron ser separado do segredo do webhook.
+
+**Nenhum sinalizador mora em `perfis`.** A política de lá é de dono com
+`with check (auth.uid() = id)` — uma coluna `admin` ali seria uma coluna que a
+própria pessoa marca como verdadeira, do navegador, com a chave anônima.
+
+## Suporte
+
+`/app/suporte` para quem abre, `/app/admin/suporte` para a fila — a **mesma
+tela**, com `equipe` mudando rótulo e permissão. Duas telas quase iguais
+divergiriam na primeira mudança, e a que divergiria em silêncio é a do
+cliente, que ninguém da equipe abre.
+
+**`da_equipe` não é escolha de quem escreve.** A política de RLS exige
+`da_equipe = sou_admin()`; sem isso, um cliente inseriria uma mensagem
+marcada como resposta oficial na própria tela.
+
+**O e-mail nunca derruba o ticket.** Ele já está gravado quando o envio
+acontece — falha vira log. Recusar o chamado porque o e-mail falhou perderia
+justamente a mensagem de quem está com problema. Destino em `EMAIL_SUPORTE`,
+com `dev.yagofontanez@gmail.com` como padrão.
+
+## Fórum
+
+`/app/forum`, aberto a **qualquer conta** — com plano ou sem — e fechado a
+quem não está logado. A escolha é de sobrevivência do domínio: conteúdo
+escrito por terceiros, indexável, num site cuja aquisição é 100% orgânica é a
+forma mais rápida de ser avaliado como fazenda de conteúdo, e moderar fórum
+público é trabalho que ninguém aqui tem.
+
+**`autor_nome` é cópia.** Juntar com `perfis` na leitura exigiria abrir a
+tabela de dados pessoais para todo mundo.
+
+**Remoção é marca, não `delete`.** Apagar a linha some com a resposta que
+citava ela e reabre a discussão do zero.
+
+**O filtro de linguagem compara palavra inteira sobre texto normalizado** —
+minúsculas, sem acento, com os substitutos de teclado (`0`→o, `3`→e, `@`→a) e
+sem letra repetida. Procurar trecho dentro de palavra barraria "assumiu" por
+conter "cu", e numa base jurídica isso aconteceria no primeiro dia. A segunda
+passada compara o texto sem separador nenhum, para pegar "c a r a l h o", e
+só vale para termos de quatro letras ou mais — abaixo disso a colisão entre
+palavras vizinhas é certa. **Ela roda no banco, dentro de `criar_topico` e
+`responder_topico`**, porque validação no navegador é contornada por quem
+abre o console, que é exatamente quem o filtro existe para conter.
+
 ## Quadro de anotações
 
 `/app/anotacoes` é uma tela livre (React Flow, `@xyflow/react`) com cartões de

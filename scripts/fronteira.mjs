@@ -95,6 +95,11 @@ for (const tabela of [
   "assinaturas",
   "tickets",
   "ticket_mensagens",
+  // O fórum é aberto a qualquer conta, e fechado a quem não tem nenhuma:
+  // conteúdo de terceiro indexável é o caminho curto para o domínio ser
+  // avaliado como fazenda de conteúdo.
+  "forum_topicos",
+  "forum_respostas",
 ]) {
   caso(`anônimo NÃO lê ${tabela}`, async () => {
     const { status, linhas } = await selecionar(tabela, "id");
@@ -157,6 +162,30 @@ caso("confirmar_pagamento exige o segredo do banco", async () => {
   });
   if (!/segredo inválido/.test(corpo)) {
     throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
+  }
+});
+
+caso("anônimo não abre tópico no fórum", async () => {
+  const { corpo } = await chamar("criar_topico", {
+    p_titulo: "Tópico de teste da fronteira",
+    p_corpo: "Não deveria existir depois desta chamada.",
+    p_disciplina: null,
+  });
+  if (!/não autorizado/.test(corpo)) {
+    throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
+  }
+});
+
+caso("o filtro de linguagem está de pé", async () => {
+  // Chamado como anônimo: a recusa por autorização vem antes, então o que se
+  // afirma aqui é que a função existe e não devolve id nenhum.
+  const { corpo } = await chamar("criar_topico", {
+    p_titulo: "Título qualquer para o teste",
+    p_corpo: "que p0rra de prova foi essa",
+    p_disciplina: null,
+  });
+  if (/^"[0-9a-f-]{36}"$/.test(corpo.trim())) {
+    throw new Error("criou tópico");
   }
 });
 
