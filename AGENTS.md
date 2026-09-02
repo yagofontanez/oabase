@@ -314,6 +314,23 @@ cobrança já está `CONFIRMED`. Pelo mesmo motivo, evento irrelevante devolve
 **Renovação soma ao que resta.** Quem renova uma semana antes não pode perder
 a semana que já pagou; a base do cálculo é `max(fim)` da assinatura ativa.
 
+**`cortesia` é um plano do banco, não do produto.** Acesso liberado sem
+pagamento (convidado, parceiro, teste longo). Está na restrição de
+`assinaturas` e **fora** da de `cobrancas` — cortesia não tem fatura — e fora
+de `planos.ts`, que é o que `/api/assinar` lê: o que não está lá não pode ser
+comprado. Concede-se por SQL:
+
+```sql
+insert into public.assinaturas (user_id, plano, status, inicio, fim)
+select id, 'cortesia', 'ativa', now(), timestamptz '2126-01-01'
+from auth.users where email = '...';
+```
+
+Não use `anual` com `fim` distante no lugar disso: cortesia disfarçada de
+venda some da receita só se alguém lembrar de descontar à mão, e volta como
+churn no dia em que expirar. `/app/configuracoes` trata o caso — mostra
+"Cortesia" e esconde a data de sentinela, que não é informação para ninguém.
+
 **A duração vai em dias, do TypeScript para o banco.** `ate-a-prova` depende
 da data do próximo exame, que mora em `src/lib/content/data.ts`. Duplicar essa
 data numa tabela de configuração criaria duas verdades que sairiam de

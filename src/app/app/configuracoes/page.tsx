@@ -53,10 +53,18 @@ export default async function ConfiguracoesPage() {
     ? formatarData(String(usuario.created_at).slice(0, 10))
     : null;
 
-  const nomeDoPlano = assinatura
-    ? (planos.find((p) => p.chave === assinatura.plano)?.nome ??
-      assinatura.plano)
-    : null;
+  // `cortesia` não está em `planos.ts` de propósito — o que está lá é o que
+  // dá para comprar, e cortesia se concede por SQL. O nome e a validade dela
+  // são tratados aqui: "Válido até 02/09/2126" é uma data de sentinela
+  // vazando para a tela, e quem recebeu cortesia não precisa saber que existe
+  // um prazo daqui a cem anos.
+  const cortesia = assinatura?.plano === "cortesia";
+  const nomeDoPlano = cortesia
+    ? "Cortesia"
+    : assinatura
+      ? (planos.find((p) => p.chave === assinatura.plano)?.nome ??
+        assinatura.plano)
+      : null;
 
   return (
     <div className="painel-conteudo flex max-w-[980px] flex-col gap-6">
@@ -106,14 +114,20 @@ export default async function ConfiguracoesPage() {
 
       <Bloco
         titulo="Plano"
-        descricao="O plano dura até o dia da prova que você escolher, sem renovação automática."
+        descricao={
+          cortesia
+            ? "Acesso concedido pela equipe do OABase. Não há cobrança nem renovação."
+            : "O plano dura até o dia da prova que você escolher, sem renovação automática."
+        }
       >
         {assinatura ? (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-paper p-5">
             <div className="flex flex-col gap-1">
               <p className="text-[1.2rem] font-bold text-ink">{nomeDoPlano}</p>
               <p className="text-[0.93rem] text-muted">
-                Válido até {formatarData(String(assinatura.fim).slice(0, 10))}
+                {cortesia
+                  ? "Acesso liberado, sem prazo e sem cobrança"
+                  : `Válido até ${formatarData(String(assinatura.fim).slice(0, 10))}`}
               </p>
             </div>
             <span
