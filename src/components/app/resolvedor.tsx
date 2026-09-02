@@ -182,7 +182,9 @@ export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
   const progresso = ((indice + (respondida ? 1 : 0)) / fila.length) * 100;
 
   return (
-    <div className="mx-auto flex w-full max-w-[820px] flex-col gap-4">
+    /* Sem teto próprio: quem define a largura é a coluna da tela, para o
+       cartão da questão nascer alinhado com o painel de filtros acima. */
+    <div className="flex w-full flex-col gap-4">
       {/* ---- Progresso ---- */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
