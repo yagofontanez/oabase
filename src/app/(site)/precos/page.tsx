@@ -91,10 +91,15 @@ export default async function PrecosPage() {
           {planos.map((plano) => (
             <div
               key={plano.chave}
-              className={`flex flex-col gap-6 rounded-2xl bg-surface p-8 ${
+              // O destaque vem de um `ring` somado à borda, não de uma borda
+              // mais grossa: `border-2` contra `border` faz o cartão em
+              // destaque medir 2px a menos por dentro, e todo o conteúdo dele
+              // — inclusive o botão — desce 1px em relação aos vizinhos. O
+              // ring é desenhado por sombra e não ocupa espaço.
+              className={`flex flex-col gap-6 rounded-2xl border bg-surface p-8 ${
                 plano.destaque
-                  ? "border-2 border-ouro-500"
-                  : "border border-line"
+                  ? "border-ouro-500 ring-1 ring-ouro-500 ring-inset"
+                  : "border-line"
               }`}
             >
               <div className="flex flex-col gap-1">
@@ -130,7 +135,10 @@ export default async function PrecosPage() {
 
               <Link
                 href={`/app/assinar?plano=${plano.chave}`}
-                className={`rounded-full px-6 py-3 text-center font-semibold transition-colors ${
+                // Altura fixa pelo mesmo motivo da landing: rótulo que quebra
+                // em duas linhas não pode deixar o botão mais alto que o do
+                // cartão ao lado.
+                className={`flex min-h-[3.4rem] items-center justify-center rounded-full px-4 text-center leading-tight font-semibold transition-colors ${
                   plano.destaque
                     ? "bg-ouro-500 text-brand-900 hover:bg-ouro-400"
                     : "border border-line text-ink hover:border-brand-300 hover:text-brand-600"

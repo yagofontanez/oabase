@@ -607,10 +607,13 @@ export default async function Home() {
               {planos.map((plano) => (
                 <div
                   key={plano.chave}
-                  className={`flex flex-col gap-5 rounded-[18px] p-7 ${
+                  // A borda transparente no cartão em destaque não é enfeite:
+                  // sem ela o cartão mede 2px a menos que os vizinhos e todo
+                  // o conteúdo dele — preço, itens, botão — desce 1px.
+                  className={`flex flex-col gap-5 rounded-[18px] border p-7 ${
                     plano.destaque
-                      ? "bg-surface"
-                      : "border border-white/15 bg-white/[0.06]"
+                      ? "border-transparent bg-surface"
+                      : "border-white/15 bg-white/[0.06]"
                   }`}
                 >
                   <div className="flex flex-col gap-1">
@@ -646,7 +649,12 @@ export default async function Home() {
 
                   <Link
                     href={`/app/assinar?plano=${plano.chave}`}
-                    className={`rounded-full px-6 py-3 text-center text-[0.94rem] font-semibold transition-colors ${
+                    // Altura fixa em vez de `py`: "Assinar até a prova" e
+                    // "Começar por R$ 1" quebram em duas linhas na largura do
+                    // cartão, e com padding vertical o botão que quebra fica
+                    // mais alto que o vizinho. A altura comporta as duas
+                    // linhas, então quebrar deixa de mudar o tamanho.
+                    className={`flex min-h-[3.4rem] items-center justify-center rounded-full px-4 text-center text-[0.94rem] leading-tight font-semibold transition-colors ${
                       plano.destaque
                         ? "bg-brand-600 text-white hover:bg-brand-700"
                         : "border border-white/25 text-white hover:bg-white hover:text-brand-800"
