@@ -3,6 +3,7 @@ import {
   getArtigosIndexaveis,
   getExames,
   getLeis,
+  getPosts,
   getSumulas,
 } from "./queries";
 
@@ -23,6 +24,7 @@ const ESTATICAS: {
   // solta. As páginas de cada súmula seguem o portão de qualidade e só
   // entram quando tiverem comentário.
   { path: "/sumulas", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
   // `/sobre` é sinal de procedência: conteúdo jurídico é avaliado por quem
@@ -47,11 +49,12 @@ export async function getUrlsIndexaveis(): Promise<
     changeFrequency: Entrada["changeFrequency"];
   }[]
 > {
-  const [leis, artigos, exames, sumulas] = await Promise.all([
+  const [leis, artigos, exames, sumulas, posts] = await Promise.all([
     getLeis(),
     getArtigosIndexaveis(),
     getExames(),
     getSumulas(),
+    getPosts(),
   ]);
 
   return [
@@ -82,6 +85,15 @@ export async function getUrlsIndexaveis(): Promise<
         priority: 0.6,
         changeFrequency: "yearly" as const,
       })),
+    // Post não passa pelo portão de qualidade porque ele **é** o trabalho
+    // autoral: se está publicado, alguém escreveu e revisou. O que filtra
+    // rascunho é a própria RLS de `posts`.
+    ...posts.map((post) => ({
+      path: `/blog/${post.slug}`,
+      lastModified: post.publicadoEm,
+      priority: 0.7,
+      changeFrequency: "yearly" as const,
+    })),
   ];
 }
 

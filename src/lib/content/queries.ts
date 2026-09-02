@@ -58,6 +58,9 @@ export const getSumulas = cache((tribunal?: "stf" | "stj" | "tst" | "tse") =>
 );
 export const getSumula = cache((slug: string) => fonte.getSumula(slug));
 
+export const getPosts = cache(() => fonte.getPosts());
+export const getPost = cache((slug: string) => fonte.getPost(slug));
+
 export const getExames = cache(() => fonte.getExames());
 
 /**

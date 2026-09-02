@@ -56,6 +56,19 @@ export type Sumula = {
   indexavel: boolean;
 };
 
+/**
+ * Post do blog. `publicadoEm` nulo não chega até aqui: a política de RLS de
+ * `posts` já filtra o que ainda não foi publicado, então rascunho não vaza
+ * nem por consulta direta com a chave anônima.
+ */
+export type Post = {
+  slug: string;
+  titulo: string;
+  resumo: string;
+  corpo: string;
+  publicadoEm: string;
+};
+
 export type Exame = {
   slug: string;
   edicao: number;

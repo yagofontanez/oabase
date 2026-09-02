@@ -9,6 +9,8 @@ export type ArtigoParaComentar = {
   numero: string;
   caput: string;
   paragrafos: string[];
+  /** Texto já escrito e ainda não publicado. Vazio = artigo virgem. */
+  comentario: string[];
   incidencia: number;
   leiSlug: string;
   leiSigla: string;
@@ -35,14 +37,14 @@ export type ArtigoParaComentar = {
  */
 export function Redacao({
   fila,
-  comentados,
+  publicados: publicadosIniciais,
 }: {
   fila: ArtigoParaComentar[];
-  comentados: number;
+  publicados: number;
 }) {
   const [pendentes, setPendentes] = useState(fila);
   const [indice, setIndice] = useState(0);
-  const [publicados, setPublicados] = useState(comentados);
+  const [publicados, setPublicados] = useState(publicadosIniciais);
 
   const atual = pendentes[indice] ?? null;
 
@@ -76,7 +78,7 @@ export function Redacao({
             <dd className="text-[1.4rem] font-bold tabular-nums text-brand-600">
               {publicados}
             </dd>
-            <dt className="text-muted">comentados</dt>
+            <dt className="text-muted">publicados</dt>
           </div>
           <div className="flex flex-col">
             <dd className="text-[1.4rem] font-bold tabular-nums text-ink">
@@ -106,6 +108,11 @@ export function Redacao({
                 {atual.incidencia}{" "}
                 {atual.incidencia === 1 ? "questão" : "questões"}
               </span>
+              {atual.comentario.length > 0 && (
+                <span className="rounded-full bg-ouro-100 px-2.5 py-1 font-semibold text-ouro-700">
+                  rascunho a revisar
+                </span>
+              )}
               <a
                 href={`/legislacao/${atual.leiSlug}/${atual.slug}`}
                 target="_blank"
@@ -192,7 +199,9 @@ function Editor({
   artigo: ArtigoParaComentar;
   aoPublicar: () => void;
 }) {
-  const [texto, setTexto] = useState("");
+  // Rascunho existente vem para a caixa: revisar é editar o que está lá, não
+  // reescrever às cegas com o texto antigo invisível no banco.
+  const [texto, setTexto] = useState(artigo.comentario.join("\n\n"));
   const [indexavel, setIndexavel] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);

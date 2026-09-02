@@ -5,6 +5,7 @@ import type {
   DispositivoDoExame,
   IncidenciaEmExame,
   Lei,
+  Post,
   Sumula,
   Vizinho,
 } from "./types";
@@ -53,6 +54,9 @@ export type FonteDeConteudo = {
    */
   getSumulas(tribunal?: Sumula["tribunal"]): Promise<Sumula[]>;
   getSumula(slug: string): Promise<Sumula | null>;
+  /** Posts publicados, do mais recente para o mais antigo. */
+  getPosts(): Promise<Post[]>;
+  getPost(slug: string): Promise<Post | null>;
   getExames(): Promise<Exame[]>;
   getExame(slug: string): Promise<Exame | null>;
   getDisciplinas(): Promise<Disciplina[]>;

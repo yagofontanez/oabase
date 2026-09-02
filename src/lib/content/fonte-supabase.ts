@@ -6,6 +6,7 @@ import type {
   Disciplina,
   Exame,
   Lei,
+  Post,
   Sumula,
   Vizinho,
 } from "./types";
@@ -75,6 +76,22 @@ async function todasAsPaginas<T>(
     if (lote.length < PAGINA) return tudo;
   }
 }
+
+type LinhaPost = {
+  slug: string;
+  titulo: string;
+  resumo: string;
+  corpo: string;
+  publicado_em: string;
+};
+
+const paraPost = (p: LinhaPost): Post => ({
+  slug: p.slug,
+  titulo: p.titulo,
+  resumo: p.resumo,
+  corpo: p.corpo,
+  publicadoEm: String(p.publicado_em).slice(0, 10),
+});
 
 export const fonteSupabase: FonteDeConteudo = {
   async getLeis() {
@@ -306,6 +323,28 @@ export const fonteSupabase: FonteDeConteudo = {
       .maybeSingle();
     erro("súmula", error);
     return (data as Sumula | null) ?? null;
+  },
+
+  // Rascunho não precisa de filtro aqui: a política de `posts` só devolve
+  // linha com `publicado_em` no passado. A regra mora no banco, e uma
+  // consulta esquecida no futuro não fura a fila editorial.
+  async getPosts() {
+    const { data, error } = await supabaseAnon()
+      .from("posts")
+      .select("slug, titulo, resumo, corpo, publicado_em")
+      .order("publicado_em", { ascending: false });
+    erro("posts", error);
+    return ((data ?? []) as LinhaPost[]).map(paraPost);
+  },
+
+  async getPost(slug) {
+    const { data, error } = await supabaseAnon()
+      .from("posts")
+      .select("slug, titulo, resumo, corpo, publicado_em")
+      .eq("slug", slug)
+      .maybeSingle();
+    erro("post", error);
+    return data ? paraPost(data as LinhaPost) : null;
   },
 
   async getDisciplinas() {

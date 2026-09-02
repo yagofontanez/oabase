@@ -3,8 +3,7 @@ import { Container } from "./container";
 import { Wordmark } from "./wordmark";
 import { site } from "@/lib/site";
 
-/* Apenas rotas publicadas. Conforme /glossario e /blog forem ao ar, entram
-   aqui. */
+/* Apenas rotas publicadas. Conforme /glossario for ao ar, entra aqui. */
 const colunas = [
   {
     titulo: "Conteúdo aberto",
@@ -13,6 +12,7 @@ const colunas = [
       { href: "/sumulas", label: "Súmulas Vinculantes" },
       { href: "/exames", label: "Exames e gabaritos" },
       { href: "/estatisticas", label: "O que mais cai" },
+      { href: "/blog", label: "Blog" },
     ],
   },
   {

@@ -70,6 +70,13 @@ export const fonteMock: FonteDeConteudo = {
   async getSumula() {
     return null;
   },
+  // Post é texto autoral: ou alguém escreveu, ou não existe.
+  async getPosts() {
+    return [];
+  },
+  async getPost() {
+    return null;
+  },
   async getExames() {
     return [...exames].sort((a, b) => b.edicao - a.edicao);
   },
