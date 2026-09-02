@@ -194,6 +194,32 @@
     font-weight: 600;
   }
 
+  /* ---- Ficha de índice: número solto numa grade, às centenas.
+       Existe como classe própria, e não como sequência de utilitários, por
+       uma razão de peso: repetida em 717 súmulas, a cadeia de classes do
+       Tailwind ia duas vezes para o navegador — no HTML e no payload do
+       React — e sozinha respondia por um terço de um megabyte. ---- */
+  .ficha-indice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.62rem 0.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    transition:
+      border-color 0.15s,
+      color 0.15s;
+  }
+  .ficha-indice:hover {
+    border-color: var(--color-brand-300);
+    color: var(--color-brand-700);
+  }
+
   /* ---- Texto de lei e enunciado: a serifa, e só aqui ---- */
   .lei-texto {
     font-family: var(--font-lei);

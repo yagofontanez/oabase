@@ -128,11 +128,10 @@ export default async function SumulasIndex() {
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
               {comuns.map((sumula) => (
                 <li key={sumula.slug}>
-                  <Link
-                    href={`/sumulas/${sumula.slug}`}
-                    title={sumula.texto.slice(0, 120)}
-                    className="flex items-center justify-center rounded-lg border border-line bg-surface px-2 py-2.5 text-[0.85rem] font-medium text-body tabular-nums transition-colors hover:border-brand-300 hover:text-brand-700"
-                  >
+                  {/* Sem `title` com o enunciado: eram 120 caracteres por
+                      link, 717 links, e tudo duas vezes. O texto está a um
+                      clique. */}
+                  <Link href={`/sumulas/${sumula.slug}`} className="ficha-indice">
                     {sumula.numero}
                   </Link>
                 </li>
