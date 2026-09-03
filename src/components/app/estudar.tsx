@@ -48,7 +48,7 @@ export type Acervo = {
  * versão anterior respondia outra — "como a prova se divide" — e o resultado
  * era um mapa de barras onde o único caminho para o conteúdo era um link
  * fraco no fim de cada linha. Quem chegava com quarenta minutos livres saía
- * com a impressão de que não havia material, tendo 3.460 questões e 42 normas
+ * com a impressão de que não havia material, tendo 3.540 questões e 42 normas
  * do outro lado de dois cliques.
  *
  * Então a ordem inverteu: primeiro as quatro portas que existem de fato

@@ -67,7 +67,7 @@ export default async function ProximoExame() {
     },
     {
       q: "Quantas questões tem a 1ª fase?",
-      a: "São 80 questões objetivas, de múltipla escolha com quatro alternativas e uma única correta. Nas 43 edições do acervo esse número só variou uma vez: o 3º Exame, em 2011, teve 100 questões.",
+      a: `São 80 questões objetivas, de múltipla escolha com quatro alternativas e uma única correta. Nas ${aplicados.length} edições do acervo esse número só variou uma vez: o 3º Exame, em 2011, teve 100 questões.`,
     },
     {
       q: "Quantos acertos preciso para passar na 1ª fase?",

@@ -15,8 +15,8 @@ export const metadata: Metadata = {
  * que inventar função para ler o que qualquer visitante já lê. O que precisa
  * de `security definer` é a escrita, e ela vive em `publicar_comentario`.
  *
- * `incidencia > 0` corta a fila em 106 artigos hoje. É deliberado: uma fila
- * de 5.756 linhas ordenada por nada é uma fila que ninguém começa.
+ * `incidencia > 0` corta a fila em 113 artigos hoje. É deliberado: uma fila
+ * de 10.168 linhas ordenada por nada é uma fila que ninguém começa.
  */
 export default async function RedacaoPage() {
   const supabase = await supabaseServidor();

@@ -27,7 +27,7 @@ type Sugestao = {
 /**
  * Vincular questão a dispositivo — o gesto que o algoritmo não pode dar.
  *
- * `dispositivos.py` acha 133 vínculos em 3.460 questões, e não é defeito do
+ * `dispositivos.py` acha 164 vínculos em 3.540 questões, e não é defeito do
  * regex: a FGV narra um caso e quase nunca nomeia o artigo. Preencher o resto
  * por semelhança de texto e gravar como vínculo transformaria
  * `artigos.incidencia` — o número que ordena o que estudar — em palpite com

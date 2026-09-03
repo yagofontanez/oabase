@@ -226,9 +226,9 @@ export const fonteSupabase: FonteDeConteudo = {
 
   async getArtigosRelacionados(artigo, limite) {
     // A disciplina entra como filtro da consulta, e não como peneira do
-    // resultado: ordenar 5.756 artigos por incidência e só então separar por
-    // disciplina devolvia quase sempre os mesmos poucos comentados, porque
-    // 5.751 empatam em zero e o desempate é arbitrário.
+    // resultado: ordenar 10.168 artigos por incidência e só então separar por
+    // disciplina devolvia quase sempre os mesmos poucos comentados, porque a
+    // esmagadora maioria empata em zero e o desempate é arbitrário.
     // Quando o embedding estiver preenchido, isto vira busca por vizinhança
     // em pgvector sem mudar a assinatura.
     const { data, error } = await supabaseAnon()

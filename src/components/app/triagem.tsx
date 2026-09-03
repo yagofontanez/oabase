@@ -19,7 +19,7 @@ export type DisciplinaOpcao = { slug: string; nome: string };
 /**
  * Triagem de disciplina — a ferramenta, não o produto.
  *
- * 3.460 questões classificadas por heurística e nenhuma confirmada por
+ * 3.540 questões classificadas por heurística e nenhuma confirmada por
  * humano. Enquanto for assim, a distribuição por exame não existe, o gráfico
  * de evolução por matéria não existe, e `/estatisticas` publica estimativa.
  * O trabalho é de leitura; o que o código pode fazer é não cobrar um clique a

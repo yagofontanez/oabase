@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
 import { JsonLd } from "@/lib/jsonld";
 import { abs } from "@/lib/site";
-import { getDisciplinas, getGlossario } from "@/lib/content/queries";
+import { getAcervo, getDisciplinas, getGlossario } from "@/lib/content/queries";
 
 export const revalidate = 3600;
 
@@ -31,9 +31,10 @@ export const metadata: Metadata = {
  * O índice é a unidade honesta aqui, como em `/sumulas`.
  */
 export default async function Glossario() {
-  const [verbetes, disciplinas] = await Promise.all([
+  const [verbetes, disciplinas, acervo] = await Promise.all([
     getGlossario(),
     getDisciplinas(),
+    getAcervo(),
   ]);
 
   // A ordem dos blocos é a das disciplinas (incidência na prova), e não a
@@ -102,8 +103,9 @@ export default async function Glossario() {
         {verbetes.length > 0 && (
           <p className="max-w-[74ch] text-[0.92rem] leading-relaxed text-muted">
             O número ao lado do termo é a contagem de questões que citaram
-            aquele dispositivo de forma expressa, apurada nas 43 provas do
-            acervo. Ele mede citação nominal, não incidência do instituto: a
+            aquele dispositivo de forma expressa, apurada nas {acervo.exames}{" "}
+            provas do acervo. Ele mede citação nominal, não incidência do
+            instituto: a
             FGV quase sempre narra o caso sem nomear o artigo, então a ausência
             do número diz que a banca não escreveu o dispositivo — não que ele
             não caia.
