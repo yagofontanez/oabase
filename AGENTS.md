@@ -120,9 +120,24 @@ mudar é `fonte-supabase.ts` — um vetor de busca em `posts`, como o de
 
 ## Medição
 
-`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` e `NEXT_PUBLIC_BING_SITE_VERIFICATION`
-emitem a meta de verificação no layout raiz; ausentes, o campo não é emitido.
-O token é da conta de quem opera o site, não do projeto — daí vir do ambiente.
+`GOOGLE_SITE_VERIFICATION` e `BING_SITE_VERIFICATION` emitem a meta de
+verificação no layout raiz; ausentes, o campo não é emitido. O token é da
+conta de quem opera o site, não do projeto — daí vir do ambiente.
+
+**Sem `NEXT_PUBLIC_`**: é lido no servidor e não tem por que ir para o pacote
+do navegador.
+
+**A variável tem de existir no build.** A metadata do layout raiz é assada em
+cada página pré-renderizada, e aqui são quase todas — definir a variável só no
+runtime não muda o HTML já gerado. Quem cadastrar o token depois precisa
+disparar um deploy novo, não só reiniciar. (Verificado: com a variável no
+build, a meta sai tanto em `/` quanto em `/busca`; sem ela, em nenhuma.)
+
+**Não há analytics de página, e é decisão, não esquecimento.** Com o tráfego
+de hoje ele mediria quase nada, custaria mensalidade e obrigaria a acrescentar
+um fornecedor em `subprocessadores` — política que omite tratamento que
+acontece não protege ninguém. O gatilho para reavaliar é o Search Console
+mostrar impressão em volume.
 
 **Sem Search Console o projeto é cego.** A aquisição é 100% orgânica e não
 havia como responder quais páginas indexaram, quais consultas trazem gente,
