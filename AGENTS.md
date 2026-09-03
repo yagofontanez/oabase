@@ -70,6 +70,36 @@ Postgres exige IMMUTABLE em expressão de geração — por isso
 Ao mexer em `numero`, `caput` ou `comentario`, confira que o trigger cobre a
 coluna.
 
+## Busca
+
+`public.buscar_dispositivos(termo, lei_slug, limite)` — artigo e súmula por
+texto livre ou por número. **Security invoker**, sobre tabelas de leitura
+aberta: quem decide continua sendo a RLS, e a função é chamável pelo papel
+anônimo porque é a mesma leitura que `/legislacao` já faz.
+
+**Acento é opcional, e não é detalhe.** O vetor é gravado por
+`public.sem_acento()` — `unaccent` embrulhado como IMMUTABLE, porque
+`unaccent` é STABLE e expressão de índice exige IMMUTABLE (a mesma pedra do
+`array_to_string`). Sem isso, "prisao" e "honorarios" voltavam vazio, e vazio
+diz "não existe" quando o dispositivo está no acervo. Se o dicionário
+`unaccent` do servidor mudar, os índices que dependem de `sem_acento`
+precisam ser reconstruídos.
+
+**Os dois lados do número são normalizados.** `art. 155`, `5º` e `217-a` viram
+`155`, `5` e `217-A` — e o número gravado passa pela mesma limpeza, porque um
+único artigo em 10.168 tem ordinal em `numero`: o **art. 5º da CF**, que é o
+mais procurado que existe. Normalizar só o que a pessoa digita conserta hoje e
+quebra na próxima carga.
+
+**A incidência medida entra no peso, não só no desempate.** `ts_rank` mede
+semelhança de texto e não sabe o que cai na prova: sem o empurrão, "furto"
+devolvia o art. 250 da Constituição à frente do roubo e do dano. O teto de 10
+impede que um dispositivo muito citado suba em busca que não tem a ver com ele.
+
+**Um dígito solto é consulta válida** (o art. 5), uma letra solta não é. O
+piso do cliente tem de ser o mesmo da função, senão a tela recusa o que o
+banco responderia.
+
 ## Origem dos dados
 
 `src/lib/content/queries.ts` escolhe entre duas implementações do contrato
@@ -445,6 +475,16 @@ abre o console, que é exatamente quem o filtro existe para conter.
 
 `/app/anotacoes` é uma tela livre (React Flow, `@xyflow/react`) com cartões de
 anotação e de questões já respondidas, ligáveis entre si.
+
+**O seletor de lei e súmula busca por texto, não por número.** A versão
+anterior pedia o número dentro de uma norma escolhida, partindo de que "quem
+está anotando já sabe qual artigo quer" — e quem está anotando é quem estuda
+para a 1ª fase, a mesma pessoa a quem este site diz, com a contagem na mão,
+que só 4% das questões citam artigo expressamente. Ela sabe "furto", sabe
+"algemas"; não sabe 155 nem Vinculante 11. O casamento exato falhava também
+para quem sabia o número, porque `numero` é texto: `art. 155`, `5º` e `217-a`
+não achavam nada, e a pessoa concluía que o acervo não tinha o dispositivo.
+Ver **Busca**. A norma virou filtro para estreitar, nunca pré-requisito.
 
 **A ligação não tem semântica no banco** — só origem, destino e um rótulo em
 texto. Tipar a aresta ("causa", "exceção", "fundamento") seria impor um
