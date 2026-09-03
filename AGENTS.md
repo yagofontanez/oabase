@@ -12,7 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 **A fronteira aberto/pago é a regra mais importante do repositório.**
 
-- Rotas públicas (`/`, `/legislacao`, `/exames`, `/estatisticas`, `/precos`, `/blog`) são
+- Rotas públicas (`/`, `/legislacao`, `/sumulas`, `/glossario`,
+  `/proximo-exame`, `/exames`, `/estatisticas`, `/precos`, `/blog`) são
   indexáveis, renderizadas no servidor com ISR e entram no sitemap.
 - Tudo sob `/app` é produto pago: `robots: { index: false }` na rota **e**
   `Disallow` em `robots.ts`. Nunca depender de um mecanismo só.
@@ -119,12 +120,66 @@ sem `User-Agent` de navegador a resposta é 403; e a página que parece a certa
 é uma casca de JavaScript — quem tem o conteúdo no HTML é
 `sumariosumulas.asp?base=26`.
 
+## Glossário
+
+`/glossario` é um índice **sem página por verbete**, e isso é a decisão de
+conteúdo, não uma etapa que faltou. **A definição é o artigo**: cada verbete
+aponta um dispositivo e exibe o caput literal. Como a definição é o texto do
+artigo, `/glossario/<termo>` seria uma cópia de `/legislacao/<lei>/<artigo>`
+sem uma linha a mais — 142 páginas rasas competindo com as páginas que têm
+comentário, duplicata interna contra o próprio acervo.
+
+O que é autoral aqui é a **curadoria** — qual termo merece verbete e onde ele
+está definido. É trabalho de índice, não de doutrina, e é por isso que ele
+pôde ser feito sem escrever uma linha sobre direito. `ingest/oabase_ingest/
+glossario.py` traz a lista à mão, e não por regex: das 73 ocorrências de
+"considera-se" no acervo, boa parte não define termo nenhum.
+
+**Verbete cujo artigo não está no acervo não aparece.** É o `!inner` do join
+em `getGlossario`, e é o que separa este glossário de mil glossários soltos:
+cada definição carrega o endereço da fonte.
+
+**A contagem ao lado do termo é `artigos.incidencia`** — citação expressa, o
+mesmo número da página de legislação. Zero não vira rótulo: "0 questões" lê
+como ausência de valor quando é ausência de *citação nominal*, e o instituto
+cai sem que a prova o nomeie. A página explica isso antes da lista.
+
+## Blog
+
+**O texto dos posts mora em migration, não só no banco.** O primeiro post
+ficou meses existindo numa linha da tabela `posts` e em lugar nenhum do
+repositório — um `db reset` o apagaria em silêncio, e a página só diria
+"nenhum texto publicado ainda". Texto autoral é o que nenhum pipeline refaz.
+As migrations usam `on conflict (slug) do nothing`: semeiam, não sobrescrevem
+revisão feita depois pelo banco — o mesmo princípio do upsert de `artigos`.
+
+**A pauta sai da medição.** Cada texto publicado é uma contagem sobre o
+acervo, com a consulta descrita no corpo para que qualquer pessoa refaça: a
+distribuição das alternativas corretas, o crescimento do enunciado, a taxa de
+anulação, a citação expressa de dispositivo. Texto jurídico genérico existe
+aos milhares e não posiciona nada; o que só existe aqui são as 43 provas.
+
+**Onde o dado é aproximado, o texto diz que é** — e um dos posts é justamente
+sobre por que a classificação por disciplina ainda não vale como medição.
+Publicar a tabela redonda que todo site publica seria dar precisão falsa a
+alguém que organiza as últimas semanas de estudo em cima dela.
+
 ## Links internos
 
 Não linke para rota que ainda não existe. Link interno para 404 gasta orçamento
 de rastreamento, e num site cuja aquisição é 100% orgânica isso é custo direto.
-Pendentes da camada aberta: `/glossario`, `/blog`.
-`/sobre`, `/termos` e `/privacidade` já existem e estão no rodapé.
+**Não há mais rota pendente na camada aberta.** `/legislacao`, `/sumulas`,
+`/glossario`, `/proximo-exame`, `/exames`, `/estatisticas` e `/blog` estão no
+ar; `/sobre`, `/termos` e `/privacidade` estão no rodapé. Ao acrescentar uma
+rota, ela entra em três lugares ou em nenhum: `ESTATICAS` em
+`content/urls.ts` (sitemap), `site-footer.tsx` e — se for de entrada —
+`site-header.tsx`.
+
+O menu do cabeçalho passou de cinco para seis itens com `/proximo-exame`, e o
+corte do menu horizontal subiu de `md` para `lg` junto: em 768px os seis
+espremiam a marca. Entre 768 e 1024 quem atende é a faixa rolável que já
+existia embaixo. Ao acrescentar um sétimo item, é esse limite que estoura
+primeiro.
 
 ## Ingestão de provas
 
@@ -138,8 +193,14 @@ dependências). Ver `ingest/README.md`.
 | `questoes`: 3.460, do 3º ao 46º Exame (43 edições, 16 anuladas) | `disciplinas.media_por_prova` |
 | `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` (léxico + sequência, nenhuma confirmada) |
 | gabarito, tipo 1 — definitivo em 13 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
-| `leis` e `artigos`: 8 códigos, 5.756 artigos do Planalto | |
+| `leis` e `artigos`: 42 leis, 10.168 artigos do Planalto | |
 | `artigos.incidencia`: 155 vínculos em 106 artigos, só de citação explícita | |
+| `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
+
+**O 35º Exame não está no acervo.** As edições vão de 3 a 46 com um buraco
+entre o 34º e o 36º — ele existiu e foi aplicado; o que falta é a carga. Como
+`/exames` lista o que a tabela tem, o buraco é visível na página. Ao mexer no
+pipeline de provas, é a primeira edição a tentar.
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
@@ -187,7 +248,7 @@ Três regras que a carga respeita e que não devem ser afrouxadas:
    `where public.artigos.comentario = '{}'`. Texto de lei se atualiza sozinho
    enquanto ninguém escreveu sobre ele; a partir do comentário, a linha é
    trabalho autoral e mudança de redação vira revisão humana.
-2. **Tudo entra com `indexavel = false`.** São 5.756 páginas de texto legal que
+2. **Tudo entra com `indexavel = false`.** São 10.168 páginas de texto legal que
    existem em centenas de outros sites. Elas servem para consulta e para
    navegação interna; ao índice só vai o que tiver comentário. Já as páginas
    de lei (`/legislacao/<slug>`) entram no sitemap: são índices completos e
@@ -281,7 +342,8 @@ inteiro sem classificação.
 ## Revisão editorial
 
 Os dois gargalos do projeto são trabalho humano: 3.460 questões classificadas
-por heurística e nenhuma confirmada; 5.756 artigos e quatro comentados.
+por heurística e nenhuma confirmada; 10.168 artigos e 107 comentados. O
+segundo gargalo anda — eram quatro —, o primeiro não saiu do zero.
 `/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
 para tirar o atrito desse trabalho, não para fazê-lo.
 
@@ -718,8 +780,21 @@ O que foi acrescentado:
   rastreador entrava e saía sem achar as páginas profundas.
   `artigos_do_exame` fecha o ciclo.
 - **`trailingSlash: false`** e cabeçalhos de segurança em `next.config.ts`.
+- **`/proximo-exame`** — contagem regressiva, calendário e o formato da prova,
+  com **FAQPage** e **Event**. É a única página aberta que escala sem custar
+  comentário autoral: tudo nela é ato oficial (as datas do cronograma do
+  Conselho Federal) ou medição do próprio acervo. O `Event` só é emitido
+  quando existe aplicação futura publicada — marcar como evento uma data
+  vencida é o mesmo defeito da contagem travada em zero.
 
-**O gargalo de posicionamento não é técnico.** São 4 artigos indexáveis de
-5.756, porque o portão de qualidade — correto — só anuncia o que tem
+**A página que não existe é de propósito.** `/proximo-exame` não afirma prazo
+de inscrição, valor de taxa nem número de edital: isso muda a cada edição, não
+está no acervo, e errar faz alguém perder a prova. Ela diz o que mede e manda
+ao edital para o resto. Ao acrescentar campo ali, a pergunta é de onde ele vem.
+
+**O gargalo de posicionamento não é técnico.** São 107 artigos indexáveis de
+10.168, porque o portão de qualidade — correto — só anuncia o que tem
 comentário revisado. Nenhuma marcação compensa isso: o caminho é escrever
-comentário, e `artigos.incidencia`, agora medida, diz por onde começar.
+comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
+glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
+lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
