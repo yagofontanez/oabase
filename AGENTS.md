@@ -120,8 +120,16 @@ mudar é `fonte-supabase.ts` — um vetor de busca em `posts`, como o de
 
 ## Medição
 
-`GOOGLE_SITE_VERIFICATION` e `BING_SITE_VERIFICATION` emitem a meta de
-verificação no layout raiz; ausentes, o campo não é emitido. O token é da
+**O Search Console já está verificado, por DNS.** Há um registro TXT
+`google-site-verification=...` em `oabase.com.br`, e é por isso que não existe
+meta nenhuma no HTML de produção. Verificação por DNS não deixa rastro no
+repositório — quem procurar prova disso no código vai concluir, errado, que
+não há medição. Ela é também a mais forte das duas: vale para o domínio
+inteiro, subdomínios inclusive, enquanto a meta vale só para o prefixo de URL.
+
+`GOOGLE_SITE_VERIFICATION` e `BING_SITE_VERIFICATION` emitem a meta no layout
+raiz; ausentes, o campo não é emitido — que é o estado atual. Ficam como
+caminho alternativo e, no caso do Bing, como o único que existe. O token é da
 conta de quem opera o site, não do projeto — daí vir do ambiente.
 
 **Sem `NEXT_PUBLIC_`**: é lido no servidor e não tem por que ir para o pacote
@@ -139,10 +147,10 @@ um fornecedor em `subprocessadores` — política que omite tratamento que
 acontece não protege ninguém. O gatilho para reavaliar é o Search Console
 mostrar impressão em volume.
 
-**Sem Search Console o projeto é cego.** A aquisição é 100% orgânica e não
-havia como responder quais páginas indexaram, quais consultas trazem gente,
-nem se um comentário novo mudou alguma coisa. Nenhuma decisão de pauta
-editorial se justifica sem isso.
+**O Search Console é a medição que decide a pauta.** A aquisição é 100%
+orgânica, e é ele que responde quais páginas indexaram, quais consultas trazem
+gente e o que um comentário novo mudou. Ao propor conteúdo, o dado está lá —
+não é preciso supor.
 
 ## Origem dos dados
 
