@@ -15,6 +15,25 @@ from dataclasses import dataclass, field
 # A marcação da alternativa mudou entre edições: "(A)" nas provas recentes,
 # "A)" nas mais antigas. O parêntese de abertura é opcional.
 INICIO_ALTERNATIVA = re.compile(r"^\s*\(?([A-D])\)\s*(.*)$")
+
+# A mesma marcação com a **letra ilegível**.
+#
+# No caderno do 35º Exame, a alternativa D da questão 77 sai da extração como
+# `\x18)\x03 A CLT é omissa...`: a letra e o espaço caíram numa fonte CID sem
+# tabela de caracteres e viraram índices de glifo, enquanto o resto da linha
+# decodificou normalmente. A letra está lá — a página renderiza "D)" —, só
+# não chegou como letra.
+#
+# Sem isto a linha não casa como início de alternativa e é engolida pela
+# alternativa anterior: a questão fica com três alternativas e a C termina
+# com o texto da D grudado. O parser recusa a prova inteira por isso, que é o
+# comportamento certo, mas a causa é um caractere.
+#
+# A recuperação é **estrutural, não adivinhação**: só vale quando exatamente
+# uma das quatro letras ainda falta, e é essa a letra devolvida. Com duas
+# faltando não há o que inferir, e a linha volta a ser tratada como texto
+# comum — de novo, o parser recusa e alguém olha.
+ALTERNATIVA_SEM_LETRA = re.compile(r"^[^\w\s(]?\)[\s\x00-\x1f]+(\S.*)$")
 # Depois da última questão vem o "questionário de percepção sobre a prova".
 # Sem essa âncora ele é absorvido pela alternativa (D) da questão 80 — o
 # parser não tem como saber sozinho onde a prova acabou.
@@ -22,9 +41,36 @@ FIM_DA_PROVA = re.compile(
     r"^\s*Question[áa]rio de percep[çc][ãa]o sobre a prova\b", re.IGNORECASE
 )
 
+# Rodapé de página.
+#
+# **A edição vem em numeral romano no rodapé** — "XXXV EXAME DE ORDEM
+# UNIFICADO" —, e o prefixo aceito aqui era só decimal. O resultado é que o
+# rodapé nunca casou como ruído e foi parar dentro da alternativa D de toda
+# questão que fechava uma página: 656 questões do acervo, 19% da base,
+# terminam com "IX EXAME DE ORDEM UNI" grudado no texto.
+#
+# Passou despercebido por anos porque não quebra nada — não derruba o parser,
+# não falha validação, não some com questão. Só suja o texto que a pessoa
+# paga para ler, no fim da última alternativa, onde ninguém revisa.
+#
+# **O numeral da edição é obrigatório** para casar "EXAME DE ORDEM", e essa
+# exigência é o que separa rodapé de conteúdo. Sem ela o filtro come linha
+# legítima: a questão 7 do 35º é sobre advogado formado no exterior e as
+# alternativas quebram a linha exatamente antes de "Exame de Ordem,
+# cumpridos os demais requisitos legais" — a alternativa C terminava em "e
+# que seja aprovado no", truncada, sem erro nenhum. Rodapé traz a edição;
+# frase de questão, não.
+#
+# O corte por coluna trunca as palavras do rodapé ("UNI", "UN", "UNIFI"), por
+# isso o casamento é por prefixo e não pela frase inteira.
 RUIDO = re.compile(
-    r"^\s*(\d+\s*)?(EXAME DE ORDEM|EXAME DO ORDEM|Tipo Branca|Tipo \w+|"
-    r"Ordem dos Advogados do Brasil|FGV|Prova Objetiva)\b.*$",
+    r"^\s*(?:"
+    r"(?:[IVXLC]+|\d+)\s*(?:EXAME DE ORDEM|EXAME DO ORDEM)"
+    r"|PROVA APLICADA"
+    r"|Tipo Branca|Tipo \w+"
+    r"|FGV|Prova Objetiva"
+    r"|P[áa]gina\s+\d"
+    r")\b.*$",
     re.IGNORECASE,
 )
 
@@ -107,18 +153,41 @@ def _e_ancora(linha: str, numero: int, rotulada: bool) -> bool:
     return linha.strip() == str(numero)
 
 
-def _dividir_blocos(texto: str, total: int) -> dict[int, list[str]]:
+def _dividir_blocos(
+    texto: str, total: int, supridas: frozenset[int] = frozenset()
+) -> dict[int, list[str]]:
+    """
+    Segmenta o texto em blocos, um por questão.
+
+    `supridas` são os números que vêm de fora (remendo) e cuja âncora não
+    existe no texto. Sem essa lista a busca é estritamente sequencial: ao não
+    achar a âncora 57, o parser fica esperando por ela para sempre e as
+    questões 58 em diante nunca são reconhecidas — foi assim que o 35º Exame
+    apareceu como "56 de 80" quando 71 âncoras estavam legíveis no arquivo.
+
+    A ausência é declarada, e não inferida: pular uma âncora só porque ela
+    não apareceu transformaria uma prova mal extraída numa prova
+    silenciosamente incompleta.
+    """
     linhas = texto.splitlines()
     rotulada = _usa_rotulo(linhas, total)
     blocos: dict[int, list[str]] = {}
     esperado = 1
     atual: list[str] | None = None
 
+    def proximo_no_texto(n: int) -> int:
+        """O próximo número cuja âncora deve mesmo estar no texto."""
+        while n <= total and n in supridas:
+            n += 1
+        return n
+
+    esperado = proximo_no_texto(esperado)
+
     for linha in linhas:
         if esperado <= total and _e_ancora(linha, esperado, rotulada):
             atual = []
             blocos[esperado] = atual
-            esperado += 1
+            esperado = proximo_no_texto(esperado + 1)
             continue
         if FIM_DA_PROVA.match(linha):
             atual = None
@@ -126,10 +195,12 @@ def _dividir_blocos(texto: str, total: int) -> dict[int, list[str]]:
         if atual is not None:
             atual.append(linha)
 
-    if len(blocos) != total:
-        faltando = [n for n in range(1, total + 1) if n not in blocos]
+    esperados = [n for n in range(1, total + 1) if n not in supridas]
+    if len(blocos) != len(esperados):
+        faltando = [n for n in esperados if n not in blocos]
         raise ErroDeParsing(
-            f"encontrei {len(blocos)} de {total} questões; faltam: {faltando[:10]}"
+            f"encontrei {len(blocos)} de {len(esperados)} questões; "
+            f"faltam: {faltando[:10]}"
         )
     return blocos
 
@@ -143,8 +214,18 @@ def _parsear_bloco(numero: int, linhas: list[str]) -> Questao:
 
     for linha in linhas:
         m = INICIO_ALTERNATIVA.match(linha)
-        if m:
-            letra = m.group(1)
+        letra_recuperada: str | None = None
+        resto_recuperado = ""
+        if not m:
+            orfa = ALTERNATIVA_SEM_LETRA.match(linha)
+            if orfa:
+                ausentes = sorted({"A", "B", "C", "D"} - set(alternativas))
+                if len(ausentes) == 1:
+                    letra_recuperada = ausentes[0]
+                    resto_recuperado = orfa.group(1)
+        if m or letra_recuperada:
+            letra = letra_recuperada or m.group(1)
+            resto = m.group(2) if m else resto_recuperado
             # Uma questão tem exatamente um conjunto A–D. Reencontrar uma
             # letra já vista significa que saímos dela — em geral para o
             # questionário de percepção que fecha o caderno, cujas opções
@@ -153,7 +234,7 @@ def _parsear_bloco(numero: int, linhas: list[str]) -> Questao:
             if letra in alternativas:
                 break
             atual = letra
-            alternativas[atual] = [m.group(2)]
+            alternativas[atual] = [resto]
         elif atual:
             alternativas[atual].append(linha)
         else:
@@ -166,6 +247,8 @@ def _parsear_bloco(numero: int, linhas: list[str]) -> Questao:
     )
 
 
-def parsear_prova(texto: str, total: int = 80) -> list[Questao]:
-    blocos = _dividir_blocos(texto, total)
+def parsear_prova(
+    texto: str, total: int = 80, supridas: frozenset[int] = frozenset()
+) -> list[Questao]:
+    blocos = _dividir_blocos(texto, total, supridas)
     return [_parsear_bloco(n, blocos[n]) for n in sorted(blocos)]

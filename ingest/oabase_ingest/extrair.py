@@ -55,13 +55,32 @@ def _recorte(pdf: Path, pagina: int, x: int, largura: int, altura: int) -> str:
     ).stdout
 
 
-def texto_em_ordem_de_leitura(pdf: Path, colunas: int = 2) -> str:
-    """Extrai o PDF coluna a coluna, página a página."""
+def texto_em_ordem_de_leitura(
+    pdf: Path, colunas: int = 2, ignorar: frozenset[int] = frozenset()
+) -> str:
+    """
+    Extrai o PDF coluna a coluna, página a página.
+
+    `ignorar` descarta páginas inteiras antes de qualquer segmentação. Existe
+    por causa de um defeito real do arquivo de origem: no caderno do 35º
+    Exame, seis páginas trazem fontes CID sem tabela de caracteres
+    (`pdffonts` mostra `uni = no`), e o texto extraído delas é uma
+    substituição consistente — sai lixo, e lixo que **parece** texto.
+
+    Deixar esse lixo no fluxo é pior do que descartá-lo: ele não tem âncora
+    de questão legível, então o bloco da questão anterior segue engolindo
+    tudo até a próxima âncora válida, e o resultado é uma alternativa de uma
+    questão boa terminando com meia página de símbolos. A página some inteira
+    e as questões que estavam nela entram por remendo, conferidas contra a
+    renderização do PDF oficial.
+    """
     paginas, largura, altura = dimensoes(pdf)
     largura_coluna = largura // colunas
 
     partes: list[str] = []
     for pagina in range(1, paginas + 1):
+        if pagina in ignorar:
+            continue
         for coluna in range(colunas):
             partes.append(
                 _recorte(pdf, pagina, coluna * largura_coluna, largura_coluna, altura)
