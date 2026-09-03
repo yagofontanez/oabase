@@ -239,7 +239,7 @@ revisão feita depois pelo banco — o mesmo princípio do upsert de `artigos`.
 acervo, com a consulta descrita no corpo para que qualquer pessoa refaça: a
 distribuição das alternativas corretas, o crescimento do enunciado, a taxa de
 anulação, a citação expressa de dispositivo. Texto jurídico genérico existe
-aos milhares e não posiciona nada; o que só existe aqui são as 43 provas.
+aos milhares e não posiciona nada; o que só existe aqui são as 44 provas.
 
 **Onde o dado é aproximado, o texto diz que é** — e um dos posts é justamente
 sobre por que a classificação por disciplina ainda não vale como medição.
@@ -272,17 +272,42 @@ dependências). Ver `ingest/README.md`.
 
 | Real, de fonte oficial | Placeholder |
 |---|---|
-| `questoes`: 3.460, do 3º ao 46º Exame (43 edições, 16 anuladas) | `disciplinas.media_por_prova` |
+| `questoes`: 3.540, do 3º ao 46º Exame (44 edições, 16 anuladas) | `disciplinas.media_por_prova` |
 | `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` (léxico + sequência, nenhuma confirmada) |
-| gabarito, tipo 1 — definitivo em 13 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
+| gabarito, tipo 1 — definitivo em 14 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
 | `leis` e `artigos`: 42 leis, 10.168 artigos do Planalto | |
-| `artigos.incidencia`: 155 vínculos em 106 artigos, só de citação explícita | |
+| `artigos.incidencia`: 164 vínculos em 113 artigos, só de citação explícita | |
 | `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
 
-**O 35º Exame não está no acervo.** As edições vão de 3 a 46 com um buraco
-entre o 34º e o 36º — ele existiu e foi aplicado; o que falta é a carga. Como
-`/exames` lista o que a tabela tem, o buraco é visível na página. Ao mexer no
-pipeline de provas, é a primeira edição a tentar.
+**Número de acervo em literal tem data de validade.** A entrada do 35º
+invalidou, no mesmo dia, o texto de cinco posts, a descrição do blog e três
+comentários de código — num site cujo argumento é que aqui os números são
+contados. Onde a página puder contar (`getAcervo()`), ela conta; onde não
+puder, o número está aqui, e esta tabela é o que se atualiza.
+
+**O 35º Exame entrou por remendo.** As páginas 17 e 21 do caderno oficial têm
+fontes CID sem tabela de caracteres: o texto extraído é lixo, e a página
+renderiza perfeitamente. As nove questões dessas páginas foram transcritas da
+renderização do mesmo PDF oficial. Ver `ingest/README.md` — e as três
+invariantes que impedem o mecanismo de virar atalho, sendo a principal que o
+remendo **preenche e nunca sobrescreve** o que o parser conseguiu ler.
+
+**O rodapé estava dentro de 645 questões.** O filtro de ruído do parser
+aceitava prefixo decimal antes de "EXAME DE ORDEM", e o rodapé traz a edição
+em **numeral romano** — então toda questão que fechava página terminava com
+"IX EXAME DE ORDEM UNI" grudado na alternativa D. Passou anos despercebido
+porque não derruba parser nem falha validação: só suja o texto que a pessoa
+paga para ler, no fim da última alternativa, onde ninguém revisa. Ao mexer em
+`RUIDO`, note que o numeral é **obrigatório** — sem ele o filtro come linha
+legítima, e há questão de Ética cuja alternativa quebra a linha exatamente
+antes de "Exame de Ordem".
+
+**Recarregar uma prova não pode apagar classificação melhor.** O upsert de
+`questoes` escrevia `disciplina_id = excluded.disciplina_id` sem condição, o
+que fazia da reingestão um ato destrutivo: as 440 questões classificadas pelo
+modelo voltariam ao palpite léxico e `classificacao_origem` continuaria
+dizendo 'modelo' — procedência mentindo, que é pior do que classificação
+faltando. Hoje o upsert preserva `modelo`, `humano` e `disciplina_confirmada`.
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
@@ -384,7 +409,7 @@ preencher o espaço: gerar explicação jurídica por IA é o pior defeito
 possível aqui, porque quem estuda a regra alucinada só descobre no dia da
 prova.
 
-**A classificação por disciplina é aproximada.** 2.751 das 3.460 questões têm
+**A classificação por disciplina é aproximada.** 2.910 das 3.540 questões têm
 `disciplina_id`, nenhuma tem `disciplina_confirmada = true`. O filtro por
 disciplina funciona e a tela avisa que é aproximado; filtro por exame é
 exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
@@ -392,7 +417,7 @@ gráfico de evolução por matéria — seria dado inventado com cara de mediç�
 
 ## Classificação automática e procedência
 
-Confirmar 3.460 questões e vincular 3.317 à mão é trabalho de meses. A saída
+Confirmar 3.540 questões e vincular 3.376 à mão é trabalho de meses. A saída
 foi automatizar **registrando de onde veio cada dado**, e nunca marcar palpite
 como revisão humana:
 
@@ -423,7 +448,7 @@ inteiro sem classificação.
 
 ## Revisão editorial
 
-Os dois gargalos do projeto são trabalho humano: 3.460 questões classificadas
+Os dois gargalos do projeto são trabalho humano: 3.540 questões classificadas
 por heurística e nenhuma confirmada; 10.168 artigos e 107 comentados. O
 segundo gargalo anda — eram quatro —, o primeiro não saiu do zero.
 `/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
