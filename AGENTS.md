@@ -100,6 +100,35 @@ impede que um dispositivo muito citado suba em busca que não tem a ver com ele.
 piso do cliente tem de ser o mesmo da função, senão a tela recusa o que o
 banco responderia.
 
+`/busca` é a busca do site, sobre `buscarNoSite()` no contrato — a mesma
+função do banco, mais os posts. **É `noindex` e fica fora do sitemap**:
+resultado de busca interna é conteúdo gerado por quem digita, em endereços
+ilimitados, e indexar isso dilui o domínio — exatamente o que o portão de
+qualidade existe para evitar. É `noindex` **sem** `Disallow`: bloquear o
+rastreamento impediria o buscador de ler o próprio `noindex`.
+
+**O formulário é GET e não depende de JavaScript.** O resultado ganha
+endereço compartilhável e o campo existe no HTML antes de qualquer script —
+busca que só funciona depois da hidratação não existe para quem está numa
+conexão ruim, que é boa parte de quem estuda pelo celular.
+
+**Post é filtrado em memória**, e isso é decisão de escala, não descuido: são
+cinco textos, e montar o `or=(...ilike...)` do PostgREST exigiria escapar
+vírgula, parêntese e aspas do que a pessoa digitou. Com cem textos, o lugar de
+mudar é `fonte-supabase.ts` — um vetor de busca em `posts`, como o de
+`artigos`.
+
+## Medição
+
+`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` e `NEXT_PUBLIC_BING_SITE_VERIFICATION`
+emitem a meta de verificação no layout raiz; ausentes, o campo não é emitido.
+O token é da conta de quem opera o site, não do projeto — daí vir do ambiente.
+
+**Sem Search Console o projeto é cego.** A aquisição é 100% orgânica e não
+havia como responder quais páginas indexaram, quais consultas trazem gente,
+nem se um comentário novo mudou alguma coisa. Nenhuma decisão de pauta
+editorial se justifica sem isso.
+
 ## Origem dos dados
 
 `src/lib/content/queries.ts` escolhe entre duas implementações do contrato

@@ -106,6 +106,23 @@ export type Verbete = {
   incidencia: number;
 };
 
+/**
+ * Uma linha de resultado da busca do site.
+ *
+ * Deliberadamente plana e sem o registro de origem: a página de busca não
+ * precisa saber que artigo veio de `buscar_dispositivos` e post veio de uma
+ * filtragem em memória. `tipo` existe para rotular na tela — "Artigo",
+ * "Súmula", "Texto" —, não para ramificar comportamento.
+ */
+export type ResultadoDeBusca = {
+  tipo: "artigo" | "sumula" | "post";
+  rotulo: string;
+  resumo: string;
+  href: string;
+  /** Tem comentário autoral — o que distingue esta página das cópias. */
+  comentado: boolean;
+};
+
 export type Exame = {
   slug: string;
   edicao: number;

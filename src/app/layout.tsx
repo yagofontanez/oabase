@@ -38,6 +38,24 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", site: site.twitter },
   formatDetection: { telephone: false },
+  /*
+    Verificação de propriedade nos buscadores.
+
+    Vem do ambiente e não do código porque o token é da conta de quem opera o
+    site, não do projeto — e porque um token errado no repositório é uma
+    verificação que ninguém consegue explicar por que falhou.
+
+    Sem Search Console, o site não tem como responder quais páginas foram
+    indexadas nem quais consultas trazem gente. Num projeto cuja aquisição é
+    100% orgânica, essa é a única medição que importa antes de qualquer outra.
+    Ausente a variável, o campo simplesmente não é emitido.
+  */
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : {},
+  },
   robots: {
     index: true,
     follow: true,
