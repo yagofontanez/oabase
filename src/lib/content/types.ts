@@ -94,6 +94,16 @@ export type Verbete = {
   caput: string;
   /** O artigo já tem comentário autoral — vale a visita. */
   temComentario: boolean;
+  /**
+   * Questões que citaram o dispositivo de forma expressa — `artigos.incidencia`,
+   * que conta só `citacao` e `humano`. É o mesmo número da página de legislação,
+   * e é o que transforma o glossário de índice em ordem de estudo: quem abre na
+   * véspera precisa saber qual dos 142 termos a banca de fato nomeia.
+   *
+   * Não é `incidencia_estimada`: aqui a página é aberta, e o número precisa
+   * sobreviver a alguém reler a questão para conferir.
+   */
+  incidencia: number;
 };
 
 export type Exame = {

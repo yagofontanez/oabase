@@ -92,6 +92,7 @@ type LinhaArtigoDoVerbete = {
   numero: string;
   caput: string;
   comentario: string[] | null;
+  incidencia: number | null;
   leis: { slug: string; sigla: string } | { slug: string; sigla: string }[];
 };
 
@@ -394,7 +395,7 @@ export const fonteSupabase: FonteDeConteudo = {
       .from("termos_glossario")
       .select(
         "slug, termo, disciplinas(slug, nome), " +
-          "artigos!inner(slug, numero, caput, comentario, leis!inner(slug, sigla))",
+          "artigos!inner(slug, numero, caput, comentario, incidencia, leis!inner(slug, sigla))",
       )
       .order("termo", { ascending: true });
     erro("glossário", error);
@@ -414,6 +415,7 @@ export const fonteSupabase: FonteDeConteudo = {
         numero: artigo.numero,
         caput: artigo.caput,
         temComentario: (artigo.comentario ?? []).length > 0,
+        incidencia: artigo.incidencia ?? 0,
       } satisfies Verbete;
     });
   },

@@ -99,6 +99,17 @@ export default async function Glossario() {
           </p>
         )}
 
+        {verbetes.length > 0 && (
+          <p className="max-w-[74ch] text-[0.92rem] leading-relaxed text-muted">
+            O número ao lado do termo é a contagem de questões que citaram
+            aquele dispositivo de forma expressa, apurada nas 43 provas do
+            acervo. Ele mede citação nominal, não incidência do instituto: a
+            FGV quase sempre narra o caso sem nomear o artigo, então a ausência
+            do número diz que a banca não escreveu o dispositivo — não que ele
+            não caia.
+          </p>
+        )}
+
         {grupos.length > 1 && (
           <nav aria-label="Disciplinas" className="flex flex-wrap gap-2">
             {grupos.map((grupo) => (
@@ -139,6 +150,20 @@ export default async function Glossario() {
                       <span className="text-[0.82rem] font-bold text-brand-600 tabular-nums">
                         {verbete.leiSigla}, art. {verbete.numero}
                       </span>
+                      {/* A incidência medida — as questões que nomeiam o
+                          dispositivo. É o que dá ordem de prioridade a uma
+                          lista que, sem ela, é só alfabética: o termo que a
+                          banca cita oito vezes não vale o mesmo que o termo
+                          que ela nunca citou. Zero não vira rótulo, porque
+                          "0 questões" lê como ausência de valor quando é
+                          ausência de *citação expressa* — e o instituto pode
+                          cair sem que a prova o nomeie. */}
+                      {verbete.incidencia > 0 && (
+                        <span className="text-[0.78rem] font-semibold text-brand-500 tabular-nums">
+                          {verbete.incidencia}{" "}
+                          {verbete.incidencia === 1 ? "questão" : "questões"}
+                        </span>
+                      )}
                       {verbete.temComentario && (
                         <span className="text-[0.78rem] font-semibold text-ouro-600">
                           comentado
