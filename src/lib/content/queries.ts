@@ -129,6 +129,26 @@ export const getProximoExame = cache(async (hoje = new Date()) => {
   );
 });
 
+/**
+ * O calendário inteiro que a OAB publicou, e não só a próxima aplicação.
+ *
+ * `/proximo-exame` precisa da lista completa: quem perdeu a inscrição de uma
+ * edição quer saber quando é a seguinte, e mostrar só a primeira transformaria
+ * a página numa contagem regressiva sem serventia no dia seguinte à prova.
+ *
+ * A comparação em texto ISO é a mesma de `getProximoExame` e pelo mesmo
+ * motivo: `new Date("YYYY-MM-DD")` é UTC e antecipa a virada em fuso
+ * brasileiro.
+ */
+export const getAplicacoes = cache(async (hoje = new Date()) => {
+  const dia = [
+    hoje.getFullYear(),
+    String(hoje.getMonth() + 1).padStart(2, "0"),
+    String(hoje.getDate()).padStart(2, "0"),
+  ].join("-");
+  return aplicacoes.map((a) => ({ ...a, passou: a.data < dia }));
+});
+
 /** Dias até a próxima prova, sem deixar o fuso interferir na contagem. */
 export function diasAte(iso: string, hoje = new Date()): number {
   const [ano, mes, dia] = iso.split("-").map(Number);

@@ -6,6 +6,10 @@ import { EstadoSessao } from "./auth/estado-sessao";
 /* Só rotas que existem. Link interno para 404 gasta orçamento de rastreamento e quebra a confiança de quem clica.
    Pendente da camada aberta: nenhuma — /blog e /glossario estão no ar. */
 const nav = [
+  // Primeiro item porque é o que traz a maior parte de quem chega buscando —
+  // "quando é a próxima prova da OAB" — e é a única seção com data de
+  // validade: passada a aplicação, ela já aponta para a seguinte sozinha.
+  { href: "/proximo-exame", label: "Próximo exame" },
   { href: "/legislacao", label: "Legislação" },
   { href: "/sumulas", label: "Súmulas" },
   { href: "/glossario", label: "Glossário" },
@@ -20,7 +24,10 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Seções">
+        {/* O corte subiu de `md` para `lg` quando o menu passou a seis itens:
+            em 768px eles espremiam a marca e o botão de sessão. Entre 768 e
+            1024 quem atende é a faixa rolável abaixo, que já existia. */}
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Seções">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -37,9 +44,9 @@ export function SiteHeader() {
         </div>
       </Container>
 
-      {/* Abaixo de md o menu principal desaparece. Em vez de escondê-lo
+      {/* Abaixo de lg o menu principal desaparece. Em vez de escondê-lo
           atrás de um botão, as seções ficam à vista numa faixa rolável. */}
-      <div className="border-t border-line/70 md:hidden">
+      <div className="border-t border-line/70 lg:hidden">
         <Container>
           <nav
             aria-label="Seções"

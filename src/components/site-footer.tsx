@@ -8,6 +8,7 @@ const colunas = [
   {
     titulo: "Conteúdo aberto",
     links: [
+      { href: "/proximo-exame", label: "Próximo exame" },
       { href: "/legislacao", label: "Legislação comentada" },
       { href: "/sumulas", label: "Súmulas Vinculantes" },
       { href: "/glossario", label: "Glossário jurídico" },

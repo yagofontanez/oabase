@@ -29,6 +29,11 @@ const ESTATICAS: {
   // cópia de `/legislacao/<lei>/<artigo>` sem uma linha a mais — duplicata
   // interna, e das ruins, porque competiria com a página que tem comentário.
   { path: "/glossario", priority: 0.8, changeFrequency: "monthly" },
+  // Muda de conteúdo a cada dia — a contagem regressiva é parte da página, e
+  // a data da aplicação seguinte entra quando o cronograma sai. `daily` é a
+  // única frequência honesta aqui, e é também a página cuja demanda de busca
+  // é mais sazonal de todo o site.
+  { path: "/proximo-exame", priority: 0.9, changeFrequency: "daily" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
