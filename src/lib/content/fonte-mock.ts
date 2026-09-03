@@ -74,6 +74,11 @@ export const fonteMock: FonteDeConteudo = {
   async getDistribuicaoDoExame() {
     return [];
   },
+  // O verbete é um ponteiro para artigo do acervo. Sem acervo carregado, ele
+  // apontaria para o nada — e a página diz isso em vez de inventar entrada.
+  async getGlossario() {
+    return [];
+  },
   // Post é texto autoral: ou alguém escreveu, ou não existe.
   async getPosts() {
     return [];

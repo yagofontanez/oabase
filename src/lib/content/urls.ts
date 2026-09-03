@@ -24,6 +24,11 @@ const ESTATICAS: {
   // solta. As páginas de cada súmula seguem o portão de qualidade e só
   // entram quando tiverem comentário.
   { path: "/sumulas", priority: 0.8, changeFrequency: "monthly" },
+  // Índice completo e navegável, como `/sumulas`. Não há página por verbete:
+  // a definição é o texto do artigo, então um endereço por termo seria uma
+  // cópia de `/legislacao/<lei>/<artigo>` sem uma linha a mais — duplicata
+  // interna, e das ruins, porque competiria com a página que tem comentário.
+  { path: "/glossario", priority: 0.8, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },

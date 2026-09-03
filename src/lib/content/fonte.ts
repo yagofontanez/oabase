@@ -7,6 +7,7 @@ import type {
   Lei,
   Post,
   Sumula,
+  Verbete,
   Vizinho,
 } from "./types";
 
@@ -54,6 +55,12 @@ export type FonteDeConteudo = {
    */
   getSumulas(tribunal?: Sumula["tribunal"]): Promise<Sumula[]>;
   getSumula(slug: string): Promise<Sumula | null>;
+  /**
+   * Glossário inteiro, em ordem alfabética. Verbete cujo artigo não está no
+   * acervo não sai daqui: definição apontando para o nada é pior do que
+   * verbete nenhum, e o `!inner` do join é quem garante isso.
+   */
+  getGlossario(): Promise<Verbete[]>;
   /** Posts publicados, do mais recente para o mais antigo. */
   getPosts(): Promise<Post[]>;
   getPost(slug: string): Promise<Post | null>;

@@ -8,6 +8,7 @@ import type {
   Lei,
   Post,
   Sumula,
+  Verbete,
   Vizinho,
 } from "./types";
 
@@ -76,6 +77,23 @@ async function todasAsPaginas<T>(
     if (lote.length < PAGINA) return tudo;
   }
 }
+
+type LinhaVerbete = {
+  slug: string;
+  termo: string;
+  disciplinas: { slug: string; nome: string } | { slug: string; nome: string }[] | null;
+  artigos:
+    | LinhaArtigoDoVerbete
+    | LinhaArtigoDoVerbete[];
+};
+
+type LinhaArtigoDoVerbete = {
+  slug: string;
+  numero: string;
+  caput: string;
+  comentario: string[] | null;
+  leis: { slug: string; sigla: string } | { slug: string; sigla: string }[];
+};
 
 const CAMPOS_LEI = "slug, nome, sigla, ano, resumo, disciplinas(slug)";
 
@@ -365,6 +383,39 @@ export const fonteSupabase: FonteDeConteudo = {
       .maybeSingle();
     erro("súmula", error);
     return (data as Sumula | null) ?? null;
+  },
+
+  /* O `!inner` em `artigos` não é detalhe de sintaxe: é a regra do glossário
+     escrita na consulta. Verbete sem artigo no acervo mostraria um termo sem
+     definição nenhuma, e a página perderia justamente o que a distingue de
+     mil glossários jurídicos soltos por aí — o endereço da fonte. */
+  async getGlossario() {
+    const { data, error } = await supabaseAnon()
+      .from("termos_glossario")
+      .select(
+        "slug, termo, disciplinas(slug, nome), " +
+          "artigos!inner(slug, numero, caput, comentario, leis!inner(slug, sigla))",
+      )
+      .order("termo", { ascending: true });
+    erro("glossário", error);
+
+    return ((data ?? []) as unknown as LinhaVerbete[]).map((linha) => {
+      const artigo = um(linha.artigos)!;
+      const lei = um(artigo.leis)!;
+      const disciplina = um(linha.disciplinas);
+      return {
+        slug: linha.slug,
+        termo: linha.termo,
+        disciplinaSlug: disciplina?.slug ?? "",
+        disciplinaNome: disciplina?.nome ?? "Sem disciplina",
+        leiSlug: lei.slug,
+        leiSigla: lei.sigla,
+        artigoSlug: artigo.slug,
+        numero: artigo.numero,
+        caput: artigo.caput,
+        temComentario: (artigo.comentario ?? []).length > 0,
+      } satisfies Verbete;
+    });
   },
 
   // Rascunho não precisa de filtro aqui: a política de `posts` só devolve

@@ -3,13 +3,14 @@ import { Container } from "./container";
 import { Wordmark } from "./wordmark";
 import { site } from "@/lib/site";
 
-/* Apenas rotas publicadas. Conforme /glossario for ao ar, entra aqui. */
+/* Apenas rotas publicadas. */
 const colunas = [
   {
     titulo: "Conteúdo aberto",
     links: [
       { href: "/legislacao", label: "Legislação comentada" },
       { href: "/sumulas", label: "Súmulas Vinculantes" },
+      { href: "/glossario", label: "Glossário jurídico" },
       { href: "/exames", label: "Exames e gabaritos" },
       { href: "/estatisticas", label: "O que mais cai" },
       { href: "/blog", label: "Blog" },

@@ -58,6 +58,8 @@ export const getSumulas = cache((tribunal?: "stf" | "stj" | "tst" | "tse") =>
 );
 export const getSumula = cache((slug: string) => fonte.getSumula(slug));
 
+export const getGlossario = cache(() => fonte.getGlossario());
+
 export const getPosts = cache(() => fonte.getPosts());
 export const getPost = cache((slug: string) => fonte.getPost(slug));
 

@@ -71,6 +71,31 @@ export type Post = {
   publicadoEm: string;
 };
 
+/**
+ * Verbete do glossário. Não há campo de definição escrita: **a definição é o
+ * artigo**, exibido literal e com link para o texto completo. O que é autoral
+ * aqui é a curadoria — qual termo merece verbete e onde ele está definido —,
+ * que é trabalho de índice, não de doutrina.
+ *
+ * Guardar uma cópia do caput na linha do verbete criaria duas verdades que
+ * sairiam de sincronia na primeira alteração da lei.
+ */
+export type Verbete = {
+  slug: string;
+  termo: string;
+  disciplinaSlug: string;
+  disciplinaNome: string;
+  leiSlug: string;
+  leiSigla: string;
+  artigoSlug: string;
+  /** Número do artigo que define o termo. */
+  numero: string;
+  /** Texto do dispositivo, literal. É a definição. */
+  caput: string;
+  /** O artigo já tem comentário autoral — vale a visita. */
+  temComentario: boolean;
+};
+
 export type Exame = {
   slug: string;
   edicao: number;
