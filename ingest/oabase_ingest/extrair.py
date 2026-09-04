@@ -179,6 +179,28 @@ def _sem_rodape(texto: str) -> str:
     return "\n".join(linhas)
 
 
+# Eco da segunda metade de uma palavra hifenizada, logo depois dela:
+# "afastar-se se", "queixa-crime crime", "má-fé fé", "julgá-lo lo". Vem do
+# próprio PDF — aparece no `pdftotext` cru, antes de qualquer recorte — e se
+# concentra nos cadernos do 15º e do 16º Exames, que redesenham parte do texto.
+#
+# **Esta é a única forma do eco que dá para consertar sem dicionário.** O eco
+# solto ("possibilidade possibil", "Alessandro essandro") exigiria decidir se
+# o segundo pedaço é palavra do português, e sem isso a mesma regra come
+# "compatível com", "apenas nas" e "oriundos dos" — texto legítimo, em 38 das
+# 44 provas. Um conserto que estraga 200 questões para arrumar 100 não é
+# conserto. O que sobra nos dois cadernos é defeito do arquivo de origem, da
+# mesma natureza do que motivou o remendo do 35º.
+#
+# Aqui não há esse risco: a repetição literal do que vem depois do hífen, logo
+# em seguida, não existe em português.
+_ECO_HIFENIZADO = re.compile(r"\b(\w+-(\w{2,}))\s+\2\b")
+
+
+def _sem_eco(texto: str) -> str:
+    return _ECO_HIFENIZADO.sub(r"\1", texto)
+
+
 def _recorte(pdf: Path, pagina: int, x: int, largura: int, altura: int) -> str:
     return subprocess.run(
         [
@@ -220,9 +242,11 @@ def texto_em_ordem_de_leitura(
             continue
         for coluna in range(colunas):
             partes.append(
-                _sem_rodape(
-                    _recorte(
-                        pdf, pagina, coluna * largura_coluna, largura_coluna, altura
+                _sem_eco(
+                    _sem_rodape(
+                        _recorte(
+                            pdf, pagina, coluna * largura_coluna, largura_coluna, altura
+                        )
                     )
                 )
             )

@@ -87,7 +87,7 @@ precisam ser reconstruídos.
 
 **Os dois lados do número são normalizados.** `art. 155`, `5º` e `217-a` viram
 `155`, `5` e `217-A` — e o número gravado passa pela mesma limpeza, porque um
-único artigo em 10.168 tem ordinal em `numero`: o **art. 5º da CF**, que é o
+único artigo em 9.887 tem ordinal em `numero`: o **art. 5º da CF**, que é o
 mais procurado que existe. Normalizar só o que a pessoa digita conserta hoje e
 quebra na próxima carga.
 
@@ -275,7 +275,7 @@ dependências). Ver `ingest/README.md`.
 | `questoes`: 3.540, do 3º ao 46º Exame (44 edições, 16 anuladas) | `disciplinas.media_por_prova` |
 | `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` (léxico + sequência, nenhuma confirmada) |
 | gabarito, tipo 1 — definitivo em 14 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
-| `leis` e `artigos`: 42 leis, 10.168 artigos do Planalto | |
+| `leis` e `artigos`: 42 leis, 9.887 artigos do Planalto | |
 | `artigos.incidencia`: 164 vínculos em 113 artigos, só de citação explícita | |
 | `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
 
@@ -301,6 +301,26 @@ paga para ler, no fim da última alternativa, onde ninguém revisa. Ao mexer em
 `RUIDO`, note que o numeral é **obrigatório** — sem ele o filtro come linha
 legítima, e há questão de Ética cuja alternativa quebra a linha exatamente
 antes de "Exame de Ordem".
+
+O conserto definitivo não mora no parser, e sim em `_sem_rodape`, na
+extração: o recorte por coluna **corta o rodapé no meio da palavra**, e o
+mesmo texto sai como "UNIFICADO", "NIFICADO", "IFICADO", "PROVA APLICADA" e
+"PROVA APLICAD" em provas diferentes. Enumerar as formas de um texto truncado
+arbitrariamente não fecha. A poda é por posição — do primeiro marcador forte
+até a borda da coluna — e as fronteiras de palavra não são zelo: sem elas
+`IFICADO` casa dentro de "qualificado" e a alternativa D da questão 63 do 25º
+some inteira.
+
+**O eco de sílaba dos cadernos do 15º e do 16º é do PDF, não da extração** —
+aparece no `pdftotext` cru. `_sem_eco` conserta só a forma determinística
+("afastar-se se", "queixa-crime crime"); o eco solto ("Alessandro essandro")
+exigiria decidir se o fragmento é palavra do português, e a mesma regra sem
+dicionário come "compatível com" e "oriundos dos" em 38 das 44 provas. O que
+sobra é candidato a remendo, não a regex.
+
+**Nem toda repetição é nossa.** O "se os os embargos" da questão 51 do 40º
+está assim no caderno oficial da FGV, em linha única. Reproduzir ato oficial
+inclui reproduzir o erro dele.
 
 **Recarregar uma prova não pode apagar classificação melhor.** O upsert de
 `questoes` escrevia `disciplina_id = excluded.disciplina_id` sem condição, o
@@ -355,7 +375,7 @@ Três regras que a carga respeita e que não devem ser afrouxadas:
    `where public.artigos.comentario = '{}'`. Texto de lei se atualiza sozinho
    enquanto ninguém escreveu sobre ele; a partir do comentário, a linha é
    trabalho autoral e mudança de redação vira revisão humana.
-2. **Tudo entra com `indexavel = false`.** São 10.168 páginas de texto legal que
+2. **Tudo entra com `indexavel = false`.** São 9.887 páginas de texto legal que
    existem em centenas de outros sites. Elas servem para consulta e para
    navegação interna; ao índice só vai o que tiver comentário. Já as páginas
    de lei (`/legislacao/<slug>`) entram no sitemap: são índices completos e
@@ -363,6 +383,41 @@ Três regras que a carga respeita e que não devem ser afrouxadas:
 3. **`ordem` vem do número, não da posição de chegada.** É o que permite
    percorrer a lei em sequência e achar o vizinho anterior/seguinte sem
    recarregar a lei inteira, e sobrevive a uma carga parcial.
+
+**O travessão da grafia antiga não é hífen de sufixo, e confundir os dois
+criou 281 artigos.** "Art. 41 - O condenado a quem sobrevém doença mental"
+era lido como o artigo **41-O**, e o "O" que abre o caput ia embora junto com
+o travessão: nascia uma duplicata de texto decapitado ao lado do art. 41
+verdadeiro, concentrada na CLT e no Código Penal, que são as leis escritas
+nessa grafia. Pior, o artigo real às vezes **nunca chegava a existir** — o CP
+não tinha art. 3º. O defeito não derruba nada e não aparece em contagem: o
+total só cresce, e "Art. 41-O" tem cara de artigo de verdade. A distinção é
+que "Art. 149-A" e "Art. 7º-B" nunca põem espaço em volta do hífen, e a
+grafia antiga sempre põe.
+
+**Cabeçalho de divisão e rubrica marginal não pertencem a artigo nenhum.**
+Por não casarem com marcador de artigo, parágrafo, inciso ou alínea, caíam na
+acumulação e iam parar na cauda do último segmento do artigo anterior — 596
+artigos terminando em "CAPÍTULO VI DA CONTESTAÇÃO", e o nome do crime
+seguinte grudado no fim do crime atual, no Código Penal. A rubrica **sai da
+coleta**: guardá-la no artigo certo pede uma coluna `rubrica`, e guardá-la no
+artigo errado é o defeito que se estava consertando.
+
+**O ordinal e o ponto são dois caracteres.** `§\s*\d+\s*[ºo°.]?` aceita um
+só, e por isso "§ 2º." não era reconhecido: o parágrafo inteiro ficava colado
+no fim do anterior. Era o caso do § 2º do art. 122 do ECA — a regra que veda
+a internação havendo outra medida adequada, escondida na cauda do § 1º.
+
+**Onde o Planalto entrega tudo numa linha só, nenhum marcador de início de
+linha alcança.** Daí `PARAGRAFO_NO_MEIO` e `ESTRUTURA_NO_MEIO` repartirem a
+linha antes de o laço olhar para ela. A quebra exige fim de frase antes
+(ponto ou o fecha-parêntese das notas de redação) — é o que separa a estrutura
+da referência a ela: "na forma dos §§ 2o e 5o deste artigo" não vem depois de
+ponto.
+
+Ao mexer em qualquer um desses marcadores, a validação que pega o estrago é
+comparar a extração inteira contra a anterior: **nenhum artigo pode sumir, e
+nenhum caput pode mudar de outro jeito que não encurtar.**
 
 O PostgREST devolve no máximo mil linhas e não avisa quando corta — o Código
 Civil tem 2.081 artigos. Qualquer consulta que precise da lei inteira passa por
@@ -449,7 +504,7 @@ inteiro sem classificação.
 ## Revisão editorial
 
 Os dois gargalos do projeto são trabalho humano: 3.540 questões classificadas
-por heurística e nenhuma confirmada; 10.168 artigos e 107 comentados. O
+por heurística e nenhuma confirmada; 9.887 artigos e 107 comentados. O
 segundo gargalo anda — eram quatro —, o primeiro não saiu do zero.
 `/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
 para tirar o atrito desse trabalho, não para fazê-lo.
@@ -910,7 +965,7 @@ está no acervo, e errar faz alguém perder a prova. Ela diz o que mede e manda
 ao edital para o resto. Ao acrescentar campo ali, a pergunta é de onde ele vem.
 
 **O gargalo de posicionamento não é técnico.** São 107 artigos indexáveis de
-10.168, porque o portão de qualidade — correto — só anuncia o que tem
+9.887, porque o portão de qualidade — correto — só anuncia o que tem
 comentário revisado. Nenhuma marcação compensa isso: o caminho é escrever
 comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
 glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
