@@ -6,6 +6,7 @@ import type {
   IncidenciaEmExame,
   Lei,
   Post,
+  ResultadoDeBusca,
   Sumula,
   Verbete,
   Vizinho,
@@ -61,6 +62,14 @@ export type FonteDeConteudo = {
    * verbete nenhum, e o `!inner` do join é quem garante isso.
    */
   getGlossario(): Promise<Verbete[]>;
+  /**
+   * Busca do site: artigo, súmula e post, em uma lista só.
+   *
+   * Quem ordena artigo e súmula é `buscar_dispositivos` no banco — a mesma
+   * função que o quadro de anotações usa, e o primeiro consumidor de
+   * `artigos.search_vector`.
+   */
+  buscarNoSite(termo: string, limite?: number): Promise<ResultadoDeBusca[]>;
   /** Posts publicados, do mais recente para o mais antigo. */
   getPosts(): Promise<Post[]>;
   getPost(slug: string): Promise<Post | null>;

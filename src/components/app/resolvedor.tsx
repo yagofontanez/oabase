@@ -292,7 +292,7 @@ export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
               </span>
             )}
             {questao.disciplina ?? "sem classificação"}
-            {/* 3.460 questões extraídas de PDF, e quem lê cada uma é quem
+            {/* 3.540 questões extraídas de PDF, e quem lê cada uma é quem
                 está resolvendo. O caminho até a equipe tem de estar aqui, na
                 questão — pedir para a pessoa procurar o suporte e digitar de
                 novo o exame e o número é pedir para ela não avisar. */}

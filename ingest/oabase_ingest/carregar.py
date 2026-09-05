@@ -86,7 +86,23 @@ def sql_das_questoes(edicao: int, questoes: list[QuestaoParaCarga]) -> str:
         "  alternativas = excluded.alternativas,\n"
         "  gabarito = excluded.gabarito,\n"
         "  anulada = excluded.anulada,\n"
-        "  disciplina_id = excluded.disciplina_id;\n"
+        # A classificação do pipeline é a do léxico com a suavização por
+        # bloco: um palpite. Ela não pode passar por cima de trabalho melhor
+        # que já esteja na linha.
+        #
+        # Antes escrevia `excluded.disciplina_id` sem condição, e isso fazia
+        # de recarregar uma prova um ato destrutivo: as 440 questões
+        # classificadas pelo modelo voltariam ao palpite léxico, e
+        # `classificacao_origem` continuaria dizendo 'modelo' — procedência
+        # mentindo, que é pior do que classificação faltando. Reingestão é
+        # rotina (gabarito preliminar vira definitivo, parser melhora), e uma
+        # rotina não pode apagar o que custou horas de API.
+        "  disciplina_id = case\n"
+        "    when public.questoes.disciplina_confirmada then public.questoes.disciplina_id\n"
+        "    when public.questoes.classificacao_origem in ('modelo', 'humano')\n"
+        "      then public.questoes.disciplina_id\n"
+        "    else excluded.disciplina_id\n"
+        "  end;\n"
         "-- `slug` fica de fora de propósito: reclassificar disciplina não pode\n"
         "-- trocar a URL de uma página já indexada.\n"
     )

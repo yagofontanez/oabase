@@ -1,0 +1,97 @@
+{
+  "edicao": 35,
+  "paginas_ilegiveis": [17, 21],
+  "motivo": "Páginas 17 e 21 do caderno oficial trazem fontes CID Identity-H sem tabela de caracteres (pdffonts: uni = no). O texto extraído sai como substituição consistente — lixo com aparência de texto — enquanto a página renderiza perfeitamente. As nove questões foram transcritas da renderização do MESMO PDF oficial (pdftoppm a 150-175 dpi), não de terceiro: continua sendo ato oficial. Transcrito em 03/09/2026.",
+  "questoes": [
+    {
+      "numero": 57,
+      "enunciado": "Paulo Filho pretende ajuizar uma ação de cobrança em face de Arnaldo José, tendo em vista um contrato de compra e venda firmado entre ambos. As alegações de fato propostas por Paulo podem ser comprovadas apenas documentalmente, e existe uma tese firmada em julgamento de casos repetitivos. Ao questionar seu advogado sobre sua pretensão, Paulo Filho buscou saber se existia a possibilidade de que lhe fosse concedida uma tutela de evidência, com o intuito de sanar o problema da forma mais célere. Como advogado(a) de Paulo, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "A tutela da evidência será concedida, caso seja demonstrado o perigo de dano ou o risco ao resultado útil do processo, quando as alegações de fato puderem ser comprovadas apenas documentalmente e houver tese firmada em julgamento de casos repetitivos ou em súmula vinculante.",
+        "B": "A tutela da evidência será concedida, independentemente da demonstração de perigo de dano ou de risco ao resultado útil do processo, somente quando ficar caracterizado o abuso do direito de defesa ou o manifesto propósito protelatório da parte.",
+        "C": "A tutela da evidência será concedida, independentemente da demonstração de perigo de dano ou de risco ao resultado útil do processo, quando as alegações de fato puderem ser comprovadas apenas documentalmente e houver tese firmada em julgamento de casos repetitivos ou em súmula vinculante.",
+        "D": "A tutela da evidência será concedida, independentemente da demonstração de perigo de dano ou de risco ao resultado útil do processo, somente quando a petição inicial for instruída com prova documental suficiente dos fatos constitutivos do direito do autor, a que o réu não oponha prova capaz de gerar dúvida razoável."
+      }
+    },
+    {
+      "numero": 58,
+      "enunciado": "Para satisfazer sentimento pessoal, já que tinha grande relação de amizade com Joana, Alan, na condição de funcionário público, deixou de praticar ato de ofício em benefício da amiga. O supervisor de Alan, todavia, identificou o ocorrido e praticou o ato que Alan havia omitido, informando os fatos em procedimento administrativo próprio. Após a conclusão do procedimento administrativo, o Ministério Público denunciou Alan pelo crime de corrupção passiva consumado, destacando que a vantagem obtida poderia ser de qualquer natureza para tipificação do delito. Confirmados os fatos durante a instrução, caberá à defesa técnica de Alan pleitear sob o ponto de vista técnico, no momento das alegações finais,",
+      "alternativas": {
+        "A": "o reconhecimento da tentativa em relação ao crime de corrupção passiva.",
+        "B": "a desclassificação para o crime de prevaricação, na forma tentada.",
+        "C": "a desclassificação para o crime de prevaricação, na forma consumada.",
+        "D": "o reconhecimento da prática do crime de condescendência criminosa, na forma consumada."
+      }
+    },
+    {
+      "numero": 59,
+      "enunciado": "Em razão de grande evento de caráter religioso que ocorreria no país, com previsão de chegada de milhares de estrangeiros, foi editada uma lei estabelecendo que, durante o prazo de vigência da norma, que seria de 02 de fevereiro de 2019 até 02 de setembro de 2019, os crimes de furto qualificado pelo concurso de pessoas passariam a ser punidos com pena de reclusão de 03 a 10 anos e multa, afastando-se o preceito secundário anterior, que fixava pena de 02 a 08 anos de reclusão e multa. Após cessar a vigência da lei, em 02 de setembro de 2019, o crime de furto qualificado pelo concurso de pessoas voltou a ser punido com pena de 02 a 08 anos de reclusão. Carlos foi preso em flagrante pela prática do crime de furto qualificado em 03 de janeiro de 2019, sendo proferida sentença condenatória em 02 de setembro de 2019, ocasião em que o juiz afirmou que fixava a pena base no mínimo legal, qual seja, 03 anos de pena privativa de liberdade, já que é a norma em vigor neste momento. Por sua vez, João foi preso em flagrante, também pela prática do crime de furto qualificado, por fatos que teriam ocorrido em 05 de maio de 2019, sendo sua sentença proferida em 12 de setembro de 2019. Na ocasião, o juiz condenou João, fixando a pena mínima de 03 anos de reclusão, já que era a norma em vigor na data do fato. Carlos e João procuram você, na condição de advogado(a), para esclarecimentos. Considerando apenas as informações narradas, com base nas previsões legais e constitucionais sobre sucessão de leis no tempo, você deverá informar aos clientes que",
+      "alternativas": {
+        "A": "não poderão ser questionadas as penas aplicadas.",
+        "B": "poderão ser questionadas as penas aplicadas.",
+        "C": "poderá ser questionada a pena aplicada a João, em razão da aplicação do princípio da retroatividade da lei penal mais benéfica, mas não a pena aplicada a Carlos.",
+        "D": "não poderá ser questionada a pena aplicada a João, mas poderá ser questionada a pena aplicada para Carlos, em razão do princípio da irretroatividade da lei penal mais gravosa."
+      }
+    },
+    {
+      "numero": 69,
+      "enunciado": "Magda é servidora pública federal, trabalhando como professora em instituição de Ensino Superior mantida pela União no Estado do Rio de Janeiro. Magda vem a ser vítima de ofensa à sua honra subjetiva em sala de aula, sendo chamada de “piranha” e “vagabunda” por Márcio, aluno que ficara revoltado com sua reprovação em disciplina ministrada por Magda. Nessa situação, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "Magda só pode ajuizar queixa-crime contra Márcio, imputando-lhe crime de injúria.",
+        "B": "Magda só pode oferecer representação contra Márcio, imputando-lhe crime de injúria.",
+        "C": "Magda não pode ajuizar queixa-crime nem oferecer representação contra Márcio, imputando-lhe crime de injúria.",
+        "D": "Magda pode optar entre ajuizar queixa-crime ou oferecer representação contra Márcio, imputando-lhe crime de injúria."
+      }
+    },
+    {
+      "numero": 70,
+      "enunciado": "Sheila e Irene foram admitidas em uma empresa de material de construção, sendo Sheila mediante contrato de experiência por 90 dias e Irene, contratada por prazo indeterminado. Ocorre que, 60 dias após o início do trabalho, o empregador resolveu dispensar ambas as empregadas porque elas não mostraram o perfil esperado, dispondo-se a pagar todas as indenizações e multas previstas em Lei para extinguir os contratos. No momento da comunicação do desligamento, ambas as empregadas informaram que estavam grávidas com 1 mês de gestação, mostrando os respectivos laudos de ultrassonografia. Considerando a situação de fato, a previsão legal e o entendimento consolidado do TST, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "As duas empregadas poderão ser dispensadas.",
+        "B": "Somente Sheila poderá ser desligada porque o seu contrato é a termo.",
+        "C": "Sheila e Irene não poderão ser desligadas em virtude da gravidez.",
+        "D": "Apenas Irene poderá ser desligada, desde que haja autorização judicial."
+      }
+    },
+    {
+      "numero": 71,
+      "enunciado": "A sociedade empresária Transportes Canela Ltda., que realiza transporte rodoviário de passageiros, abriu processo seletivo para a contratação de motoristas profissionais e despachantes. Interessados nos cargos ofertados, Sérgio se apresentou como candidato ao cargo de motorista e Bárbara, ao cargo de despachante. A sociedade exigiu de ambos a realização de exame toxicológico para detecção de drogas ilícitas como condição para a admissão. Considerando a situação de fato e a previsão legal, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "Em hipótese alguma, o exame poderia ser feito, uma vez que viola a intimidade dos trabalhadores.",
+        "B": "O exame pode ser feito em ambos os empregados, desde que haja prévia autorização judicial.",
+        "C": "O exame seria válido para Sérgio por expressa previsão legal, mas seria ilegal para Bárbara.",
+        "D": "É possível o exame em Bárbara se houver fundada desconfiança da empresa, mas, para Sérgio, não pode ser realizado."
+      }
+    },
+    {
+      "numero": 72,
+      "enunciado": "Rogéria trabalha como eletricista na companhia de energia elétrica da sua cidade, cumprindo jornada diária de 6 horas, de 2ª a 6ª feira, com intervalo de 1 hora para refeição. Em um sábado por mês, Rogéria precisa permanecer na sede da companhia por 12 horas para atender imediatamente a eventuais emergências (queda de energia, estouro de transformador ou outras urgências). Para isso, a empresa mantém um local reservado com cama, armário e espaço de lazer, até porque não se sabe se haverá, de fato, algum chamado. De acordo com a CLT, assinale a opção que indica a denominação desse período no qual Rogéria permanecerá na empresa aguardando eventual convocação para o trabalho e como esse tempo será remunerado.",
+      "alternativas": {
+        "A": "Sobreaviso; será pago na razão de 1/3 do salário normal.",
+        "B": "Prontidão; será pago na razão de 2/3 do salário-hora normal.",
+        "C": "Hora extra; será pago com adicional de 50%.",
+        "D": "Etapa; será pago com adicional de 100%."
+      }
+    },
+    {
+      "numero": 73,
+      "enunciado": "Pedro Paulo joga futebol em um clube de sua cidade, que é classificado como formador, e possui com o referido clube um contrato de formação. Recentemente, recebeu uma proposta para assinar seu primeiro contrato profissional. Sabedor de que não há nenhum outro clube interessado em assinar um primeiro contrato especial de trabalho desportivo como profissional, Pedro Paulo consultou você, como advogado(a), para saber acerca da duração do referido contrato. Diante disso, observada a Lei Geral do Desporto, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "O contrato poderá ter prazo indeterminado.",
+        "B": "O contrato poderá ter duração máxima de cinco anos.",
+        "C": "O contrato poderá ter duração máxima de três anos.",
+        "D": "Não há prazo máximo estipulado, desde que seja por prazo determinado."
+      }
+    },
+    {
+      "numero": 74,
+      "enunciado": "Paulo Sampaio foi chamado para uma entrevista de emprego em uma empresa de tecnologia. Sabendo que, se contratado, desenvolverá projetos de aplicativos para smartphones, dentre outras invenções, resolveu consultar você, como advogado (a), para saber sobre a propriedade intelectual sobre tais invenções, sendo certo que não foi tratada nenhuma condição contratual até agora. Diante disso, de acordo com a redação da CLT em vigor, assinale a afirmativa correta.",
+      "alternativas": {
+        "A": "Na qualidade de empregado, toda a propriedade sobre as invenções será do empregador.",
+        "B": "No curso do contrato de trabalho, as invenções realizadas pessoalmente pelo empregado, mas com utilização de equipamentos fornecidos pelo empregador, serão de propriedade comum, em partes iguais, salvo se o contrato de trabalho tiver por objeto pesquisa científica.",
+        "C": "O empregador poderá explorar a invenção a qualquer tempo sem limitação de prazo após a concessão da patente, uma vez que se trata de contrato de trabalho.",
+        "D": "A propriedade do invento deverá ser dividida proporcionalmente após a apuração da contribuição do empregado e o investimento em equipamentos feito pelo empregador."
+      }
+    }
+  ]
+}

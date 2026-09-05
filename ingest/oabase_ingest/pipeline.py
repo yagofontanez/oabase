@@ -16,13 +16,14 @@ import os
 import sys
 import unicodedata
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from .classificar import classificar
 from .carregar import QuestaoParaCarga, executar, sql_das_questoes, sql_do_exame
 from .extrair import texto_em_ordem_de_leitura
 from .gabarito import ler_gabarito
-from .parsear import parsear_prova
+from .parsear import Questao, parsear_prova
 from .sequenciar import Palpite, blocos, suavizar
 
 # Abaixo disso a classificação é considerada incerta e vai para revisão
@@ -36,6 +37,45 @@ def _slugificar(texto: str) -> str:
         if unicodedata.category(c) != "Mn"
     )
     return re.sub(r"[^a-z0-9]+", "-", sem_acento).strip("-")
+
+
+@dataclass
+class Remendo:
+    """
+    Questões transcritas à mão porque o PDF oficial não as entrega.
+
+    **Não é um atalho para prova difícil de parsear.** É a saída para um
+    defeito do arquivo de origem: páginas cujas fontes CID vieram sem tabela
+    de caracteres, em que `pdftotext` devolve uma substituição consistente —
+    lixo com aparência de texto. A página renderiza perfeitamente, o que
+    significa que o conteúdo está lá e só a decodificação está quebrada.
+
+    A transcrição é feita contra a renderização do **mesmo PDF oficial**, e
+    não contra terceiro: continua sendo ato oficial, que é o critério do que
+    pode virar conteúdo aqui. O que muda é o risco — de extração para
+    digitação —, e por isso o arquivo registra página, motivo e data.
+    """
+
+    paginas: frozenset[int]
+    questoes: dict[int, "Questao"]
+    motivo: str
+
+
+def _ler_remendo(caminho: Path) -> Remendo:
+    dados = json.loads(caminho.read_text(encoding="utf-8"))
+    questoes = {
+        int(q["numero"]): Questao(
+            numero=int(q["numero"]),
+            enunciado=q["enunciado"],
+            alternativas=q["alternativas"],
+        )
+        for q in dados["questoes"]
+    }
+    return Remendo(
+        paginas=frozenset(dados["paginas_ilegiveis"]),
+        questoes=questoes,
+        motivo=dados["motivo"],
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -55,11 +95,24 @@ def main(argv: list[str] | None = None) -> int:
         help="o gabarito usado é o preliminar, não o definitivo",
     )
     p.add_argument("--saida", type=Path, default=Path("saida"))
+    p.add_argument(
+        "--remendo", type=Path, default=None,
+        help="JSON com questões de páginas ilegíveis no PDF de origem",
+    )
     p.add_argument("--carregar", action="store_true", help="grava no Supabase")
     args = p.parse_args(argv)
 
+    remendo = _ler_remendo(args.remendo) if args.remendo else None
+    ignorar = frozenset(remendo.paginas) if remendo else frozenset()
+    if remendo:
+        print(
+            f"→ remendo: {len(remendo.questoes)} questões das páginas "
+            f"{sorted(remendo.paginas)}, ilegíveis no PDF de origem"
+        )
+        print(f"  motivo: {remendo.motivo}")
+
     print(f"→ extraindo {args.prova.name} (2 colunas, ordem de leitura)")
-    texto = texto_em_ordem_de_leitura(args.prova)
+    texto = texto_em_ordem_de_leitura(args.prova, ignorar=ignorar)
 
     # O gabarito é lido antes de segmentar porque é ele que diz quantas
     # questões a prova tem. O padrão era 80 fixo, e os primeiros exames
@@ -71,7 +124,25 @@ def main(argv: list[str] | None = None) -> int:
 
     total = args.total or max(gabarito)
     print(f"→ segmentando {total} questões")
-    questoes = parsear_prova(texto, total=total)
+    supridas = frozenset(remendo.questoes) if remendo else frozenset()
+    questoes = parsear_prova(texto, total=total, supridas=supridas)
+
+    # O remendo **preenche**, nunca sobrescreve. Se o parser conseguiu ler a
+    # questão do PDF, é a leitura do PDF que vale: transcrição humana é o
+    # último recurso, e um remendo que pudesse sobrepor extração viraria a
+    # porta por onde texto conferido é trocado por texto digitado à mão sem
+    # ninguém perceber.
+    if remendo:
+        lidas = {q.numero for q in questoes}
+        colisao = sorted(lidas & set(remendo.questoes))
+        if colisao:
+            print(
+                f"✗ o remendo tenta substituir questões que o parser leu: {colisao}",
+                file=sys.stderr,
+            )
+            return 1
+        questoes.extend(remendo.questoes.values())
+        questoes.sort(key=lambda q: q.numero)
 
     faltando = [q.numero for q in questoes if q.numero not in gabarito]
     if faltando:

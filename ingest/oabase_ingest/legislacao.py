@@ -57,20 +57,95 @@ NAVEGADOR = (
 # apagou justamente as prerrogativas do advogado, o artigo mais cobrado de
 # Ética, e nada no relatório acusou: o total continuou certo, porque uma
 # linha existia no lugar da outra.
+#
+# **O hífen do sufixo é colado ao número, e essa é a única coisa que o separa
+# do travessão da grafia antiga.** Com `\s*-\s*`, "Art. 41 - O condenado a
+# quem sobrevém doença mental..." era lido como o artigo "41-O", e o "O" que
+# abre o caput ia embora junto com o travessão: nascia um artigo fantasma,
+# com o texto decapitado, ao lado do art. 41 verdadeiro. Eram **281** deles no
+# acervo, concentrados na CLT e no Código Penal, que são justamente as leis
+# redigidas na grafia com travessão.
+#
+# O defeito não derruba nada e não aparece em contagem: o artigo certo
+# continua lá, o total só cresce, e a duplicata tem cara de artigo real —
+# "Art. 41-O" existe em outras leis. Quem lesse a página do 41-O veria o texto
+# do 41 começando na segunda palavra.
+#
+# A distinção é segura porque as duas grafias não se misturam: "Art. 149-A"
+# e "Art. 7º-B" nunca põem espaço em volta do hífen, e a grafia antiga sempre
+# põe. Dos 287 sufixos que esta troca deixa de reconhecer, 281 não existem
+# colados em lugar nenhum do acervo — são exatamente os fantasmas — e os 6
+# restantes continuam reconhecidos pela ocorrência colada do mesmo artigo.
 INICIO_ARTIGO = re.compile(
     r"^Art\.?\s*(\d+(?:\.\d{3})*)"
     r"(?:\.|\s?[ºo°](?![A-Za-zÀ-ÿ]))?"
-    r"(?:\s*-\s*([A-Z])(?![a-zà-ÿ]))?"
+    r"(?:-([A-Z])(?![a-zà-ÿ]))?"
 )
 # O parágrafo abre frase nova, então vem seguido de maiúscula, travessão ou
 # parêntese. Uma citação continua a frase em minúscula — "§ 1º do art. 159",
 # no caput do art. 179 do CPP, é referência e não estrutura.
-INICIO_PARAGRAFO = re.compile(
-    r"^(§\s*\d+\s*[ºo°.]?\s*[-–—A-ZÀ-Ý(]|Parágrafo\s+único)"
-)
+#
+# **O ordinal e o ponto são dois caracteres, não um.** A classe era `[ºo°.]?`,
+# que aceita um só: "§ 2º." não casava, e o parágrafo inteiro ia parar colado
+# no fim do anterior. Era o caso do § 2º do art. 122 do ECA — a regra que diz
+# que "em nenhuma hipótese será aplicada a internação, havendo outra medida
+# adequada", grudada no fim do § 1º, onde ninguém a lê.
+MARCA_PARAGRAFO = r"§\s*\d+\s*[ºo°]?\.?\s*[-–—A-ZÀ-Ý(]"
+INICIO_PARAGRAFO = re.compile(rf"^({MARCA_PARAGRAFO}|Parágrafo\s+único)")
 INICIO_INCISO = re.compile(r"^([IVXLCDM]+)\s*[-–—](?:\s|$)")
 INICIO_ALINEA = re.compile(r"^([a-z])\)\s")
 ORDINAL_SOLTO = re.compile(r"[ºª°oa]")
+
+# Cabeçalho de divisão da lei. Não é texto de artigo e não pertence a
+# parágrafo nenhum — mas, por não casar com marcador de artigo, inciso ou
+# alínea, caía no `else` que acumula, e ia parar na cauda do último parágrafo
+# do artigo anterior. Eram 596 artigos terminando em "CAPÍTULO VI DA
+# CONTESTAÇÃO" e afins, na página de legislação que o site publica aberta.
+#
+# O algarismo romano é **obrigatório**. Sem ele, "Seção" e "Título" sozinhos
+# são palavras comuns em texto de lei — o art. 1.245 do CC fala em "título"
+# translativo, e comer essa linha custaria o caput.
+INICIO_ESTRUTURA = re.compile(
+    r"^(LIVRO|SUBT[IÍ]TULO|T[IÍ]TULO|CAP[IÍ]TULO|SUBSE[ÇC][ÃA]O|SE[ÇC][ÃA]O|PARTE)"
+    r"\s+([IVXLCDM]+|[ÚU]NIC[OA]|PRIMEIRA|SEGUNDA|TERCEIRA|GERAL|ESPECIAL)\b",
+    re.IGNORECASE,
+)
+
+# Nota de vigência do compilado — "(Incluído pela Lei nº 14.711, de 2023)".
+# Ela se intromete **entre** o cabeçalho e o nome da divisão, e era o que
+# fazia o descarte errar o alvo: consumia a nota e deixava passar o nome, que
+# virava um parágrafo dizendo "DO CONDOMÍNIO EM MULTIPROPRIEDADE".
+NOTA_DE_VIGENCIA = re.compile(r"^\((?:[^()]|\([^()]*\))*\)$")
+
+# O nome da divisão, que vem logo abaixo do cabeçalho. Ele aparece tanto em
+# caixa alta ("DA CONTESTAÇÃO") quanto em caixa mista ("Dos Critérios de
+# Julgamento") — exigir ausência de minúscula deixava passar 1.361 deles, e
+# eles não sumiam: viravam um parágrafo inteiro dizendo "Da Ausência".
+#
+# O que separa o nome do texto de lei é a **pontuação final**: dispositivo
+# fecha com ponto, ponto e vírgula ou dois-pontos; título de divisão não fecha
+# com nada. Somado à posição — só a linha imediatamente após um cabeçalho —,
+# é o par de condições que torna o descarte seguro.
+NOME_DE_ESTRUTURA = re.compile(r"[.;:!?]\s*$")
+
+# Onde o Planalto entrega o parágrafo seguinte **na mesma linha** do anterior,
+# sem `<p>` nem `<br>` — aí nenhum marcador de início de linha alcança.
+# A quebra exige fim de frase antes (ponto final ou o fecha-parêntese das
+# notas de redação), que é o que separa a estrutura da referência: "na forma
+# dos §§ 2o e 5o deste artigo" não vem depois de ponto.
+PARAGRAFO_NO_MEIO = re.compile(rf"(?<=[.)])\s+(?={MARCA_PARAGRAFO})")
+
+# E o mesmo para o cabeçalho de divisão, que sofre do mesmo mal e aparecia
+# sobretudo em artigo **sem parágrafo nenhum**: ali não há segmento seguinte
+# onde a sobra pudesse cair, então ela ficava colada no próprio caput — o
+# art. 50 do Estatuto da OAB terminava em "CAPÍTULO II Do Conselho Federal".
+# A exigência de fim de frase antes é o que separa a divisão de verdade da
+# referência a ela ("na forma do Capítulo II"), que vem no meio de oração.
+ESTRUTURA_NO_MEIO = re.compile(
+    r"(?<=[.)])\s+"
+    r"(?=(?:LIVRO|SUBT[IÍ]TULO|T[IÍ]TULO|CAP[IÍ]TULO|SUBSE[ÇC][ÃA]O|SE[ÇC][ÃA]O)"
+    r"\s+[IVXLCDM]+\b)"
+)
 
 
 @dataclass
@@ -484,12 +559,60 @@ def extrair_artigos(linhas: list[str], parar_em: str | None = None) -> list[Arti
         else:
             atual.paragrafos.append(texto)
 
+    # Linhas partidas onde o Planalto grudou o parágrafo seguinte no anterior.
+    # A repartição acontece antes do laço para que o resultado passe pelo mesmo
+    # reconhecimento de marcador que qualquer outra linha — um caminho só.
+    linhas = [p for linha in linhas for p in PARAGRAFO_NO_MEIO.split(linha)]
+    linhas = [p for linha in linhas for p in ESTRUTURA_NO_MEIO.split(linha)]
+
+    # A rubrica marginal — "Furto", "Inimputáveis", "Reclusão e detenção" —
+    # nomeia o artigo que vem **depois** dela, mas nada no texto a distingue de
+    # uma linha qualquer: ela ia parar como último parágrafo do artigo
+    # anterior. No Código Penal isso põe o nome do crime seguinte na cauda do
+    # crime atual, que é o pior lugar possível para um estudo de tipos penais.
+    #
+    # Ela é reconhecida pela vizinhança, não pela forma: fragmento curto, sem
+    # pontuação de fim, imediatamente antes de um "Art.". Sai da coleta porque
+    # não há campo onde guardá-la — anexá-la ao artigo certo pede uma coluna
+    # `rubrica`, e atribuí-la ao artigo errado é o defeito que se está
+    # consertando.
+    def _e_rubrica(i: int) -> bool:
+        linha = linhas[i]
+        return (
+            i + 1 < len(linhas)
+            and bool(INICIO_ARTIGO.match(linhas[i + 1]))
+            and len(linha) <= 80
+            and not re.search(r"[.;:!?)]\s*$", linha)
+            and not INICIO_ARTIGO.match(linha)
+            and not INICIO_PARAGRAFO.match(linha)
+            and not INICIO_INCISO.match(linha)
+            and not INICIO_ALINEA.match(linha)
+        )
+
+    linhas = [l for i, l in enumerate(linhas) if not _e_rubrica(i)]
+
+    descartar_nome = False
     for linha in linhas:
         # O marcador de parada também aparece no sumário, no topo da página,
         # antes de qualquer artigo — parar ali devolveria zero. Só vale a
         # ocorrência que vem depois do corpo já ter começado.
         if artigos and parar_em and linha.upper().startswith(parar_em.upper()):
             break
+
+        # Cabeçalho de divisão: fecha o que estava aberto e não entra em lugar
+        # nenhum. O nome da divisão vem na linha seguinte e sai junto.
+        if INICIO_ESTRUTURA.match(linha):
+            fechar_segmento()
+            segmento = []
+            descartar_nome = True
+            continue
+        if descartar_nome:
+            # A nota de vigência não encerra a espera: o nome vem depois dela.
+            if NOTA_DE_VIGENCIA.match(linha):
+                continue
+            descartar_nome = False
+            if not NOME_DE_ESTRUTURA.search(linha) and not INICIO_ARTIGO.match(linha):
+                continue
 
         inicio = INICIO_ARTIGO.match(linha)
         if inicio:

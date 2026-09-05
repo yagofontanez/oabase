@@ -100,6 +100,59 @@ impede que um dispositivo muito citado suba em busca que não tem a ver com ele.
 piso do cliente tem de ser o mesmo da função, senão a tela recusa o que o
 banco responderia.
 
+`/busca` é a busca do site, sobre `buscarNoSite()` no contrato — a mesma
+função do banco, mais os posts. **É `noindex` e fica fora do sitemap**:
+resultado de busca interna é conteúdo gerado por quem digita, em endereços
+ilimitados, e indexar isso dilui o domínio — exatamente o que o portão de
+qualidade existe para evitar. É `noindex` **sem** `Disallow`: bloquear o
+rastreamento impediria o buscador de ler o próprio `noindex`.
+
+**O formulário é GET e não depende de JavaScript.** O resultado ganha
+endereço compartilhável e o campo existe no HTML antes de qualquer script —
+busca que só funciona depois da hidratação não existe para quem está numa
+conexão ruim, que é boa parte de quem estuda pelo celular.
+
+**Post é filtrado em memória**, e isso é decisão de escala, não descuido: são
+cinco textos, e montar o `or=(...ilike...)` do PostgREST exigiria escapar
+vírgula, parêntese e aspas do que a pessoa digitou. Com cem textos, o lugar de
+mudar é `fonte-supabase.ts` — um vetor de busca em `posts`, como o de
+`artigos`.
+
+## Medição
+
+**O Search Console já está verificado, por DNS.** Há um registro TXT
+`google-site-verification=...` em `oabase.com.br`, e é por isso que não existe
+meta nenhuma no HTML de produção. Verificação por DNS não deixa rastro no
+repositório — quem procurar prova disso no código vai concluir, errado, que
+não há medição. Ela é também a mais forte das duas: vale para o domínio
+inteiro, subdomínios inclusive, enquanto a meta vale só para o prefixo de URL.
+
+`GOOGLE_SITE_VERIFICATION` e `BING_SITE_VERIFICATION` emitem a meta no layout
+raiz; ausentes, o campo não é emitido — que é o estado atual. Ficam como
+caminho alternativo e, no caso do Bing, como o único que existe. O token é da
+conta de quem opera o site, não do projeto — daí vir do ambiente.
+
+**Sem `NEXT_PUBLIC_`**: é lido no servidor e não tem por que ir para o pacote
+do navegador.
+
+**A variável tem de existir no build.** A metadata do layout raiz é assada em
+cada página pré-renderizada, e aqui são quase todas — definir a variável só no
+runtime não muda o HTML já gerado. Quem cadastrar o token depois precisa
+disparar um deploy novo, não só reiniciar. (Verificado: com a variável no
+build, a meta sai tanto em `/` quanto em `/busca`; sem ela, em nenhuma.)
+
+**Não há analytics de página, e é decisão, não esquecimento.** Com o tráfego
+de hoje ele mediria quase nada, custaria mensalidade e obrigaria a acrescentar
+um fornecedor em `subprocessadores` — política que omite tratamento que
+acontece não protege ninguém. O gatilho para reavaliar é o Search Console
+mostrar impressão em volume.
+
+**O Search Console é a medição que decide a pauta.** A aquisição é 100%
+orgânica, e é ele que responde quais páginas indexaram, quais consultas trazem
+gente e o que um comentário novo mudou. Ao propor conteúdo, o dado está lá —
+não é preciso supor.
+
+
 ## Origem dos dados
 
 `src/lib/content/queries.ts` escolhe entre duas implementações do contrato
@@ -187,7 +240,7 @@ revisão feita depois pelo banco — o mesmo princípio do upsert de `artigos`.
 acervo, com a consulta descrita no corpo para que qualquer pessoa refaça: a
 distribuição das alternativas corretas, o crescimento do enunciado, a taxa de
 anulação, a citação expressa de dispositivo. Texto jurídico genérico existe
-aos milhares e não posiciona nada; o que só existe aqui são as 43 provas.
+aos milhares e não posiciona nada; o que só existe aqui são as 44 provas.
 
 **Onde o dado é aproximado, o texto diz que é** — e um dos posts é justamente
 sobre por que a classificação por disciplina ainda não vale como medição.
@@ -222,17 +275,62 @@ dependências). Ver `ingest/README.md`.
 |---|---|
 | `questoes`: 3.540, do 3º ao 46º Exame (44 edições com questões, 16 anuladas) | |
 | `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` sem confirmação (3.044 classificadas, 1.698 com `disciplina_confirmada`) |
-| gabarito, tipo 1 — definitivo em 13 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
+| gabarito, tipo 1 — definitivo em 15 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
 | `leis` e `artigos`: 42 leis, 9.887 artigos do Planalto | |
 | `artigos.incidencia`: 164 vínculos em 113 artigos, só de citação explícita | |
 | `comentarios`: 92 comentários de questão publicados, zero rascunho (`fila_de_comentarios`/`salvar_comentario`) | |
 | `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
 
-**O 35º Exame já está no acervo.** Foi a última edição carregada; a lista agora
-vai do 3º ao 47º, e o único sem questões é o **47º** — edição recente, com data
-no cronograma, mas caderno ainda não ingerido. Como `/exames` lista o que a
-tabela tem, o vazio é visível na página. Ao mexer no pipeline de provas, é a
-primeira edição a tentar.
+**Número de acervo em literal tem data de validade.** A entrada do 35º
+invalidou, no mesmo dia, o texto de cinco posts, a descrição do blog e três
+comentários de código — num site cujo argumento é que aqui os números são
+contados. Onde a página puder contar (`getAcervo()`), ela conta; onde não
+puder, o número está aqui, e esta tabela é o que se atualiza.
+
+**O 35º Exame entrou por remendo.** As páginas 17 e 21 do caderno oficial têm
+fontes CID sem tabela de caracteres: o texto extraído é lixo, e a página
+renderiza perfeitamente. As nove questões dessas páginas foram transcritas da
+renderização do mesmo PDF oficial. Ver `ingest/README.md` — e as três
+invariantes que impedem o mecanismo de virar atalho, sendo a principal que o
+remendo **preenche e nunca sobrescreve** o que o parser conseguiu ler.
+
+**O rodapé estava dentro de 645 questões.** O filtro de ruído do parser
+aceitava prefixo decimal antes de "EXAME DE ORDEM", e o rodapé traz a edição
+em **numeral romano** — então toda questão que fechava página terminava com
+"IX EXAME DE ORDEM UNI" grudado na alternativa D. Passou anos despercebido
+porque não derruba parser nem falha validação: só suja o texto que a pessoa
+paga para ler, no fim da última alternativa, onde ninguém revisa. Ao mexer em
+`RUIDO`, note que o numeral é **obrigatório** — sem ele o filtro come linha
+legítima, e há questão de Ética cuja alternativa quebra a linha exatamente
+antes de "Exame de Ordem".
+
+O conserto definitivo não mora no parser, e sim em `_sem_rodape`, na
+extração: o recorte por coluna **corta o rodapé no meio da palavra**, e o
+mesmo texto sai como "UNIFICADO", "NIFICADO", "IFICADO", "PROVA APLICADA" e
+"PROVA APLICAD" em provas diferentes. Enumerar as formas de um texto truncado
+arbitrariamente não fecha. A poda é por posição — do primeiro marcador forte
+até a borda da coluna — e as fronteiras de palavra não são zelo: sem elas
+`IFICADO` casa dentro de "qualificado" e a alternativa D da questão 63 do 25º
+some inteira.
+
+**O eco de sílaba dos cadernos do 15º e do 16º é do PDF, não da extração** —
+aparece no `pdftotext` cru. `_sem_eco` conserta só a forma determinística
+("afastar-se se", "queixa-crime crime"); o eco solto ("Alessandro essandro")
+exigiria decidir se o fragmento é palavra do português, e a mesma regra sem
+dicionário come "compatível com" e "oriundos dos" em 38 das 44 provas. O que
+sobra é candidato a remendo, não a regex.
+
+**Nem toda repetição é nossa.** O "se os os embargos" da questão 51 do 40º
+está assim no caderno oficial da FGV, em linha única. Reproduzir ato oficial
+inclui reproduzir o erro dele.
+
+**Recarregar uma prova não pode apagar classificação melhor.** O upsert de
+`questoes` escrevia `disciplina_id = excluded.disciplina_id` sem condição, o
+que fazia da reingestão um ato destrutivo: as 440 questões classificadas pelo
+modelo voltariam ao palpite léxico e `classificacao_origem` continuaria
+dizendo 'modelo' — procedência mentindo, que é pior do que classificação
+faltando. Hoje o upsert preserva `modelo`, `humano` e `disciplina_confirmada`.
+
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
@@ -293,6 +391,41 @@ Três regras que a carga respeita e que não devem ser afrouxadas:
    percorrer a lei em sequência e achar o vizinho anterior/seguinte sem
    recarregar a lei inteira, e sobrevive a uma carga parcial.
 
+**O travessão da grafia antiga não é hífen de sufixo, e confundir os dois
+criou 281 artigos.** "Art. 41 - O condenado a quem sobrevém doença mental"
+era lido como o artigo **41-O**, e o "O" que abre o caput ia embora junto com
+o travessão: nascia uma duplicata de texto decapitado ao lado do art. 41
+verdadeiro, concentrada na CLT e no Código Penal, que são as leis escritas
+nessa grafia. Pior, o artigo real às vezes **nunca chegava a existir** — o CP
+não tinha art. 3º. O defeito não derruba nada e não aparece em contagem: o
+total só cresce, e "Art. 41-O" tem cara de artigo de verdade. A distinção é
+que "Art. 149-A" e "Art. 7º-B" nunca põem espaço em volta do hífen, e a
+grafia antiga sempre põe.
+
+**Cabeçalho de divisão e rubrica marginal não pertencem a artigo nenhum.**
+Por não casarem com marcador de artigo, parágrafo, inciso ou alínea, caíam na
+acumulação e iam parar na cauda do último segmento do artigo anterior — 596
+artigos terminando em "CAPÍTULO VI DA CONTESTAÇÃO", e o nome do crime
+seguinte grudado no fim do crime atual, no Código Penal. A rubrica **sai da
+coleta**: guardá-la no artigo certo pede uma coluna `rubrica`, e guardá-la no
+artigo errado é o defeito que se estava consertando.
+
+**O ordinal e o ponto são dois caracteres.** `§\s*\d+\s*[ºo°.]?` aceita um
+só, e por isso "§ 2º." não era reconhecido: o parágrafo inteiro ficava colado
+no fim do anterior. Era o caso do § 2º do art. 122 do ECA — a regra que veda
+a internação havendo outra medida adequada, escondida na cauda do § 1º.
+
+**Onde o Planalto entrega tudo numa linha só, nenhum marcador de início de
+linha alcança.** Daí `PARAGRAFO_NO_MEIO` e `ESTRUTURA_NO_MEIO` repartirem a
+linha antes de o laço olhar para ela. A quebra exige fim de frase antes
+(ponto ou o fecha-parêntese das notas de redação) — é o que separa a estrutura
+da referência a ela: "na forma dos §§ 2o e 5o deste artigo" não vem depois de
+ponto.
+
+Ao mexer em qualquer um desses marcadores, a validação que pega o estrago é
+comparar a extração inteira contra a anterior: **nenhum artigo pode sumir, e
+nenhum caput pode mudar de outro jeito que não encurtar.**
+
 O PostgREST devolve no máximo mil linhas e não avisa quando corta — o Código
 Civil tem 2.081 artigos. Qualquer consulta que precise da lei inteira passa por
 `todasAsPaginas()` em `fonte-supabase.ts`.
@@ -340,7 +473,8 @@ Gerar explicação jurídica por IA é o pior defeito possível aqui, porque que
 estuda a regra alucinada só descobre no dia da prova.
 
 **A classificação por disciplina é aproximada.** 3.044 das 3.540 questões têm
-`disciplina_id`, 1.698 têm `disciplina_confirmada = true`. O filtro por
+`disciplina_id`, e 1.698 têm `disciplina_confirmada = true`. O filtro por
+
 disciplina funciona e a tela avisa que é aproximado; filtro por exame é
 exato. Enquanto `disciplina_confirmada` não cobrir a base inteira, gráfico de
 evolução por matéria está limitado às 1.698 confirmadas — o resto seria dado
@@ -349,6 +483,7 @@ inventado com cara de medição.
 ## Classificação automática e procedência
 
 Confirmar 3.540 questões e vincular 218 à mão é trabalho de meses. A saída
+
 foi automatizar **registrando de onde veio cada dado**, e nunca marcar palpite
 como revisão humana:
 
@@ -379,11 +514,12 @@ inteiro sem classificação.
 
 ## Revisão editorial
 
-Os dois gargalos do projeto são trabalho humano: 3.540 questões (1.698
-confirmadas, 1.842 por confirmar) e 9.887 artigos, 107 comentados. O segundo
-gargalo anda — eram quatro —; a confirmação de disciplina anda — eram zero,
-hoje são 1.698. `/app/revisao` (triagem de disciplina) e `/app/redacao`
-(comentário) existem para tirar o atrito desse trabalho, não para fazê-lo.
+Os dois gargalos do projeto são trabalho humano: 3.540 questões classificadas
+por heurística e 1.698 confirmadas; 9.887 artigos e 107 comentados. O
+segundo gargalo anda — eram quatro —, o primeiro saiu do zero e anda.
+`/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
+para tirar o atrito desse trabalho, não para fazê-lo.
+
 
 **O sinalizador de editor não mora em `perfis`.** A política de `perfis` é de
 dono com `with check (auth.uid() = id)` — uma coluna `editor` ali seria uma

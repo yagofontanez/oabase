@@ -20,7 +20,7 @@ export type ArtigoParaComentar = {
 /**
  * Redação de comentário — a ferramenta que abre o portão de qualidade.
  *
- * São 5.756 artigos e quatro comentados. O sitemap só anuncia o que tem
+ * São 10.168 artigos e 107 comentados. O sitemap só anuncia o que tem
  * comentário revisado, e é por isso — não por marcação, não por desempenho —
  * que o site não posiciona. Nenhuma linha de código resolve isso; o que dá
  * para fazer é pôr o texto da lei, a incidência medida e o campo de escrita

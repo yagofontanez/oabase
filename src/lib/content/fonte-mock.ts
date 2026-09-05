@@ -79,6 +79,12 @@ export const fonteMock: FonteDeConteudo = {
   async getGlossario() {
     return [];
   },
+  // Sem banco não há vetor de busca, e a busca de mentira devolveria o
+  // acervo de exemplo como se fosse resultado. Melhor a página dizer que
+  // não achou nada.
+  async buscarNoSite() {
+    return [];
+  },
   // Post é texto autoral: ou alguém escreveu, ou não existe.
   async getPosts() {
     return [];

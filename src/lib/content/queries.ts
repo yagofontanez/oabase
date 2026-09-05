@@ -60,6 +60,10 @@ export const getSumula = cache((slug: string) => fonte.getSumula(slug));
 
 export const getGlossario = cache(() => fonte.getGlossario());
 
+export const buscarNoSite = cache((termo: string, limite?: number) =>
+  fonte.buscarNoSite(termo, limite),
+);
+
 export const getPosts = cache(() => fonte.getPosts());
 export const getPost = cache((slug: string) => fonte.getPost(slug));
 

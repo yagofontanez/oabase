@@ -29,8 +29,8 @@ export default async function LegislacaoIndex() {
             Legislação <span className="text-ouro-500">comentada</span>
           </>
         }
-        /* "Cada artigo … com comentário" seria falso: são 4 comentados em
-           5.756. O que todo artigo tem é texto oficial e incidência medida;
+        /* "Cada artigo … com comentário" seria falso: são 107 comentados em
+           10.168. O que todo artigo tem é texto oficial e incidência medida;
            o comentário é o que o índice marca, artigo a artigo. */
         descricao="Cada artigo com o texto oficial na íntegra e quantas vezes já foi cobrado no exame — e, nos que já foram comentados, a leitura voltada à prova. Sem cadastro, sem limite de leitura."
       />

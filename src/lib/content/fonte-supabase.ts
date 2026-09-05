@@ -7,6 +7,7 @@ import type {
   Exame,
   Lei,
   Post,
+  ResultadoDeBusca,
   Sumula,
   Verbete,
   Vizinho,
@@ -14,6 +15,14 @@ import type {
 
 /* As consultas usam a chave anônima: o RLS é quem garante que só o conteúdo
    aberto sai daqui. Ver src/lib/supabase/client.ts. */
+
+/** O mesmo desacento que `public.sem_acento()` faz no banco. */
+function semAcento(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
 
 const CAMPOS_ARTIGO =
   "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, leis!inner(slug), disciplinas(slug)";
@@ -217,9 +226,9 @@ export const fonteSupabase: FonteDeConteudo = {
 
   async getArtigosRelacionados(artigo, limite) {
     // A disciplina entra como filtro da consulta, e não como peneira do
-    // resultado: ordenar 5.756 artigos por incidência e só então separar por
-    // disciplina devolvia quase sempre os mesmos poucos comentados, porque
-    // 5.751 empatam em zero e o desempate é arbitrário.
+    // resultado: ordenar 10.168 artigos por incidência e só então separar por
+    // disciplina devolvia quase sempre os mesmos poucos comentados, porque a
+    // esmagadora maioria empata em zero e o desempate é arbitrário.
     // Quando o embedding estiver preenchido, isto vira busca por vizinhança
     // em pgvector sem mudar a assinatura.
     const { data, error } = await supabaseAnon()
@@ -418,6 +427,65 @@ export const fonteSupabase: FonteDeConteudo = {
         incidencia: artigo.incidencia ?? 0,
       } satisfies Verbete;
     });
+  },
+
+  /**
+   * Busca do site.
+   *
+   * Artigo e súmula saem de `buscar_dispositivos`, a mesma função do quadro
+   * de anotações: `ts_rank` sobre o vetor, número normalizado nos dois lados,
+   * acento opcional, incidência medida no peso. Reimplementar isso aqui em
+   * TypeScript seria a segunda cópia da regra, e as duas divergiriam.
+   *
+   * **Post é filtrado em memória, de propósito.** São cinco textos. Montar um
+   * `or=(titulo.ilike...,corpo.ilike...)` do PostgREST exigiria escapar
+   * vírgula, parêntese e aspas do que a pessoa digitou — uma superfície de
+   * injeção de filtro para percorrer cinco linhas que o site já carrega. No
+   * dia em que o blog tiver cem textos, o lugar de mudar é aqui: um vetor de
+   * busca em `posts`, como o de `artigos`.
+   */
+  async buscarNoSite(termo, limite = 30) {
+    const t = termo.trim();
+    if (t.length < 2 && !/^[0-9]$/.test(t)) return [];
+
+    const [{ data, error }, posts] = await Promise.all([
+      supabaseAnon().rpc("buscar_dispositivos", {
+        termo: t,
+        lei_slug: null,
+        limite,
+      }),
+      fonteSupabase.getPosts(),
+    ]);
+    erro("busca", error);
+
+    const dispositivos = ((data ?? []) as ResultadoDeBusca[]).map((d) => ({
+      tipo: d.tipo,
+      rotulo: d.rotulo,
+      resumo: d.resumo,
+      href: d.href,
+      comentado: d.comentado ?? false,
+    }));
+
+    // O mesmo desacento da busca do banco, para que "prisao" ache o post que
+    // fala de "prisão". Piso diferente entre as duas metades da mesma tela
+    // seria um resultado que aparece e outro que não, sem explicação.
+    const alvo = semAcento(t);
+    const achadosNoBlog: ResultadoDeBusca[] = posts
+      .filter((p) =>
+        semAcento(`${p.titulo} ${p.resumo} ${p.corpo}`).includes(alvo),
+      )
+      .map((p) => ({
+        tipo: "post" as const,
+        rotulo: p.titulo,
+        resumo: p.resumo,
+        href: `/blog/${p.slug}`,
+        // Post é inteiro autoral; o selo não acrescenta nada aqui.
+        comentado: false,
+      }));
+
+    // Texto autoral primeiro: é o que só existe aqui. O resto do resultado é
+    // lei e súmula, que existem em centenas de sites.
+    return [...achadosNoBlog, ...dispositivos].slice(0, limite);
   },
 
   // Rascunho não precisa de filtro aqui: a política de `posts` só devolve

@@ -36,9 +36,9 @@ python3 -m oabase_ingest.lote --de 32 --ate 46 --carregar
 
 | Faixa | Situação |
 |---|---|
-| 3º–46º | **43 ingeridas**, 3.460 questões — todas as publicadas menos o 35º |
+| 3º–46º | **44 ingeridas**, 3.540 questões — todas as publicadas |
 | 2º | O arquivo não publica gabarito desta edição. |
-| 35º | Único buraco: a página 17 do caderno tem a codificação de fonte corrompida no PDF de origem (`pdffonts` mostra `uni = no` em todas as fontes) — as questões 57 a 59 extraem como lixo. Sem OCR, não há o que fazer. |
+| 35º | Ingerida com `--remendo`. Ver abaixo. |
 | 47º | Anunciada (06/09/2026), ainda não aplicada — ver abaixo. |
 
 São **44 edições com par prova+gabarito publicado** (de 46 listadas; faltam o
@@ -52,6 +52,48 @@ O `lote` não aborta na primeira falha: cada edição que não baixa entra em
 `pendentes` no resumo final, com o motivo. Rodar de novo é seguro — a carga é
 idempotente por edição, e o download é pulado quando o PDF já está em
 `provas/`.
+
+**O `lote` não passa remendo**, então o 35º aparece nele como pendente e é
+carregado pelo `pipeline` direto:
+
+```bash
+python3 -m oabase_ingest.pipeline \
+    --prova provas/exame-35-prova.pdf --gabarito provas/exame-35-gabarito.pdf \
+    --edicao 35 --ano 2022 --data 2022-07-03 \
+    --remendo remendos/exame-35.json --carregar
+```
+
+### Remendo: quando o PDF de origem é que está quebrado
+
+As páginas 17 e 21 do caderno do 35º trazem fontes CID Identity-H **sem
+tabela de caracteres** (`pdffonts` mostra `uni = no`). O `pdftotext` devolve
+uma substituição consistente: cada glifo vira um caractere errado, sempre o
+mesmo. Sai lixo, e lixo que *parece* texto. A página, no entanto, **renderiza
+perfeitamente** — o conteúdo está lá, só a decodificação está quebrada.
+
+`remendos/exame-35.json` traz as nove questões dessas páginas (57–59 e 69–74),
+transcritas da renderização do **mesmo PDF oficial** (`pdftoppm`), com página,
+motivo e data registrados no arquivo. Continua sendo ato oficial, que é o
+critério do acervo; o que muda é o risco, que passa de extração para
+digitação.
+
+Três invariantes protegem o mecanismo de virar atalho:
+
+1. **O remendo preenche, nunca sobrescreve.** Se o parser conseguiu ler a
+   questão, o pipeline aborta em vez de aceitar a versão digitada.
+2. **A ausência é declarada, não inferida.** `paginas_ilegiveis` some com as
+   páginas antes da segmentação, e os números vêm da lista de questões do
+   arquivo. Pular âncora que simplesmente não apareceu transformaria prova mal
+   extraída em prova silenciosamente incompleta.
+3. **A validação é a mesma.** Questão de remendo passa por `problemas()` como
+   qualquer outra: quatro alternativas, enunciado com tamanho mínimo.
+
+Uma coisa que o remendo **não** resolveu, e que virou conserto de parser: a
+alternativa D da questão 77 sai como `\x18)\x03 A CLT é omissa…` — a letra caiu
+numa fonte ruim enquanto o resto da linha decodificou. Quando exatamente uma
+das quatro letras falta e a linha começa com um `)` órfão, o parser recupera a
+letra por estrutura. Com duas faltando não há o que inferir e ele recusa a
+prova, que é o certo.
 
 ## No dia da prova
 
@@ -210,7 +252,9 @@ página já indexada.
 # Legislação
 
 `legislacao.py` baixa o texto oficial compilado do `planalto.gov.br` e carrega
-em `artigos`. Oito códigos, **5.756 artigos**:
+em `artigos`. Hoje são **42 normas, 10.168 artigos** — a tabela abaixo é a
+carga inicial, de oito códigos, e ficou como referência do formato; o número
+corrente sai de `select count(*) from artigos`, não daqui.
 
 | Norma | Artigos | Norma | Artigos |
 |---|---:|---|---:|

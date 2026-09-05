@@ -44,6 +44,33 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", site: site.twitter },
   formatDetection: { telephone: false },
+  /*
+    Verificação de propriedade nos buscadores.
+
+    Vem do ambiente e não do código porque o token é da conta de quem opera o
+    site, não do projeto — e porque um token errado no repositório é uma
+    verificação que ninguém consegue explicar por que falhou.
+
+    Sem Search Console, o site não tem como responder quais páginas foram
+    indexadas nem quais consultas trazem gente. Num projeto cuja aquisição é
+    100% orgânica, essa é a única medição que importa antes de qualquer outra.
+    Ausente a variável, o campo simplesmente não é emitido.
+
+    **Sem o prefixo `NEXT_PUBLIC_`**: isto é lido no servidor e não tem por
+    que ir para o pacote do navegador.
+
+    **E precisa estar definida no momento do build.** A metadata do layout
+    raiz é assada em cada página pré-renderizada, que aqui são quase todas —
+    definir a variável só no runtime não muda o HTML já gerado. Na Netlify
+    isso é automático (ela injeta o ambiente no build), mas quem definir a
+    variável depois precisa disparar um deploy novo, não só reiniciar.
+  */
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+    other: process.env.BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+      : {},
+  },
   robots: {
     index: true,
     follow: true,
