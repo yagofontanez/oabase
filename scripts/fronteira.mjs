@@ -84,6 +84,21 @@ for (const tabela of ["leis", "artigos", "exames", "disciplinas"]) {
   });
 }
 
+// `buscar_dispositivos` é security invoker sobre tabelas abertas, e por isso
+// pode ser chamada pelo papel anônimo — é a mesma leitura que a página de
+// legislação já faz. O que se afirma aqui é que ela continua achando o que
+// deve achar; a metade oposta (não vazar questão) está garantida por ela não
+// tocar em `questoes`, e por ser invoker se um dia tocar.
+caso("anônimo busca dispositivo por texto", async () => {
+  const { status, corpo } = await chamar("buscar_dispositivos", {
+    termo: "furto",
+    limite: 3,
+  });
+  if (status !== 200) throw new Error(`HTTP ${status}`);
+  const linhas = JSON.parse(corpo);
+  if (linhas.length === 0) throw new Error("nenhum dispositivo");
+});
+
 // ---------------------------------------------------------------------------
 // Pago: se isto quebrar, o produto está de graça e ninguém percebe.
 // ---------------------------------------------------------------------------

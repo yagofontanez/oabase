@@ -420,8 +420,10 @@ function QuadroInterno({
   const [erro, setErro] = useState<string | null>(null);
 
   const [dispositivoAberto, setDispositivoAberto] = useState(false);
-  const [fonte, setFonte] = useState(leis[0]?.slug ?? "sumula-vinculante");
-  const [numeroBuscado, setNumeroBuscado] = useState("");
+  /** Vazio = todas as normas, e súmulas junto. Filtro, não pré-requisito. */
+  const [fonte, setFonte] = useState("");
+  const [termoDispositivo, setTermoDispositivo] = useState("");
+  const [achados, setAchados] = useState<DispositivoDoQuadro[]>([]);
   const [procurando, setProcurando] = useState(false);
 
   const { screenToFlowPosition } = useReactFlow();
@@ -584,87 +586,99 @@ function QuadroInterno({
     setBusca("");
   }
 
-  /** Procura o dispositivo e, achando, põe no quadro. */
-  async function procurarDispositivo() {
-    const numero = numeroBuscado.trim();
-    if (!numero) return;
-    setProcurando(true);
-    setErro(null);
-    const supabase = supabaseNavegador();
-
-    // `artigos` e `sumulas` são leitura aberta: a mesma consulta que qualquer
-    // visitante do site faz. Não há função a inventar aqui.
-    if (fonte.startsWith("sumula-")) {
-      const vinculante = fonte === "sumula-vinculante";
-      const { data } = await supabase
-        .from("sumulas")
-        .select("id, numero, slug, texto, comentario, vinculante")
-        .eq("vinculante", vinculante)
-        .eq("numero", Number(numero.replace(/\D/g, "")) || -1)
-        .limit(1);
-
-      const s = (data ?? [])[0] as
-        | {
-            id: string;
-            numero: number;
-            slug: string;
-            texto: string;
-            comentario: string[];
-          }
-        | undefined;
-      setProcurando(false);
-      if (!s) {
-        setErro(`Não achei a súmula ${numero}.`);
+  /**
+   * Busca dispositivo por texto livre — "furto", "algemas", "art. 155".
+   *
+   * Antes era casamento exato de número dentro de uma norma escolhida, e a
+   * premissa escrita aqui era que "quem está anotando já sabe qual artigo
+   * quer". Quem está anotando é quem estuda para a 1ª fase, a mesma pessoa a
+   * quem este site diz — com a contagem na mão — que só 4% das questões citam
+   * artigo expressamente e que decorar número rende pouco. Ela sabe "furto".
+   *
+   * E o casamento exato falhava também para quem sabia o número: `art. 155`,
+   * `5º` e `217-a` não achavam nada, porque `numero` é texto e está gravado
+   * como `155`, `5` e `217-A`. Quem acertava o dispositivo levava "não achei"
+   * e concluía que o acervo não o tinha.
+   *
+   * Quem ordena é `buscar_dispositivos` no banco: `ts_rank` sobre o vetor que
+   * já existia, com a incidência medida entrando no peso. Ranquear no
+   * navegador exigiria trazer os candidatos todos para cá.
+   */
+  const procurarDispositivos = useCallback(
+    async (termo: string, lei: string) => {
+      // Uma letra solta é ruído; um dígito solto é o art. 5. O piso do
+      // cliente tem de ser o mesmo da função, senão a tela recusa o que o
+      // banco responderia.
+      const t = termo.trim();
+      if (t.length < 2 && !/^[0-9]$/.test(t)) {
+        setAchados([]);
         return;
       }
-      await adicionarDispositivo({
-        id: s.id,
-        tipo: "sumula",
-        rotulo: vinculante ? `SV ${s.numero}` : `Súmula ${s.numero} do STF`,
-        resumo: s.texto,
-        href: `/sumulas/${s.slug}`,
-        comentado: (s.comentario ?? []).length > 0,
+      setProcurando(true);
+      setErro(null);
+      const supabase = supabaseNavegador();
+      const { data, error } = await supabase.rpc("buscar_dispositivos", {
+        termo,
+        lei_slug: lei || null,
+        limite: 20,
       });
-      setNumeroBuscado("");
-      return;
-    }
+      setProcurando(false);
+      if (error) {
+        setErro("Não consegui buscar agora.");
+        return;
+      }
+      setAchados(
+        ((data ?? []) as DispositivoDoQuadro[]).map((d) => ({
+          id: d.id,
+          tipo: d.tipo,
+          rotulo: d.rotulo,
+          resumo: d.resumo,
+          href: d.href,
+          comentado: d.comentado,
+        })),
+      );
+    },
+    [],
+  );
 
-    const { data } = await supabase
-      .from("artigos")
-      .select("id, numero, slug, caput, comentario, leis!inner(slug, sigla)")
-      .eq("leis.slug", fonte)
-      .eq("numero", numero)
-      .limit(1);
+  /**
+   * Meio segundo depois da última tecla, como a gravação de texto.
+   *
+   * Uma consulta por letra digitada mandaria oito requisições para quem
+   * escreve "prescrição", e as respostas voltariam fora de ordem — a de
+   * "presc" chegando depois da de "prescrição" e sobrescrevendo a lista
+   * certa. O `cancelado` cobre o que o atraso não cobre.
+   */
+  useEffect(() => {
+    if (!dispositivoAberto) return;
+    let cancelado = false;
+    const id = window.setTimeout(() => {
+      void procurarDispositivos(termoDispositivo, fonte).then(() => {
+        if (cancelado) setAchados([]);
+      });
+    }, 500);
+    return () => {
+      cancelado = true;
+      window.clearTimeout(id);
+    };
+  }, [termoDispositivo, fonte, dispositivoAberto, procurarDispositivos]);
 
-    const a = (data ?? [])[0] as
-      | {
-          id: string;
-          numero: string;
-          slug: string;
-          caput: string;
-          comentario: string[];
-          leis:
-            | { slug: string; sigla: string }
-            | { slug: string; sigla: string }[];
-        }
-      | undefined;
-    setProcurando(false);
-    if (!a) {
-      setErro(`Não achei o art. ${numero} nessa norma.`);
-      return;
-    }
-    const lei = Array.isArray(a.leis) ? a.leis[0] : a.leis;
-    await adicionarDispositivo({
-      id: a.id,
-      tipo: "artigo",
-      rotulo: `Art. ${a.numero} ${lei.sigla}`,
-      // O caput inteiro viraria um muro dentro do cartão; o link leva ao resto.
-      resumo: a.caput.length > 260 ? `${a.caput.slice(0, 260)}…` : a.caput,
-      href: `/legislacao/${lei.slug}/${a.slug}`,
-      comentado: (a.comentario ?? []).length > 0,
-    });
-    setNumeroBuscado("");
-  }
+  /** Dispositivo que já está no quadro não volta na lista de resultados:
+      o índice único do banco o recusaria, com uma mensagem de erro que não
+      faz sentido para quem acabou de clicar num resultado oferecido. */
+  const jaNoQuadro = useMemo(
+    () =>
+      new Set(
+        nos
+          .map((no) => no.data.dispositivo?.id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [nos],
+  );
+  const achadosNovos = useMemo(
+    () => achados.filter((d) => !jaNoQuadro.has(d.id)),
+    [achados, jaNoQuadro],
+  );
 
   /**
    * Põe no quadro um artigo de lei ou uma súmula.
@@ -1035,48 +1049,70 @@ function QuadroInterno({
             )}
 
             {/* ---- Seletor de dispositivo ----
-                Busca por número dentro da norma escolhida, e não por texto
-                livre: quem está anotando já sabe qual artigo quer, e uma
-                busca textual em 9.845 artigos devolveria ruído. */}
+                Busca por texto ou por número, sobre todas as normas. A norma
+                é filtro para estreitar, não pré-requisito para procurar: quem
+                está estudando sabe o instituto, não o endereço dele. */}
             {dispositivoAberto && (
               <div className="superficie mt-2 flex w-[min(90vw,380px)] flex-col gap-2 p-3">
-                <div className="flex gap-2">
-                  <select
-                    value={fonte}
-                    onChange={(e) => setFonte(e.target.value)}
-                    className="min-w-0 flex-1 rounded-[10px] border border-line bg-surface px-2 py-2 text-[0.85rem] text-ink"
-                  >
-                    {leis.map((l) => (
-                      <option key={l.slug} value={l.slug}>
-                        {l.sigla}
-                      </option>
+                <input
+                  value={termoDispositivo}
+                  onChange={(e) => setTermoDispositivo(e.target.value)}
+                  autoFocus
+                  placeholder="furto, algemas, art. 155…"
+                  className="w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-[0.88rem] text-ink outline-none placeholder:text-muted focus:border-brand-400"
+                />
+
+                <select
+                  value={fonte}
+                  onChange={(e) => setFonte(e.target.value)}
+                  className="w-full rounded-[10px] border border-line bg-surface px-2 py-2 text-[0.82rem] text-body"
+                >
+                  <option value="">Todas as normas e súmulas</option>
+                  {leis.map((l) => (
+                    <option key={l.slug} value={l.slug}>
+                      Só {l.sigla}
+                    </option>
+                  ))}
+                </select>
+
+                {achadosNovos.length > 0 ? (
+                  <ul className="nowheel flex max-h-[320px] flex-col gap-1 overflow-y-auto">
+                    {achadosNovos.map((d) => (
+                      <li key={d.id}>
+                        <button
+                          type="button"
+                          onClick={() => void adicionarDispositivo(d)}
+                          className="flex w-full flex-col gap-0.5 rounded-[10px] px-3 py-2 text-left transition-colors hover:bg-sunk"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-[0.84rem] font-semibold text-ink">
+                              {d.rotulo}
+                            </span>
+                            {d.comentado && (
+                              <span className="rounded-full bg-ouro-100 px-1.5 text-[0.7rem] font-semibold text-ouro-600">
+                                comentado
+                              </span>
+                            )}
+                          </span>
+                          <span className="line-clamp-2 text-[0.8rem] text-muted">
+                            {d.resumo}
+                          </span>
+                        </button>
+                      </li>
                     ))}
-                    <option value="sumula-vinculante">Súmula Vinculante</option>
-                    <option value="sumula-stf">Súmula do STF</option>
-                  </select>
-                  <input
-                    value={numeroBuscado}
-                    onChange={(e) => setNumeroBuscado(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") void procurarDispositivo();
-                    }}
-                    placeholder="número"
-                    className="w-[7.5rem] rounded-[10px] border border-line bg-surface px-3 py-2 text-[0.88rem] text-ink outline-none placeholder:text-muted focus:border-brand-400"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void procurarDispositivo()}
-                    disabled={procurando || !numeroBuscado.trim()}
-                    className="rounded-[10px] bg-brand-600 px-3 py-2 text-[0.85rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-brand-200"
-                  >
-                    Pôr
-                  </button>
-                </div>
-                <p className="px-1 text-[0.78rem] text-muted">
-                  Ex.: art. <strong>155</strong> do CP, ou{" "}
-                  <strong>11</strong> em Súmula Vinculante. O cartão fica
-                  ligado ao texto oficial.
-                </p>
+                  </ul>
+                ) : (
+                  <p className="px-1 py-2 text-[0.85rem] text-muted">
+                    {procurando
+                      ? "Procurando…"
+                      : termoDispositivo.trim().length < 2 &&
+                          !/^[0-9]$/.test(termoDispositivo.trim())
+                        ? "Procure pelo instituto — furto, algemas, honorários de sucumbência — ou pelo número, se souber. Acento é opcional."
+                        : achados.length > 0
+                          ? "Tudo que essa busca acha já está no quadro."
+                          : "Nada com esse termo no acervo."}
+                  </p>
+                )}
               </div>
             )}
           </Panel>

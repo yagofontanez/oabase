@@ -70,6 +70,36 @@ Postgres exige IMMUTABLE em expressão de geração — por isso
 Ao mexer em `numero`, `caput` ou `comentario`, confira que o trigger cobre a
 coluna.
 
+## Busca
+
+`public.buscar_dispositivos(termo, lei_slug, limite)` — artigo e súmula por
+texto livre ou por número. **Security invoker**, sobre tabelas de leitura
+aberta: quem decide continua sendo a RLS, e a função é chamável pelo papel
+anônimo porque é a mesma leitura que `/legislacao` já faz.
+
+**Acento é opcional, e não é detalhe.** O vetor é gravado por
+`public.sem_acento()` — `unaccent` embrulhado como IMMUTABLE, porque
+`unaccent` é STABLE e expressão de índice exige IMMUTABLE (a mesma pedra do
+`array_to_string`). Sem isso, "prisao" e "honorarios" voltavam vazio, e vazio
+diz "não existe" quando o dispositivo está no acervo. Se o dicionário
+`unaccent` do servidor mudar, os índices que dependem de `sem_acento`
+precisam ser reconstruídos.
+
+**Os dois lados do número são normalizados.** `art. 155`, `5º` e `217-a` viram
+`155`, `5` e `217-A` — e o número gravado passa pela mesma limpeza, porque um
+único artigo em 9.887 tem ordinal em `numero`: o **art. 5º da CF**, que é o
+mais procurado que existe. Normalizar só o que a pessoa digita conserta hoje e
+quebra na próxima carga.
+
+**A incidência medida entra no peso, não só no desempate.** `ts_rank` mede
+semelhança de texto e não sabe o que cai na prova: sem o empurrão, "furto"
+devolvia o art. 250 da Constituição à frente do roubo e do dano. O teto de 10
+impede que um dispositivo muito citado suba em busca que não tem a ver com ele.
+
+**Um dígito solto é consulta válida** (o art. 5), uma letra solta não é. O
+piso do cliente tem de ser o mesmo da função, senão a tela recusa o que o
+banco responderia.
+
 ## Origem dos dados
 
 `src/lib/content/queries.ts` escolhe entre duas implementações do contrato
@@ -190,25 +220,31 @@ dependências). Ver `ingest/README.md`.
 
 | Real, de fonte oficial | Placeholder |
 |---|---|
-| `questoes`: 3.460, do 3º ao 46º Exame (43 edições, 16 anuladas) | `disciplinas.media_por_prova` |
-| `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` (léxico + sequência, nenhuma confirmada) |
+| `questoes`: 3.540, do 3º ao 46º Exame (44 edições com questões, 16 anuladas) | |
+| `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` sem confirmação (3.044 classificadas, 1.698 com `disciplina_confirmada`) |
 | gabarito, tipo 1 — definitivo em 13 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
-| `leis` e `artigos`: 42 leis, 10.168 artigos do Planalto | |
-| `artigos.incidencia`: 155 vínculos em 106 artigos, só de citação explícita | |
+| `leis` e `artigos`: 42 leis, 9.887 artigos do Planalto | |
+| `artigos.incidencia`: 164 vínculos em 113 artigos, só de citação explícita | |
+| `comentarios`: 92 comentários de questão publicados, zero rascunho (`fila_de_comentarios`/`salvar_comentario`) | |
 | `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
 
-**O 35º Exame não está no acervo.** As edições vão de 3 a 46 com um buraco
-entre o 34º e o 36º — ele existiu e foi aplicado; o que falta é a carga. Como
-`/exames` lista o que a tabela tem, o buraco é visível na página. Ao mexer no
-pipeline de provas, é a primeira edição a tentar.
+**O 35º Exame já está no acervo.** Foi a última edição carregada; a lista agora
+vai do 3º ao 47º, e o único sem questões é o **47º** — edição recente, com data
+no cronograma, mas caderno ainda não ingerido. Como `/exames` lista o que a
+tabela tem, o vazio é visível na página. Ao mexer no pipeline de provas, é a
+primeira edição a tentar.
 
 Exames **não** são semeados por `seed.sql`: entram pelo pipeline, com data
 vinda do edital. Datas inventadas em seed ficam indistinguíveis de datas reais
 assim que convivem na mesma tabela.
 
-A distribuição por disciplina exibida na landing e em `/estatisticas` ainda sai
-de `media_por_prova`, que é estimativa. Ela só pode ser calculada dos dados
-reais quando houver questões com `disciplina_confirmada = true` em volume.
+**A distribuição por disciplina já sai de contagem real.** `disciplinas.media_por_prova`
+foi **removida do schema** — era a velha estimativa por prova, e um `db pull`
+registrou a sua ausência. Quem a substitui é a função `distribuicao_por_disciplina`,
+que conta `questoes` por `disciplina`, e o `fonte-supabase.ts` monta
+`mediaPorProva = questoes / edicoes` a partir dela, para as telas que ainda
+usam o nome antigo. A `incidencia_estimada`, que ordena a fila editorial, pode
+mudar de significado quando `disciplina_confirmada = true` ganhar volume.
 
 **O arquivo da OAB exige HTTPS para tudo até o 31º Exame.** Os links saem da
 página em `http://`, e em `http://` o `s.oab.org.br` devolve **502 em toda a
@@ -248,7 +284,7 @@ Três regras que a carga respeita e que não devem ser afrouxadas:
    `where public.artigos.comentario = '{}'`. Texto de lei se atualiza sozinho
    enquanto ninguém escreveu sobre ele; a partir do comentário, a linha é
    trabalho autoral e mudança de redação vira revisão humana.
-2. **Tudo entra com `indexavel = false`.** São 10.168 páginas de texto legal que
+2. **Tudo entra com `indexavel = false`.** São 9.887 páginas de texto legal que
    existem em centenas de outros sites. Elas servem para consulta e para
    navegação interna; ao índice só vai o que tiver comentário. Já as páginas
    de lei (`/legislacao/<slug>`) entram no sitemap: são índices completos e
@@ -296,21 +332,23 @@ só no número.
 Continuam no acervo como material de estudo, e é assim que `/desempenho` as
 apresenta.
 
-**Comentário de questão é trabalho autoral e ainda não existe** — a tabela
-`comentarios` está vazia. A tela diz isso com todas as letras em vez de
-preencher o espaço: gerar explicação jurídica por IA é o pior defeito
-possível aqui, porque quem estuda a regra alucinada só descobre no dia da
-prova.
+**Comentário de questão é trabalho autoral — e hoje ele existe.** A tabela
+`comentarios` tem 92 linhas publicadas e zero rascunho. O fluxo vive no banco:
+`sou_editor()` libera a fila em `fila_de_comentarios`, `salvar_comentario`
+escreve o rascunho sem publicar e `comentarios_pendentes` alimenta `/app/redacao`.
+Gerar explicação jurídica por IA é o pior defeito possível aqui, porque quem
+estuda a regra alucinada só descobre no dia da prova.
 
-**A classificação por disciplina é aproximada.** 2.751 das 3.460 questões têm
-`disciplina_id`, nenhuma tem `disciplina_confirmada = true`. O filtro por
+**A classificação por disciplina é aproximada.** 3.044 das 3.540 questões têm
+`disciplina_id`, 1.698 têm `disciplina_confirmada = true`. O filtro por
 disciplina funciona e a tela avisa que é aproximado; filtro por exame é
-exato. Enquanto `disciplina_confirmada` for falso em toda a base, não existe
-gráfico de evolução por matéria — seria dado inventado com cara de medição.
+exato. Enquanto `disciplina_confirmada` não cobrir a base inteira, gráfico de
+evolução por matéria está limitado às 1.698 confirmadas — o resto seria dado
+inventado com cara de medição.
 
 ## Classificação automática e procedência
 
-Confirmar 3.460 questões e vincular 3.317 à mão é trabalho de meses. A saída
+Confirmar 3.540 questões e vincular 218 à mão é trabalho de meses. A saída
 foi automatizar **registrando de onde veio cada dado**, e nunca marcar palpite
 como revisão humana:
 
@@ -341,11 +379,11 @@ inteiro sem classificação.
 
 ## Revisão editorial
 
-Os dois gargalos do projeto são trabalho humano: 3.460 questões classificadas
-por heurística e nenhuma confirmada; 10.168 artigos e 107 comentados. O
-segundo gargalo anda — eram quatro —, o primeiro não saiu do zero.
-`/app/revisao` (triagem de disciplina) e `/app/redacao` (comentário) existem
-para tirar o atrito desse trabalho, não para fazê-lo.
+Os dois gargalos do projeto são trabalho humano: 3.540 questões (1.698
+confirmadas, 1.842 por confirmar) e 9.887 artigos, 107 comentados. O segundo
+gargalo anda — eram quatro —; a confirmação de disciplina anda — eram zero,
+hoje são 1.698. `/app/revisao` (triagem de disciplina) e `/app/redacao`
+(comentário) existem para tirar o atrito desse trabalho, não para fazê-lo.
 
 **O sinalizador de editor não mora em `perfis`.** A política de `perfis` é de
 dono com `with check (auth.uid() = id)` — uma coluna `editor` ali seria uma
@@ -445,6 +483,16 @@ abre o console, que é exatamente quem o filtro existe para conter.
 
 `/app/anotacoes` é uma tela livre (React Flow, `@xyflow/react`) com cartões de
 anotação e de questões já respondidas, ligáveis entre si.
+
+**O seletor de lei e súmula busca por texto, não por número.** A versão
+anterior pedia o número dentro de uma norma escolhida, partindo de que "quem
+está anotando já sabe qual artigo quer" — e quem está anotando é quem estuda
+para a 1ª fase, a mesma pessoa a quem este site diz, com a contagem na mão,
+que só 4% das questões citam artigo expressamente. Ela sabe "furto", sabe
+"algemas"; não sabe 155 nem Vinculante 11. O casamento exato falhava também
+para quem sabia o número, porque `numero` é texto: `art. 155`, `5º` e `217-a`
+não achavam nada, e a pessoa concluía que o acervo não tinha o dispositivo.
+Ver **Busca**. A norma virou filtro para estreitar, nunca pré-requisito.
 
 **A ligação não tem semântica no banco** — só origem, destino e um rótulo em
 texto. Tipar a aresta ("causa", "exceção", "fundamento") seria impor um
@@ -793,8 +841,34 @@ está no acervo, e errar faz alguém perder a prova. Ela diz o que mede e manda
 ao edital para o resto. Ao acrescentar campo ali, a pergunta é de onde ele vem.
 
 **O gargalo de posicionamento não é técnico.** São 107 artigos indexáveis de
-10.168, porque o portão de qualidade — correto — só anuncia o que tem
+9.887, porque o portão de qualidade — correto — só anuncia o que tem
 comentário revisado. Nenhuma marcação compensa isso: o caminho é escrever
 comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
 glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
 lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
+
+## PWA
+
+Instalável em PC e celular (manifest em `src/app/manifest.ts`, service worker
+em `public/sw.js`). Duas regras sustentam o worker, e a primeira não é opcional:
+
+1. **`/app` é network-only.** A área paga é decidida pela RLS a cada sessão;
+   cachear uma resposta autenticada deixaria ler questão do offline depois
+   que a assinatura acabou. Para o conteúdo pago o SW é invisível.
+2. **Nenhum domínio externo é tocado.** As consultas ao Supabase vão por
+   `fetch` no cliente; interceptá-las daria ao SW poder de decidir sobre
+   resposta de banco.
+
+O que sobra é o que compensa: estáticos `/_next/static` (cache-first, o nome
+tem hash e não muda) e páginas abertas (network-first, com o cache como rede
+de segurança offline). O `start_url` é `/` — a página aberta, nunca `/app`.
+
+O registro é **só em produção** (em dev ele esconderia a edição que acabou de
+salvar). `/sw.js` é servido com `Cache-Control: no-cache` para a correção de
+um bug não esperar a expiração de um CDN; a versão é manual (`oabase-v1`) e
+muda quando o comportamento do worker muda.
+
+**Pegadinha do Next 16 registrada:** `appleWebApp` mora em `metadata`, não em
+`viewport` — a interface `Viewport` desta versão não tem o campo e o TypeScript
+recusa. Ícones PWA foram gerados de `src/app/icon.svg` (via `qlmanage`) em
+`public/icons/`; o `apple-icon.png` (iOS) segue automático do `src/app/`.

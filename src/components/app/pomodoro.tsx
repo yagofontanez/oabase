@@ -76,7 +76,12 @@ export function Pomodoro({
     [duracoes],
   );
 
-  // Preferências e sessão em andamento sobrevivem ao recarregamento.
+  /* Preferências e sessão em andamento sobrevivem ao recarregamento.
+     Restaurar do armazenamento significa gravar o estado na montagem — é o
+     único caminho para a sessão continuar, e é o caso legítimo que a regra
+     `react-hooks/set-state-in-effect` não aceita sem reescrever a máquina de
+     estados num `useSyncExternalStore` que não lhe convém. Bloqueio só aqui. */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const salvas = window.localStorage.getItem(CHAVE_DURACOES);
@@ -110,6 +115,7 @@ export function Pomodoro({
     }
     setMontado(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const salvarEstado = useCallback(
     (extra: Partial<{ fase: Fase; ciclo: number; restante: number }> = {}) => {

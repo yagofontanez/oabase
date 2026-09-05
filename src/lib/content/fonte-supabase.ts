@@ -443,36 +443,56 @@ export const fonteSupabase: FonteDeConteudo = {
   },
 
   async getDisciplinas() {
-    const { data, error } = await supabaseAnon()
-      .from("disciplinas")
-      .select("slug, nome, media_por_prova")
-      .order("media_por_prova", { ascending: false });
-    erro("disciplinas", error);
-    return (
-      (data ?? []) as { slug: string; nome: string; media_por_prova: number }[]
-    ).map((d) => ({
-      slug: d.slug,
-      nome: d.nome,
-      mediaPorProva: Number(d.media_por_prova),
-    }));
+    return distribuicaoDeDisciplinas();
   },
 
   async getDisciplina(slug) {
-    const { data, error } = await supabaseAnon()
-      .from("disciplinas")
-      .select("slug, nome, media_por_prova")
-      .eq("slug", slug)
-      .maybeSingle();
-    erro("disciplina", error);
-    if (!data) return null;
-    const d = data as { slug: string; nome: string; media_por_prova: number };
-    return {
-      slug: d.slug,
-      nome: d.nome,
-      mediaPorProva: Number(d.media_por_prova),
-    } as Disciplina;
+    return (await distribuicaoDeDisciplinas()).find(
+      (d) => d.slug === slug,
+    ) ?? null;
   },
 };
+
+type LinhaDistribuicao = {
+  disciplina_slug: string;
+  disciplina_nome: string;
+  questoes: number;
+};
+
+/**
+ * Distribuição real de questões por disciplina, com a "média por prova".
+ *
+ * A coluna `disciplinas.media_por_prova` — estimativa de vitrine — foi
+ * removida do schema; quem a leu já não lê. O que existe é a contagem real na
+ * RPC `distribuicao_por_disciplina` (security definer sobre a leitura aberta
+ * de `disciplinas` e `questoes`), e a "média por prova" é contagem dividida
+ * pelas edições ingeridas. É medição, não placeholder.
+ *
+ * `getDisciplina` (a ficha de um artigo) não precisa do peso, mas o tipo
+ * `Disciplina` o carrega e todas as telas esperam o mesmo shape — então as
+ * duas implementações passam pelo mesmo caminho em vez de duplicar o cálculo.
+ */
+async function distribuicaoDeDisciplinas(): Promise<Disciplina[]> {
+  const [distRes, examesRes] = await Promise.all([
+    supabaseAnon().rpc("distribuicao_por_disciplina"),
+    supabaseAnon()
+      .from("exames")
+      .select("questoes_carregadas")
+      .gt("questoes_carregadas", 0)
+      .limit(100),
+  ]);
+  erro("disciplinas", distRes.error);
+  erro("edições ingeridas", examesRes.error);
+  const linhas = (distRes.data ?? []) as LinhaDistribuicao[];
+  const edicoes = Math.max(1, (examesRes.data ?? []).length);
+  return [...linhas]
+    .sort((a, b) => b.questoes - a.questoes)
+    .map((d) => ({
+      slug: d.disciplina_slug,
+      nome: d.disciplina_nome,
+      mediaPorProva: Math.round((Number(d.questoes) / edicoes) * 10) / 10,
+    })) as Disciplina[];
+}
 
 type LinhaExame = {
   slug: string;

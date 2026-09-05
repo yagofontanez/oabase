@@ -51,6 +51,18 @@ const nextConfig: NextConfig = {
         source: "/app/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
+      {
+        // O navegador consulta o service worker a cada carregamento; se um
+        // CDN o servir com cache longo, uma correção de segurança demora a
+        // chegar. Imutável é o `/sw.js` arquivo, não a versão que ele toca.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };

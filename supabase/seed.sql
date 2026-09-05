@@ -4,25 +4,27 @@
 -- apontar para o banco. Substituído pela carga do pipeline na Fase 0.
 -- ============================================================================
 
-insert into public.disciplinas (slug, nome, media_por_prova) values
-  ('etica-e-estatuto-da-oab',              'Ética e Estatuto da OAB',       8),
-  ('direito-constitucional',               'Direito Constitucional',        7),
-  ('direito-civil',                        'Direito Civil',                 7),
-  ('direito-processual-civil',             'Direito Processual Civil',      7),
-  ('direito-penal',                        'Direito Penal',                 6),
-  ('direito-do-trabalho',                  'Direito do Trabalho',           6),
-  ('direito-processual-penal',             'Direito Processual Penal',      5),
-  ('direito-administrativo',               'Direito Administrativo',        5),
-  ('direito-empresarial',                  'Direito Empresarial',           5),
-  ('direito-processual-do-trabalho',       'Direito Processual do Trabalho',4),
-  ('direito-tributario',                   'Direito Tributário',            4),
-  ('direitos-humanos',                     'Direitos Humanos',              3),
-  ('direito-previdenciario',               'Direito Previdenciário',        3),
-  ('filosofia-do-direito',                 'Filosofia do Direito',          2),
-  ('direito-internacional',                'Direito Internacional',         2),
-  ('direito-ambiental',                    'Direito Ambiental',             2),
-  ('direito-do-consumidor',                'Direito do Consumidor',         2),
-  ('estatuto-da-crianca-e-do-adolescente', 'ECA',                           2);
+-- `disciplinas.media_por_prova` foi removida do schema: a vitrine agora sai da
+-- contagem real na RPC `distribuicao_por_disciplina`, e não de estimativa.
+insert into public.disciplinas (slug, nome) values
+  ('etica-e-estatuto-da-oab',              'Ética e Estatuto da OAB'),
+  ('direito-constitucional',               'Direito Constitucional'),
+  ('direito-civil',                        'Direito Civil'),
+  ('direito-processual-civil',             'Direito Processual Civil'),
+  ('direito-penal',                        'Direito Penal'),
+  ('direito-do-trabalho',                  'Direito do Trabalho'),
+  ('direito-processual-penal',             'Direito Processual Penal'),
+  ('direito-administrativo',               'Direito Administrativo'),
+  ('direito-empresarial',                  'Direito Empresarial'),
+  ('direito-processual-do-trabalho',       'Direito Processual do Trabalho'),
+  ('direito-tributario',                   'Direito Tributário'),
+  ('direitos-humanos',                     'Direitos Humanos'),
+  ('direito-previdenciario',               'Direito Previdenciário'),
+  ('filosofia-do-direito',                 'Filosofia do Direito'),
+  ('direito-internacional',                'Direito Internacional'),
+  ('direito-ambiental',                    'Direito Ambiental'),
+  ('direito-do-consumidor',                'Direito do Consumidor'),
+  ('estatuto-da-crianca-e-do-adolescente', 'ECA');
 
 insert into public.leis (slug, nome, sigla, ano, resumo) values
   ('constituicao-federal', 'Constituição Federal', 'CF/88', 1988,

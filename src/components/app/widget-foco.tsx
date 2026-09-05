@@ -152,7 +152,11 @@ export function WidgetFoco({
     [persistir],
   );
 
-  // Retoma o que estava rodando, inclusive depois de recarregar a página.
+  /* Retoma o que estava rodando, inclusive depois de recarregar a página.
+     Gravar o estado salvo na montagem é o único caminho para a sessão
+     continuar — é o caso legítimo que `react-hooks/set-state-in-effect` não
+     aceita sem reescrever a máquina de estados. Bloqueio só neste bloco. */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const salvo = window.localStorage.getItem(CHAVE);
@@ -171,6 +175,7 @@ export function WidgetFoco({
     }
     setMontado(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const abrir = () =>

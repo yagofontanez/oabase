@@ -6,11 +6,11 @@ type Restante = {
   minutos: number;
   segundos: number;
 };
-function calcular(alvoISO: string): Restante {
+function calcular(alvoISO: string, agora: number): Restante {
   const [ano, mes, dia] = alvoISO.split("-").map(Number);
   // A prova começa às 13h no horário de Brasília (UTC-3).
   const alvo = Date.UTC(ano, mes - 1, dia, 16, 0, 0);
-  const restante = Math.max(0, alvo - Date.now());
+  const restante = Math.max(0, alvo - agora);
   return {
     dias: Math.floor(restante / 86_400_000),
     horas: Math.floor(restante / 3_600_000) % 24,
@@ -33,29 +33,32 @@ const pad = (n: number) => String(n).padStart(2, "0");
  * relevante da página inteira.
  */
 export function Contagem({ dataISO, dias }: { dataISO: string; dias: number }) {
-  const [restante, setRestante] = useState<Restante | null>(null);
+  // `agora` começa nulo e só o intervalo o atualiza: a regra do React
+  // proíbe setState síncrono no corpo do effect, e o primeiro quadro — com
+  // `agora === null` — renderiza o mesmo `Xd` que o servidor mandou.
+  const [agora, setAgora] = useState<number | null>(null);
 
   useEffect(() => {
-    setRestante(calcular(dataISO));
-    const id = setInterval(() => setRestante(calcular(dataISO)), 1000);
+    const id = setInterval(() => setAgora(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [dataISO]);
+  }, []);
+
+  if (agora === null) {
+    return (
+      <span className="tabular-nums" aria-live="off">
+        {dias}
+        <span className="opacity-55">d</span>
+      </span>
+    );
+  }
+  const restante = calcular(dataISO, agora);
   return (
     <span className="tabular-nums" aria-live="off">
-      {restante ? (
-        <>
-          {restante.dias}
-          <span className="opacity-55">d</span> {pad(restante.horas)}
-          <span className="opacity-55">h</span> {pad(restante.minutos)}
-          <span className="opacity-55">m</span> {pad(restante.segundos)}
-          <span className="opacity-55">s</span>
-        </>
-      ) : (
-        <>
-          {dias}
-          <span className="opacity-55">d</span>
-        </>
-      )}
+      {restante.dias}
+      <span className="opacity-55">d</span> {pad(restante.horas)}
+      <span className="opacity-55">h</span> {pad(restante.minutos)}
+      <span className="opacity-55">m</span> {pad(restante.segundos)}
+      <span className="opacity-55">s</span>
     </span>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { JsonLd } from "@/lib/jsonld";
 import { operador } from "@/lib/legal";
+import { PwaRegistro } from "@/components/pwa-registro";
 import { abs, site } from "@/lib/site";
 import "./globals.css";
 
@@ -27,6 +28,11 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
+  appleWebApp: {
+    capable: true,
+    title: site.name,
+    statusBarStyle: "default",
+  },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -114,6 +120,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <PwaRegistro />
       </body>
     </html>
   );

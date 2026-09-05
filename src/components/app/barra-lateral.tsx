@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { BotaoSair } from "@/components/auth/botao-sair";
 import { Wordmark } from "@/components/wordmark";
 import { NavegacaoApp } from "./navegacao";
@@ -44,28 +44,47 @@ export function BarraLateral({
   admin?: boolean;
   editor?: boolean;
 }) {
-  const [recolhida, setRecolhida] = useState(false);
   const [pronta, setPronta] = useState(false);
 
+  /* `recolhida` é uma leitura do `localStorage`, e estado que espelha
+     armazenamento externo pede `useSyncExternalStore`: o snapshot do servidor
+     é sempre `false` (o trilho começa expandido no HTML), e depois da
+     hidratação a inscrição aplica a preferência salva sem divergir. O
+     `setItem` de `alternar` re-renderiza pela mesma via — o evento `storage`
+     propagado no mesmo documento. */
+  const recolhida = useSyncExternalStore(
+    (aoMudar) => {
+      window.addEventListener("storage", aoMudar);
+      return () => window.removeEventListener("storage", aoMudar);
+    },
+    () => {
+      try {
+        return window.localStorage.getItem(CHAVE) === "1";
+      } catch {
+        return false;
+      }
+    },
+    () => false,
+  );
+
+  /* `pronta` liga a transição de largura só depois do primeiro quadro — é o
+     que impede o trilho de animar de 248px para 78px na montagem quando a
+     preferência salva é recolhida. Escrever `true` na montagem é o caso que
+     `react-hooks/set-state-in-effect` não aceita; bloqueio só neste bloco. */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    try {
-      setRecolhida(window.localStorage.getItem(CHAVE) === "1");
-    } catch {
-      // Navegador com armazenamento bloqueado: segue expandida.
-    }
     setPronta(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function alternar() {
-    setRecolhida((atual) => {
-      const proxima = !atual;
-      try {
-        window.localStorage.setItem(CHAVE, proxima ? "1" : "0");
-      } catch {
-        // Preferência não persiste, mas a sessão atual funciona.
-      }
-      return proxima;
-    });
+    const proxima = !recolhida;
+    try {
+      window.localStorage.setItem(CHAVE, proxima ? "1" : "0");
+    } catch {
+      // Preferência não persiste, mas a sessão atual funciona.
+    }
+    window.dispatchEvent(new StorageEvent("storage", { key: CHAVE }));
   }
 
   return (
