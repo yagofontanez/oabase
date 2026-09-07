@@ -18,15 +18,15 @@ export const metadata: Metadata = {
  * artigos de apoio. O comentário de questão é o diferencial do produto pago —
  * é ele que transforma "errei" em "entendi".
  *
- * Ordenação por incidência dos dispositivos vinculados: escrever primeiro o
- * que a banca cobra mais vezes.
+ * Exames mais recentes primeiro; os dispositivos vinculados dentro de cada
+ * questão vêm ordenados por incidência — o que a banca cobra mais vezes.
  */
 export default async function ComentariosQuestaoPage() {
   const supabase = await supabaseServidor();
 
   const [{ data: editor }, { data: pendentesRes }, { data: filaBruta }] =
     await Promise.all([
-      supabase.rpc("comentarios_pendentes"),
+      supabase.rpc("sou_editor"),
       supabase.rpc("comentarios_pendentes"),
       supabase.rpc("fila_de_comentarios", { p_limite: 60 }),
     ]);

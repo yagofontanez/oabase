@@ -29,8 +29,9 @@ export type QuestaoParaComentar = {
  * resposta correta.
  *
  * São 3.540 questões e 92 comentadas. O comentário é o diferencial do produto
- * pago: transforma "errei" em "entendi". A fila é ordenada pela incidência
- * dos dispositivos vinculados — escrever primeiro o que a banca cobra mais.
+ * pago: transforma "errei" em "entendi". A fila vem por exame mais recente, e
+ * os dispositivos vinculados em cada questão baixam ordenados por incidência —
+ * o que a banca já cobrou em evidência.
  *
  * Um parágrafo por bloco separado por linha em branco. `corpo` é `text[]`
  * no banco justamente para isso: o texto chega estruturado e a página não
@@ -71,8 +72,9 @@ export function ComentariosQuestao({
             Comentários de questão
           </h1>
           <p className="text-body">
-            Fila ordenada pela incidência dos dispositivos vinculados — o que a
-            banca já cobrou vem primeiro. Uma linha em branco separa parágrafos.{" "}
+            Exames mais recentes primeiro — o apoio de cada questão vem com os
+            dispositivos ordenados por incidência, o que a banca já cobrou em
+            evidência. Uma linha em branco separa parágrafos.{" "}
             <kbd className="tecla">⌘</kbd>
             <kbd className="tecla">Enter</kbd> publica.
           </p>
@@ -101,9 +103,9 @@ export function ComentariosQuestao({
 
       {!atual ? (
         <p className="rounded-2xl bg-paper p-8 text-body">
-          A fila acabou: todas as questões com dispositivo vinculado já têm
-          comentário. Vínculo mais dispositivos para ampliar a fila, ou
-          escreva comentários para questões sem vinculação.
+          A fila acabou: esta leva de questões está comentada. Continue a
+          partir das abas de revisão — classificar mais questões e vincular
+          dispositivos dá mais material para comentar.
         </p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
