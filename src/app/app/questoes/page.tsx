@@ -270,14 +270,10 @@ export default async function QuestoesPage({
           ))}
         </div>
 
-        {/* A classificação por disciplina veio do pipeline e ainda não passou
-            por revisão humana — `disciplina_confirmada` é falso em toda a
-            base. Filtrar por matéria funciona; prometer exatidão, não. */}
         <p className="text-[0.8rem] text-muted">
           {semDisciplina.toLocaleString("pt-BR")} das{" "}
           {acervo.toLocaleString("pt-BR")} questões ainda não têm disciplina
-          atribuída, e a classificação das demais não passou por revisão.
-          Filtrar por exame é exato; por disciplina, aproximado.
+          atribuída. Filtrar por exame é exato; por disciplina, aproximado.
         </p>
       </section>
 

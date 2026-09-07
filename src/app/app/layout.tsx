@@ -41,7 +41,7 @@ export default async function AppLayout({
     supabase
       .from("disciplinas")
       .select("id, slug, nome")
-      .order("media_por_prova", { ascending: false }),
+      .order("nome"),
     supabase
       .from("assinaturas")
       .select("plano, fim")

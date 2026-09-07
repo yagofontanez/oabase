@@ -204,6 +204,15 @@ const ITENS_EDITOR = [
     ),
   },
   {
+    href: "/app/redacao/comentarios",
+    rotulo: "Comentários",
+    icone: (
+      <>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </>
+    ),
+  },
+  {
     href: "/app/revisao",
     rotulo: "Triagem",
     icone: (
@@ -228,6 +237,7 @@ const ITENS_EDITOR = [
 /** Telas que existem sem ficar na navegação — chegam por botão, não por menu. */
 const FORA_DO_MENU: Record<string, string> = {
   "/app/assinar": "Assinar",
+  "/app/redacao/comentarios": "Comentários",
 };
 
 /**
