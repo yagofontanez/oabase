@@ -80,6 +80,27 @@ function horas(h: number) {
   return `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
 }
 
+function escaparHtml(texto: string) {
+  return texto.replace(/[&<>'"]/g, (caractere) => {
+    const entidades: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return entidades[caractere];
+  });
+}
+
+function rotuloDoEstado(estado: EstadoDoRoadmap) {
+  return {
+    a_estudar: "A estudar",
+    em_andamento: "Em andamento",
+    concluido: "Concluído",
+  }[estado];
+}
+
 /** Marca da superfície de IA. Nunca aparece em texto de lei ou do acervo. */
 function Gema({ className = "h-6 w-6" }: { className?: string }) {
   return (
@@ -403,6 +424,39 @@ export function PlanoConversa({
     setItemAtualizando(null);
   }
 
+  function exportarPdf() {
+    if (!plano) return;
+    // Uma janela própria é mais confiável que esconder o app inteiro com CSS:
+    // o painel tem altura e rolagem controladas, que alguns navegadores
+    // imprimem como uma página vazia. Este documento é estático e completo.
+    const janela = window.open("", "_blank", "noopener,noreferrer");
+    if (!janela) {
+      setErro("O navegador bloqueou a janela de impressão. Libere pop-ups e tente de novo.");
+      return;
+    }
+    const semanas = plano.semanas
+      .map((semana) => {
+        const blocos = semana.blocos
+          .map((bloco, ordem) => {
+            const item = roadmap.find(
+              (atual) => atual.semana === semana.numero && atual.ordem === ordem,
+            );
+            const estado = item?.estado ?? "a_estudar";
+            return `<li><div><strong>${escaparHtml(bloco.disciplina)}</strong><p>${escaparHtml(bloco.objetivo)}</p></div><span class="estado ${estado}">${rotuloDoEstado(estado)}</span><span class="horas">${horas(bloco.horas)}</span></li>`;
+          })
+          .join("");
+        return `<section><header><span>Semana ${semana.numero}</span><h2>${escaparHtml(semana.foco)}</h2></header><ul>${blocos}</ul></section>`;
+      })
+      .join("");
+    const percentual = roadmap.length
+      ? Math.round((concluidos / roadmap.length) * 100)
+      : 0;
+
+    janela.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Roadmap de estudos — OABase</title><style>
+      @page { margin: 16mm; } * { box-sizing: border-box; } body { color:#16201d; font: 12px/1.5 Arial, sans-serif; } h1,h2,p { margin:0; } .marca { color:#0b6250; font-weight:700; letter-spacing:.12em; text-transform:uppercase; font-size:10px; } h1 { margin-top:6px; font-size:26px; line-height:1.08; } .resumo { display:flex; gap:18px; margin:18px 0; padding:13px 15px; background:#ebf5f1; border-radius:10px; } .resumo b { display:block; color:#073b33; font-size:16px; } .barra { height:7px; overflow:hidden; border-radius:99px; background:#d6e0db; margin-bottom:22px; } .barra span { display:block; height:100%; background:#e9a23b; width:${percentual}%; } section { break-inside:avoid; border-top:1px solid #d6e0db; padding:15px 0; } section header { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; } section header span { color:#0b6250; font-weight:700; } h2 { font-size:15px; } ul { list-style:none; padding:0; margin:0; } li { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:start; padding:9px 0; border-top:1px solid #edf3f0; } li p { color:#4c5a55; margin-top:2px; } .estado { border-radius:99px; padding:2px 7px; font-size:10px; font-weight:700; background:#edf3f0; color:#4c5a55; } .estado.em_andamento { background:#fae9cc; color:#8c5410; } .estado.concluido { background:#cfe8df; color:#073b33; } .horas { color:#4c5a55; font-weight:700; white-space:nowrap; } footer { margin-top:22px; color:#7c8a85; font-size:10px; } </style></head><body><div class="marca">OABase · roadmap de estudos</div><h1>${plano.semanas.length} ${plano.semanas.length === 1 ? "semana" : "semanas"} de execução</h1><div class="resumo"><div><b>${concluidos}/${roadmap.length}</b>blocos concluídos</div><div><b>${horas(horasConcluidas)}</b>horas concluídas</div><div><b>${horas(totalDeHoras)}</b>horas planejadas</div></div><div class="barra"><span></span></div>${semanas}<footer>Gerado pelo OABase. O conteúdo jurídico deve ser consultado no acervo oficial da plataforma.</footer><script>window.onload = () => window.print();</script></body></html>`);
+    janela.document.close();
+  }
+
   /* ---------------- Conversa ---------------- */
 
   const colunaConversa = (
@@ -716,7 +770,7 @@ export function PlanoConversa({
 
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={exportarPdf}
                 title="Abre a impressão do navegador; escolha Salvar como PDF"
                 className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
               >
