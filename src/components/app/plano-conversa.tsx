@@ -80,14 +80,6 @@ function horas(h: number) {
   return `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
 }
 
-function rotuloDoEstado(estado: EstadoDoRoadmap) {
-  return {
-    a_estudar: "A estudar",
-    em_andamento: "Em andamento",
-    concluido: "Concluído",
-  }[estado];
-}
-
 /** Marca da superfície de IA. Nunca aparece em texto de lei ou do acervo. */
 function Gema({ className = "h-6 w-6" }: { className?: string }) {
   return (
@@ -167,7 +159,6 @@ export function PlanoConversa({
   const [prazoLivre, setPrazoLivre] = useState(contextoInicial.prazo ?? "");
   const [criandoRoadmap, setCriandoRoadmap] = useState(false);
   const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
-  const [exportandoPdf, setExportandoPdf] = useState(false);
   const [filtroRoadmap, setFiltroRoadmap] = useState<
     "todos" | EstadoDoRoadmap
   >("todos");
@@ -410,135 +401,6 @@ export function PlanoConversa({
       setErro("Não consegui atualizar este bloco. Tente de novo.");
     }
     setItemAtualizando(null);
-  }
-
-  async function exportarPdf() {
-    if (!plano || exportandoPdf) return;
-    setExportandoPdf(true);
-    setErro(null);
-    try {
-      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
-      const pdf = await PDFDocument.create();
-      const regular = await pdf.embedFont(StandardFonts.Helvetica);
-      const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
-      const largura = 595.28;
-      const altura = 841.89;
-      const margem = 46;
-      const tinta = rgb(0.086, 0.125, 0.114);
-      const verde = rgb(0.043, 0.384, 0.314);
-      const verdeClaro = rgb(0.922, 0.961, 0.945);
-      const ouro = rgb(0.914, 0.635, 0.231);
-      const cinza = rgb(0.486, 0.541, 0.522);
-      let pagina = pdf.addPage([largura, altura]);
-      let y = altura - margem;
-
-      const textoSeguro = (texto: string) =>
-        texto
-          .normalize("NFC")
-          .replace(/[—–]/g, "-")
-          .replace(/[“”]/g, '"')
-          .replace(/[‘’]/g, "'");
-      const novaPagina = () => {
-        pagina = pdf.addPage([largura, altura]);
-        y = altura - margem;
-        pagina.drawText("OABase  |  Roadmap de estudos", {
-          x: margem,
-          y,
-          size: 9,
-          font: negrito,
-          color: verde,
-        });
-        y -= 24;
-      };
-      const linhas = (texto: string, fonte: typeof regular, tamanho: number, max: number) => {
-        const palavras = textoSeguro(texto).split(/\s+/);
-        const resultado: string[] = [];
-        let linha = "";
-        for (const palavra of palavras) {
-          const teste = linha ? `${linha} ${palavra}` : palavra;
-          if (fonte.widthOfTextAtSize(teste, tamanho) <= max || !linha) linha = teste;
-          else {
-            resultado.push(linha);
-            linha = palavra;
-          }
-        }
-        if (linha) resultado.push(linha);
-        return resultado;
-      };
-      const escrever = (texto: string, fonte: typeof regular, tamanho: number, cor = tinta, larguraMax = largura - margem * 2, espacamento = 4) => {
-        const partes = linhas(texto, fonte, tamanho, larguraMax);
-        const necessario = partes.length * (tamanho + espacamento);
-        if (y - necessario < margem) novaPagina();
-        for (const parte of partes) {
-          pagina.drawText(parte, { x: margem, y, size: tamanho, font: fonte, color: cor });
-          y -= tamanho + espacamento;
-        }
-      };
-
-      pagina.drawText("OABase", { x: margem, y, size: 10, font: negrito, color: verde });
-      y -= 30;
-      pagina.drawText("Roadmap de estudos", { x: margem, y, size: 25, font: negrito, color: tinta });
-      y -= 16;
-      pagina.drawText("Plano acionável, com o progresso registrado até agora.", { x: margem, y, size: 10, font: regular, color: cinza });
-      y -= 28;
-      pagina.drawRectangle({ x: margem, y: y - 54, width: largura - margem * 2, height: 54, color: verdeClaro });
-      const resumo = [
-        [`${concluidos}/${roadmap.length}`, "blocos concluídos"],
-        [horas(horasConcluidas), "horas concluídas"],
-        [horas(totalDeHoras), "horas planejadas"],
-      ];
-      resumo.forEach(([valor, rotulo], indice) => {
-        const x = margem + 15 + indice * 160;
-        pagina.drawText(valor, { x, y: y - 20, size: 15, font: negrito, color: verde });
-        pagina.drawText(rotulo, { x, y: y - 37, size: 8, font: regular, color: cinza });
-      });
-      y -= 72;
-      pagina.drawRectangle({ x: margem, y, width: largura - margem * 2, height: 7, color: rgb(0.84, 0.88, 0.86) });
-      pagina.drawRectangle({ x: margem, y, width: (largura - margem * 2) * (roadmap.length ? concluidos / roadmap.length : 0), height: 7, color: ouro });
-      y -= 28;
-
-      for (const semana of plano.semanas) {
-        if (y < 130) novaPagina();
-        pagina.drawRectangle({ x: margem, y: y - 4, width: 4, height: 28, color: ouro });
-        pagina.drawText(`SEMANA ${semana.numero}`, { x: margem + 13, y: y + 10, size: 8, font: negrito, color: verde });
-        pagina.drawText(textoSeguro(semana.foco), { x: margem + 13, y: y - 5, size: 14, font: negrito, color: tinta });
-        y -= 35;
-        for (const [ordem, bloco] of semana.blocos.entries()) {
-          const item = roadmap.find((atual) => atual.semana === semana.numero && atual.ordem === ordem);
-          const estado = item?.estado ?? "a_estudar";
-          const objetivo = linhas(bloco.objetivo, regular, 9, largura - margem * 2 - 105);
-          const alturaBloco = 32 + objetivo.length * 13;
-          if (y - alturaBloco < margem) novaPagina();
-          pagina.drawRectangle({ x: margem, y: y - alturaBloco + 4, width: largura - margem * 2, height: alturaBloco, color: rgb(0.965, 0.976, 0.969) });
-          pagina.drawText(textoSeguro(bloco.disciplina), { x: margem + 11, y: y - 13, size: 10, font: negrito, color: tinta });
-          pagina.drawText(horas(bloco.horas), { x: largura - margem - 35, y: y - 13, size: 9, font: negrito, color: verde });
-          objetivo.forEach((linha, indice) => pagina.drawText(linha, { x: margem + 11, y: y - 29 - indice * 13, size: 9, font: regular, color: cinza }));
-          pagina.drawText(rotuloDoEstado(estado), { x: largura - margem - 86, y: y - alturaBloco + 14, size: 7.5, font: negrito, color: estado === "concluido" ? verde : estado === "em_andamento" ? rgb(0.55, 0.33, 0.06) : cinza });
-          y -= alturaBloco + 7;
-        }
-        y -= 10;
-      }
-      const paginas = pdf.getPages();
-      paginas.forEach((folha, indice) => folha.drawText(`Página ${indice + 1} de ${paginas.length}`, { x: largura - margem - 58, y: 22, size: 8, font: regular, color: cinza }));
-      const bytes = await pdf.save();
-      // Cópia para ArrayBuffer próprio: o tipo retornado pela biblioteca aceita
-      // SharedArrayBuffer, mas Blob no DOM exige um buffer transferível.
-      const dadosPdf = new Uint8Array(bytes);
-      const arquivo = new Blob([dadosPdf.buffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(arquivo);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "roadmap-de-estudos-oabase.pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (erro) {
-      console.error("Falha ao exportar PDF:", erro);
-      setErro("Não consegui gerar o PDF. Tente novamente.");
-    } finally {
-      setExportandoPdf(false);
-    }
   }
 
   /* ---------------- Conversa ---------------- */
@@ -852,15 +714,13 @@ export function PlanoConversa({
                 {enviando ? "atualizando…" : `${horas(totalDeHoras)} no total`}
               </span>
 
-              <button
-                type="button"
-                onClick={exportarPdf}
-                disabled={exportandoPdf}
+              <a
+                href="/api/roadmap/pdf"
                 title="Baixa um arquivo PDF do roadmap"
-                className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700 disabled:opacity-50"
+                className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
               >
-                {exportandoPdf ? "Gerando PDF…" : "Baixar PDF"}
-              </button>
+                Baixar PDF
+              </a>
 
               {confirmandoLimpeza ? (
                 <span className="flex items-center gap-1">
