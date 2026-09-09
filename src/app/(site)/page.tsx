@@ -271,25 +271,13 @@ export default async function Home() {
             </dl>
           </div>
 
-          {/* A moldura translúcida põe a demonstração um plano à frente do
-              fundo. Assim, os dois lados da hero não leem como colunas
-              independentes: a questão é a prova visual da promessa à esquerda. */}
-          <div className="relative mx-auto w-full max-w-[560px] pt-4 lg:mx-0 lg:max-w-none lg:pt-7">
-            <div
-              aria-hidden="true"
-              className="absolute -inset-x-5 top-0 bottom-5 rounded-[34px] border border-white/75 bg-white/30 shadow-[0_24px_70px_-40px_rgba(7,59,51,0.45)]"
-            />
-            <div className="absolute -top-1 right-5 z-20 hidden items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-2 text-[0.76rem] font-semibold text-brand-700 shadow-[0_12px_24px_-16px_rgba(7,59,51,0.5)] sm:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-ouro-400" />
-              Treino na prática
-            </div>
+          {/* A questão precisa continuar sendo o centro da primeira dobra —
+              sem rótulo ou moldura sobreposta, para preservar a leitura e o
+              toque nas alternativas no celular. */}
+          <div className="relative mx-auto w-full max-w-[560px] lg:mx-0 lg:max-w-none">
             <div className="relative z-10">
               <QuestaoVitrine />
             </div>
-            <p className="relative z-10 mx-auto mt-4 max-w-[37ch] text-center text-[0.82rem] leading-relaxed text-muted lg:mt-5">
-              Uma questão oficial, uma resposta e o retorno imediato — antes de
-              você criar uma conta.
-            </p>
           </div>
         </Container>
       </section>
