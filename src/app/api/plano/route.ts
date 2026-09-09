@@ -8,6 +8,7 @@ import {
   type Mensagem,
   type Plano,
 } from "@/lib/ia/plano";
+import { blocosDoPlano } from "@/lib/roadmap";
 
 /**
  * Gera ou ajusta o plano de estudos.
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
   const { data: registro } = await supabase
     .from("planos_estudo")
-    .select("plano, conversa, atualizado_em")
+    .select("plano, conversa, atualizado_em, versao_roadmap")
     .maybeSingle();
 
   // Freio simples contra envio repetido: o modelo leva alguns segundos e não
@@ -143,10 +144,12 @@ export async function POST(request: Request) {
   });
 
   // RLS garante que a linha gravada é a da própria sessão.
+  const versaoRoadmap = (registro?.versao_roadmap ?? 0) + 1;
   const { error } = await supabase.from("planos_estudo").upsert(
     {
       user_id: user.id,
       plano,
+      versao_roadmap: versaoRoadmap,
       // Guarda um histórico curto: o ajuste depende do plano atual mais do
       // pedido recente, não da conversa inteira.
       conversa: proximaConversa.slice(-20),
@@ -163,7 +166,32 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ plano, conversa: proximaConversa.slice(-20) });
+  // Cada geração inaugura uma rota nova. Não reutilizamos linhas de uma
+  // versão anterior: objetivos e ordem podem ter mudado, mas o histórico
+  // antigo continua preservado no banco para nunca reescrever progresso.
+  const itens = blocosDoPlano(plano).map((bloco) => ({
+    user_id: user.id,
+    versao: versaoRoadmap,
+    ...bloco,
+  }));
+  const { data: roadmap, error: erroRoadmap } = await supabase
+    .from("roadmap_itens")
+    .insert(itens)
+    .select("id, semana, ordem, disciplina, objetivo, horas, estado");
+
+  if (erroRoadmap) {
+    console.error("Falha ao criar roadmap:", erroRoadmap);
+    return NextResponse.json(
+      { erro: "O plano foi montado, mas não consegui criar o roadmap." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({
+    plano,
+    conversa: proximaConversa.slice(-20),
+    roadmap: roadmap ?? [],
+  });
 }
 
 /**

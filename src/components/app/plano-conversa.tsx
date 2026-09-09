@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Mensagem, Plano } from "@/lib/ia/plano";
+import {
+  type EstadoDoRoadmap,
+  type ItemRoadmap,
+} from "@/lib/roadmap";
+import { supabaseNavegador } from "@/lib/supabase/browser";
 
 export type PortaDeEntrada = { href: string; rotulo: string };
 
@@ -121,6 +126,7 @@ function Icone({ nome }: { nome: string }) {
 export function PlanoConversa({
   planoInicial,
   conversaInicial,
+  roadmapInicial,
   portas,
   nome,
   diasRestantes,
@@ -128,6 +134,7 @@ export function PlanoConversa({
 }: {
   planoInicial: Plano | null;
   conversaInicial: Mensagem[];
+  roadmapInicial: ItemRoadmap[];
   portas: Record<string, PortaDeEntrada>;
   nome: string;
   diasRestantes: number;
@@ -135,6 +142,9 @@ export function PlanoConversa({
 }) {
   const [plano, setPlano] = useState<Plano | null>(planoInicial);
   const [conversa, setConversa] = useState<Mensagem[]>(conversaInicial);
+  const [roadmap, setRoadmap] = useState<ItemRoadmap[]>(roadmapInicial);
+  const [criandoRoadmap, setCriandoRoadmap] = useState(false);
+  const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -253,6 +263,7 @@ export function PlanoConversa({
 
       setPlano(dados.plano as Plano);
       setConversa(dados.conversa as Mensagem[]);
+      setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
     } catch {
       setErro("Sem conexão com o servidor. Tente de novo.");
       setTexto(limpo);
@@ -282,6 +293,7 @@ export function PlanoConversa({
       }
       setPlano(null);
       setConversa([]);
+      setRoadmap([]);
       setAba("conversa");
       setConfirmandoLimpeza(false);
     } catch {
@@ -298,6 +310,54 @@ export function PlanoConversa({
         0,
       )
     : 0;
+  const concluidos = roadmap.filter((item) => item.estado === "concluido").length;
+  const proximoItem = roadmap.find((item) => item.estado !== "concluido");
+
+  async function criarRoadmap() {
+    if (criandoRoadmap) return;
+    setCriandoRoadmap(true);
+    setErro(null);
+    try {
+      const resposta = await fetch("/api/roadmap", { method: "POST" });
+      const dados = await resposta.json();
+      if (!resposta.ok) {
+        setErro(dados.erro ?? "Não consegui criar o roadmap agora.");
+        return;
+      }
+      setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
+    } catch {
+      setErro("Sem conexão com o servidor. Tente de novo.");
+    } finally {
+      setCriandoRoadmap(false);
+    }
+  }
+
+  async function mudarEstado(item: ItemRoadmap, estado: EstadoDoRoadmap) {
+    if (item.estado === estado || itemAtualizando) return;
+    const anterior = roadmap;
+    const agora = new Date().toISOString();
+    setItemAtualizando(item.id);
+    setRoadmap((itens) =>
+      itens.map((outro) =>
+        outro.id === item.id ? { ...outro, estado } : outro,
+      ),
+    );
+    const alteracao =
+      estado === "concluido"
+        ? { estado, concluido_em: agora, iniciado_em: agora }
+        : estado === "em_andamento"
+          ? { estado, iniciado_em: agora, concluido_em: null }
+          : { estado, iniciado_em: null, concluido_em: null };
+    const { error } = await supabaseNavegador()
+      .from("roadmap_itens")
+      .update(alteracao)
+      .eq("id", item.id);
+    if (error) {
+      setRoadmap(anterior);
+      setErro("Não consegui atualizar este bloco. Tente de novo.");
+    }
+    setItemAtualizando(null);
+  }
 
   /* ---------------- Conversa ---------------- */
 
@@ -503,7 +563,7 @@ export function PlanoConversa({
         <>
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
             <div className="flex flex-col">
-              <span className="rotulo">Seu cronograma</span>
+              <span className="rotulo">Seu roadmap</span>
               <span className="text-[1.05rem] font-bold text-ink">
                 {plano.semanas.length}{" "}
                 {plano.semanas.length === 1 ? "semana" : "semanas"} ·{" "}
@@ -579,6 +639,51 @@ export function PlanoConversa({
               enviando ? "opacity-45" : ""
             }`}
           >
+            {roadmap.length === 0 ? (
+              <div className="mb-6 rounded-[18px] border border-brand-100 bg-brand-50 p-5">
+                <span className="rotulo text-brand-700">Transforme em ação</span>
+                <p className="mt-1 text-[1rem] font-bold text-ink">
+                  Seu cronograma já tem direção. Agora dê estado a cada bloco.
+                </p>
+                <p className="mt-1.5 max-w-[54ch] text-[0.9rem] leading-relaxed text-body">
+                  Marque o que ainda vai estudar, o que está em andamento e o
+                  que foi concluído. Ao ajustar o plano, o roteiro novo começa
+                  limpo sem apagar o histórico anterior.
+                </p>
+                <button
+                  type="button"
+                  onClick={criarRoadmap}
+                  disabled={criandoRoadmap || enviando}
+                  className="mt-4 rounded-full bg-brand-600 px-4 py-2.5 text-[0.88rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+                >
+                  {criandoRoadmap ? "Criando roadmap…" : "Criar roadmap interativo"}
+                </button>
+              </div>
+            ) : (
+              <div className="mb-6 rounded-[18px] bg-brand-800 p-5 text-white">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <span className="text-[0.72rem] font-bold tracking-[0.12em] text-brand-200 uppercase">
+                      Seu próximo passo
+                    </span>
+                    {proximoItem ? (
+                      <p className="mt-1 text-[1.05rem] font-bold">
+                        {proximoItem.disciplina}
+                        <span className="font-normal text-brand-100"> · {proximoItem.objetivo}</span>
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[1.05rem] font-bold text-ouro-200">
+                        Roadmap concluído. Excelente trabalho.
+                      </p>
+                    )}
+                  </div>
+                  <span className="rounded-full bg-white/12 px-3 py-1.5 text-[0.82rem] font-semibold text-brand-100 tabular-nums">
+                    {concluidos}/{roadmap.length} concluídos
+                  </span>
+                </div>
+              </div>
+            )}
+
             {plano.avisos.length > 0 && (
               <ul className="mb-6 flex flex-col gap-2 rounded-[14px] bg-ouro-50 p-4">
                 {plano.avisos.map((a) => (
@@ -621,13 +726,24 @@ export function PlanoConversa({
                       <ul className="flex flex-col gap-3">
                         {semana.blocos.map((bloco, i) => {
                           const porta = portas[bloco.disciplina];
+                          const item = roadmap.find(
+                            (atual) =>
+                              atual.semana === semana.numero && atual.ordem === i,
+                          );
+                          const estado = item?.estado ?? "a_estudar";
                           return (
                             <li
                               key={`${bloco.disciplina}-${i}`}
-                              className="flex gap-3 rounded-[14px] bg-paper p-3.5"
+                              className={`flex gap-3 rounded-[14px] border p-3.5 transition-colors ${
+                                estado === "concluido"
+                                  ? "border-brand-100 bg-brand-50/60"
+                                  : estado === "em_andamento"
+                                    ? "border-ouro-200 bg-ouro-50"
+                                    : "border-transparent bg-paper"
+                              }`}
                             >
                               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                <span className="text-[0.94rem] font-semibold text-ink">
+                                <span className={`text-[0.94rem] font-semibold ${estado === "concluido" ? "text-brand-700 line-through decoration-brand-300" : "text-ink"}`}>
                                   {bloco.disciplina}
                                 </span>
                                 <span className="text-[0.88rem] leading-snug text-muted">
@@ -642,6 +758,36 @@ export function PlanoConversa({
                                   >
                                     {porta.rotulo}
                                   </Link>
+                                )}
+                                {item && (
+                                  <div className="mt-3 flex flex-wrap gap-1.5">
+                                    {(
+                                      [
+                                        ["a_estudar", "A estudar"],
+                                        ["em_andamento", "Estudando"],
+                                        ["concluido", "Concluído"],
+                                      ] as const
+                                    ).map(([chave, rotulo]) => (
+                                      <button
+                                        key={chave}
+                                        type="button"
+                                        onClick={() => mudarEstado(item, chave)}
+                                        disabled={itemAtualizando === item.id}
+                                        aria-pressed={estado === chave}
+                                        className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold transition-colors disabled:opacity-50 ${
+                                          estado === chave
+                                            ? chave === "concluido"
+                                              ? "bg-brand-600 text-white"
+                                              : chave === "em_andamento"
+                                                ? "bg-ouro-400 text-noite"
+                                                : "bg-body text-white"
+                                            : "bg-white text-muted hover:bg-sunk hover:text-ink"
+                                        }`}
+                                      >
+                                        {rotulo}
+                                      </button>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                               <span className="h-fit shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[0.82rem] font-semibold text-brand-700 tabular-nums">

@@ -12,6 +12,7 @@ import {
   getProximoExame,
 } from "@/lib/content/queries";
 import type { Mensagem, Plano } from "@/lib/ia/plano";
+import type { ItemRoadmap } from "@/lib/roadmap";
 
 export const metadata: Metadata = {
   title: "Plano de estudos",
@@ -23,7 +24,10 @@ export default async function PlanoPage() {
 
   const [registroRes, disciplinas, artigos, leis, usuario, proximo] =
     await Promise.all([
-      supabase.from("planos_estudo").select("plano, conversa").maybeSingle(),
+      supabase
+        .from("planos_estudo")
+        .select("plano, conversa, versao_roadmap")
+        .maybeSingle(),
       getDisciplinas(),
       getArtigosIndexaveis(),
       getLeis(),
@@ -36,6 +40,17 @@ export default async function PlanoPage() {
   const conversa: Mensagem[] = Array.isArray(registro?.conversa)
     ? (registro.conversa as Mensagem[])
     : [];
+  const versaoRoadmap = registro?.versao_roadmap ?? 0;
+  const itensRes =
+    versaoRoadmap > 0
+      ? await supabase
+          .from("roadmap_itens")
+          .select("id, semana, ordem, disciplina, objetivo, horas, estado")
+          .eq("versao", versaoRoadmap)
+          .order("semana")
+          .order("ordem")
+      : { data: [] };
+  const roadmapInicial = (itensRes.data ?? []) as ItemRoadmap[];
 
   // A porta de entrada de cada disciplina sai do acervo — o artigo mais
   // cobrado com comentário publicado. É o que garante que o link ao lado de
@@ -65,6 +80,7 @@ export default async function PlanoPage() {
     <PlanoConversa
       planoInicial={plano}
       conversaInicial={conversa}
+      roadmapInicial={roadmapInicial}
       portas={portas}
       nome={nome}
       diasRestantes={diasAte(proximo.data)}
