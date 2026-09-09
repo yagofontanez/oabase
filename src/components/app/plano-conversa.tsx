@@ -159,6 +159,9 @@ export function PlanoConversa({
   const [prazoLivre, setPrazoLivre] = useState(contextoInicial.prazo ?? "");
   const [criandoRoadmap, setCriandoRoadmap] = useState(false);
   const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
+  const [filtroRoadmap, setFiltroRoadmap] = useState<
+    "todos" | EstadoDoRoadmap
+  >("todos");
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -335,6 +338,23 @@ export function PlanoConversa({
     : 0;
   const concluidos = roadmap.filter((item) => item.estado === "concluido").length;
   const proximoItem = roadmap.find((item) => item.estado !== "concluido");
+  const emAndamento = roadmap.filter(
+    (item) => item.estado === "em_andamento",
+  ).length;
+  const horasConcluidas = roadmap
+    .filter((item) => item.estado === "concluido")
+    .reduce((total, item) => total + item.horas, 0);
+  const semanaAtual = proximoItem?.semana ?? roadmap.at(-1)?.semana;
+  const progressoPorDisciplina = [...roadmap
+    .reduce((mapa, item) => {
+      const atual = mapa.get(item.disciplina) ?? { total: 0, concluidos: 0 };
+      atual.total += 1;
+      if (item.estado === "concluido") atual.concluidos += 1;
+      mapa.set(item.disciplina, atual);
+      return mapa;
+    }, new Map<string, { total: number; concluidos: number }>())]
+    .sort(([, a], [, b]) => a.concluidos / a.total - b.concluidos / b.total)
+    .slice(0, 6);
 
   async function criarRoadmap() {
     if (criandoRoadmap) return;
@@ -672,7 +692,7 @@ export function PlanoConversa({
     >
       {plano ? (
         <>
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
+          <div className="nao-imprimir flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
             <div className="flex flex-col">
               <span className="rotulo">Seu roadmap</span>
               <span className="text-[1.05rem] font-bold text-ink">
@@ -692,6 +712,15 @@ export function PlanoConversa({
               >
                 {enviando ? "atualizando…" : `${horas(totalDeHoras)} no total`}
               </span>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                title="Abre a impressão do navegador; escolha Salvar como PDF"
+                className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+              >
+                Exportar PDF
+              </button>
 
               {confirmandoLimpeza ? (
                 <span className="flex items-center gap-1">
@@ -746,10 +775,12 @@ export function PlanoConversa({
           )}
 
           <div
-            className={`rolagem-fina min-h-0 flex-1 overflow-y-auto px-6 py-6 transition-opacity ${
-              enviando ? "opacity-45" : ""
-            }`}
+            id="roadmap-document"
+            className="roadmap-impressao flex min-h-0 flex-1 flex-col"
           >
+            <div className={`rolagem-fina min-h-0 flex-1 overflow-y-auto px-6 py-6 transition-opacity ${
+              enviando ? "opacity-45" : ""
+            }`}>
             {roadmap.length === 0 ? (
               <div className="mb-6 rounded-[18px] border border-brand-100 bg-brand-50 p-5">
                 <span className="rotulo text-brand-700">Transforme em ação</span>
@@ -771,7 +802,8 @@ export function PlanoConversa({
                 </button>
               </div>
             ) : (
-              <div className="mb-6 rounded-[18px] bg-brand-800 p-5 text-white">
+              <>
+              <div className="mb-4 rounded-[18px] bg-brand-800 p-5 text-white">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <span className="text-[0.72rem] font-bold tracking-[0.12em] text-brand-200 uppercase">
@@ -792,7 +824,64 @@ export function PlanoConversa({
                     {concluidos}/{roadmap.length} concluídos
                   </span>
                 </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
+                  <span
+                    className="block h-full rounded-full bg-ouro-400 transition-[width] duration-500"
+                    style={{ width: `${(concluidos / roadmap.length) * 100}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.8rem] text-brand-100">
+                  <span>{horas(horasConcluidas)} concluídas</span>
+                  <span>{emAndamento} em andamento</span>
+                  {semanaAtual && <span>etapa atual: semana {semanaAtual}</span>}
+                </div>
               </div>
+              <div className="nao-imprimir mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+                <span className="rotulo">Filtrar blocos</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(
+                    [
+                      ["todos", "Todos"],
+                      ["a_estudar", "A estudar"],
+                      ["em_andamento", "Estudando"],
+                      ["concluido", "Concluídos"],
+                    ] as const
+                  ).map(([chave, rotulo]) => (
+                    <button
+                      key={chave}
+                      type="button"
+                      onClick={() => setFiltroRoadmap(chave)}
+                      aria-pressed={filtroRoadmap === chave}
+                      className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold transition-colors ${filtroRoadmap === chave ? "bg-brand-700 text-white" : "bg-sunk text-muted hover:text-ink"}`}
+                    >
+                      {rotulo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <section className="mb-6">
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <h3 className="rotulo">Termômetro por matéria</h3>
+                  <span className="text-[0.78rem] text-muted">blocos concluídos</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {progressoPorDisciplina.map(([disciplina, progresso]) => {
+                    const percentual = (progresso.concluidos / progresso.total) * 100;
+                    return (
+                      <div key={disciplina} className="rounded-[12px] bg-paper px-3 py-2.5">
+                        <div className="flex items-baseline justify-between gap-2 text-[0.82rem]">
+                          <span className="truncate font-semibold text-ink">{disciplina}</span>
+                          <span className="shrink-0 text-muted tabular-nums">{progresso.concluidos}/{progresso.total}</span>
+                        </div>
+                        <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-sunk">
+                          <span className="block h-full rounded-full bg-brand-400" style={{ width: `${percentual}%` }} />
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+              </>
             )}
 
             {plano.avisos.length > 0 && (
@@ -842,6 +931,9 @@ export function PlanoConversa({
                               atual.semana === semana.numero && atual.ordem === i,
                           );
                           const estado = item?.estado ?? "a_estudar";
+                          if (filtroRoadmap !== "todos" && estado !== filtroRoadmap) {
+                            return null;
+                          }
                           return (
                             <li
                               key={`${bloco.disciplina}-${i}`}
@@ -913,6 +1005,7 @@ export function PlanoConversa({
                 );
               })}
             </ol>
+            </div>
           </div>
         </>
       ) : (

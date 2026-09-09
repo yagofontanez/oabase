@@ -524,3 +524,28 @@
     -webkit-text-fill-color: var(--color-muted);
   }
 }
+
+/* O navegador é o gerador de PDF: preservar o documento vivo na impressão
+   evita uma segunda versão do roadmap que inevitavelmente sairia de sincronia.
+   A pessoa escolhe “Salvar como PDF” no diálogo nativo. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .roadmap-impressao,
+  .roadmap-impressao * {
+    visibility: visible;
+  }
+  .roadmap-impressao {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: #fff;
+  }
+  .roadmap-impressao .rolagem-fina {
+    overflow: visible !important;
+  }
+  .nao-imprimir {
+    display: none !important;
+  }
+}
