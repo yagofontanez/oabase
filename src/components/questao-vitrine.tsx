@@ -77,8 +77,12 @@ export function QuestaoVitrine() {
           }`}
         >
           <div className="overflow-hidden">
-            <div className="rounded-[14px] bg-sunk p-5">
-              <p className="text-[0.84rem] font-semibold">
+            <div className="rounded-[16px] border border-brand-100 bg-white p-5 shadow-[0_12px_25px_-22px_rgba(7,59,51,0.5)] sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
+                <span className="text-[0.74rem] font-bold tracking-[0.12em] text-brand-700 uppercase">
+                  Entenda a resposta
+                </span>
+                <p className="text-[0.85rem] font-semibold">
                 <span className={acertou ? "text-brand-600" : "text-vinho-500"}>
                   {acertou
                     ? "Você acertou."
@@ -87,9 +91,11 @@ export function QuestaoVitrine() {
                 <span className="font-normal text-muted">
                   Gabarito definitivo da FGV.
                 </span>
-              </p>
+                </p>
+              </div>
+              <div className="mt-4 border-l-2 border-ouro-400 pl-4 sm:pl-5">
               <p
-                className="comentario mt-2.5 text-[0.9rem] leading-relaxed"
+                className="comentario text-[1rem] leading-[1.78] text-ink"
                 dangerouslySetInnerHTML={{
                   __html: q.comentario.replace(
                     /\*\*(.+?)\*\*/g,
@@ -97,6 +103,7 @@ export function QuestaoVitrine() {
                   ),
                 }}
               />
+              </div>
             </div>
           </div>
         </div>
