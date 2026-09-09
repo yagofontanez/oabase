@@ -290,6 +290,7 @@ export function PlanoConversa({
       setPlano(dados.plano as Plano);
       setConversa(dados.conversa as Mensagem[]);
       setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
+      if (dados.aviso) setErro(String(dados.aviso));
     } catch {
       setErro("Sem conexão com o servidor. Tente de novo.");
       setTexto(limpo);

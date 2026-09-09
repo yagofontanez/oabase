@@ -55,12 +55,13 @@ export async function POST() {
 
   const { data: roadmap, error } = await supabase
     .from("roadmap_itens")
-    .insert(
+    .upsert(
       blocosDoPlano(plano).map((bloco) => ({
         user_id: user.id,
         versao,
         ...bloco,
       })),
+      { onConflict: "user_id,versao,semana,ordem" },
     )
     .select("id, semana, ordem, disciplina, objetivo, horas, estado");
   if (error) {

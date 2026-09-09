@@ -223,15 +223,22 @@ export async function POST(request: Request) {
   }));
   const { data: roadmap, error: erroRoadmap } = await supabase
     .from("roadmap_itens")
-    .insert(itens)
+    // Duplo toque, reconexão e reenvio podem alcançar esta etapa com a mesma
+    // versão. O roadmap é derivado do plano salvo: repetir a escrita precisa
+    // ser seguro, não transformar um plano válido em erro para a pessoa.
+    .upsert(itens, { onConflict: "user_id,versao,semana,ordem" })
     .select("id, semana, ordem, disciplina, objetivo, horas, estado");
 
   if (erroRoadmap) {
     console.error("Falha ao criar roadmap:", erroRoadmap);
-    return NextResponse.json(
-      { erro: "O plano foi montado, mas não consegui criar o roadmap." },
-      { status: 500 },
-    );
+    // O plano já foi gravado. Não o tratamos como fracasso total: a tela
+    // oferece converter o cronograma em roadmap numa segunda tentativa.
+    return NextResponse.json({
+      plano,
+      conversa: proximaConversa.slice(-20),
+      roadmap: [],
+      aviso: "O cronograma foi salvo. Crie o roadmap pelo painel à direita.",
+    });
   }
 
   return NextResponse.json({
