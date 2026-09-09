@@ -26,6 +26,8 @@ function semAcento(texto: string): string {
 
 const CAMPOS_ARTIGO =
   "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, leis!inner(slug), disciplinas(slug)";
+const CAMPOS_ARTIGO_COM_DISCIPLINA =
+  "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, leis!inner(slug), disciplinas!inner(slug)";
 
 type LinhaArtigo = {
   numero: string;
@@ -221,6 +223,17 @@ export const fonteSupabase: FonteDeConteudo = {
       .order("incidencia", { ascending: false })
       .limit(limite);
     erro("artigos mais buscados", error);
+    return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+  },
+
+  async getArtigosDaDisciplina(disciplinaSlug, limite) {
+    const { data, error } = await supabaseAnon()
+      .from("artigos")
+      .select(CAMPOS_ARTIGO_COM_DISCIPLINA)
+      .eq("disciplinas.slug", disciplinaSlug)
+      .order("incidencia", { ascending: false })
+      .limit(limite);
+    erro("artigos da disciplina", error);
     return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
   },
 

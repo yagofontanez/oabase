@@ -10,6 +10,7 @@ export type ItemRoadmap = {
   objetivo: string;
   horas: number;
   estado: EstadoDoRoadmap;
+  anotacao?: string;
 };
 
 /**

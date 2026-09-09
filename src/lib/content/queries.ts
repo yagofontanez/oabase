@@ -44,6 +44,10 @@ export const getArtigosIndexaveis = cache(() => fonte.getArtigosIndexaveis());
 export const getArtigosMaisBuscados = cache((limite = 500) =>
   fonte.getArtigosMaisBuscados(limite),
 );
+export const getArtigosDaDisciplina = cache(
+  (disciplinaSlug: string, limite = 3) =>
+    fonte.getArtigosDaDisciplina(disciplinaSlug, limite),
+);
 
 export const getVizinhos = cache((leiSlug: string, artigoSlug: string) =>
   fonte.getVizinhos(leiSlug, artigoSlug),

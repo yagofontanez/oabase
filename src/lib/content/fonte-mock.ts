@@ -30,6 +30,12 @@ export const fonteMock: FonteDeConteudo = {
       .sort((a, b) => b.incidencia - a.incidencia)
       .slice(0, limite);
   },
+  async getArtigosDaDisciplina(disciplinaSlug, limite) {
+    return artigos
+      .filter((artigo) => artigo.disciplinaSlug === disciplinaSlug)
+      .sort((a, b) => b.incidencia - a.incidencia)
+      .slice(0, limite);
+  },
   async getArtigosRelacionados(artigo, limite) {
     return artigos
       .filter(

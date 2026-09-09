@@ -28,6 +28,8 @@ export type FonteDeConteudo = {
   contarArtigos(leiSlug: string): Promise<number>;
   getArtigosIndexaveis(): Promise<Artigo[]>;
   getArtigosMaisBuscados(limite: number): Promise<Artigo[]>;
+  /** Top dispositivos de uma matéria para uma sessão curta de estudo. */
+  getArtigosDaDisciplina(disciplinaSlug: string, limite: number): Promise<Artigo[]>;
   getArtigosRelacionados(artigo: Artigo, limite: number): Promise<Artigo[]>;
   /** Artigo anterior e seguinte na mesma lei, para ler o código em sequência. */
   getVizinhos(

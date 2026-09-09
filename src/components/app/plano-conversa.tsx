@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type {
   ContextoSalvoDoPlano,
@@ -149,6 +150,7 @@ export function PlanoConversa({
   diasRestantes: number;
   edicao: number;
 }) {
+  const router = useRouter();
   const [plano, setPlano] = useState<Plano | null>(planoInicial);
   const [conversa, setConversa] = useState<Mensagem[]>(conversaInicial);
   const [roadmap, setRoadmap] = useState<ItemRoadmap[]>(roadmapInicial);
@@ -291,6 +293,9 @@ export function PlanoConversa({
       setConversa(dados.conversa as Mensagem[]);
       setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
       if (dados.aviso) setErro(String(dados.aviso));
+      if (Array.isArray(dados.roadmap) && dados.roadmap.length > 0) {
+        router.push("/app/roadmap");
+      }
     } catch {
       setErro("Sem conexão com o servidor. Tente de novo.");
       setTexto(limpo);
