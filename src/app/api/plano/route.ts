@@ -5,7 +5,9 @@ import { formatarData } from "@/lib/format";
 import {
   ErroDeLimite,
   gerarPlano,
+  type ContextoSalvoDoPlano,
   type Mensagem,
+  type ModoDoPlano,
   type Plano,
 } from "@/lib/ia/plano";
 import { blocosDoPlano } from "@/lib/roadmap";
@@ -29,9 +31,23 @@ export async function POST(request: Request) {
   }
 
   let pedido = "";
+  let modo: ModoDoPlano = "oab";
+  let disciplinasPedidas: string[] = [];
+  let prazoLivre: string | null = null;
   try {
-    const corpo = (await request.json()) as { mensagem?: unknown };
+    const corpo = (await request.json()) as {
+      mensagem?: unknown;
+      modo?: unknown;
+      disciplinas?: unknown;
+      prazo?: unknown;
+    };
     pedido = String(corpo.mensagem ?? "").trim().slice(0, 1200);
+    modo = corpo.modo === "livre" ? "livre" : "oab";
+    disciplinasPedidas = Array.isArray(corpo.disciplinas)
+      ? corpo.disciplinas.map(String).slice(0, 18)
+      : [];
+    const prazo = String(corpo.prazo ?? "");
+    prazoLivre = /^\d{4}-\d{2}-\d{2}$/.test(prazo) ? prazo : null;
   } catch {
     return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
   }
@@ -44,7 +60,7 @@ export async function POST(request: Request) {
 
   const { data: registro } = await supabase
     .from("planos_estudo")
-    .select("plano, conversa, atualizado_em, versao_roadmap")
+    .select("plano, conversa, atualizado_em, versao_roadmap, contexto")
     .maybeSingle();
 
   // Freio simples contra envio repetido: o modelo leva alguns segundos e não
@@ -62,7 +78,11 @@ export async function POST(request: Request) {
   const conversa: Mensagem[] = Array.isArray(registro?.conversa)
     ? (registro.conversa as Mensagem[])
     : [];
-  const planoAtual = (registro?.plano as Plano | null) ?? null;
+  const contextoAnterior = registro?.contexto as ContextoSalvoDoPlano | null;
+  const planoAtual =
+    contextoAnterior?.modo === modo
+      ? (registro?.plano as Plano | null) ?? null
+      : null;
 
   const agora = new Date();
   const desde14 = new Date(agora);
@@ -74,8 +94,27 @@ export async function POST(request: Request) {
     supabase
       .from("sessoes_foco")
       .select("minutos, disciplinas(nome)")
-      .gte("concluido_em", desde14.toISOString()),
+    .gte("concluido_em", desde14.toISOString()),
   ]);
+  const permitidas = new Set(disciplinas.map((d) => d.nome));
+  const nomesSelecionados = [...new Set(disciplinasPedidas)].filter((nome) =>
+    permitidas.has(nome),
+  );
+  if (modo === "livre" && nomesSelecionados.length === 0) {
+    return NextResponse.json(
+      { erro: "Escolha ao menos uma matéria para o plano livre." },
+      { status: 400 },
+    );
+  }
+  const disciplinasDoPlano =
+    modo === "livre"
+      ? disciplinas.filter((d) => nomesSelecionados.includes(d.nome))
+      : disciplinas;
+  const contextoSalvo: ContextoSalvoDoPlano = {
+    modo,
+    disciplinas: modo === "livre" ? nomesSelecionados : [],
+    prazo: modo === "livre" ? prazoLivre : null,
+  };
 
   type Linha = {
     minutos: number;
@@ -100,14 +139,21 @@ export async function POST(request: Request) {
   try {
     plano = await gerarPlano(
       {
+        modo,
         edicao: proximo.edicao,
         dataDaProva: formatarData(proximo.data, {
           day: "2-digit",
           month: "long",
           year: "numeric",
         }),
-        diasRestantes: diasAte(proximo.data),
-        disciplinas: disciplinas.map((d) => ({
+        diasRestantes:
+          modo === "livre" && prazoLivre
+            ? diasAte(prazoLivre)
+            : modo === "livre"
+              ? 42
+              : diasAte(proximo.data),
+        prazoLivre,
+        disciplinas: disciplinasDoPlano.map((d) => ({
           nome: d.nome,
           mediaPorProva: d.mediaPorProva,
         })),
@@ -149,6 +195,7 @@ export async function POST(request: Request) {
     {
       user_id: user.id,
       plano,
+      contexto: contextoSalvo,
       versao_roadmap: versaoRoadmap,
       // Guarda um histórico curto: o ajuste depende do plano atual mais do
       // pedido recente, não da conversa inteira.

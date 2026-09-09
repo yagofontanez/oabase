@@ -45,6 +45,13 @@ export type Plano = {
   avisos: string[];
 };
 
+export type ModoDoPlano = "oab" | "livre";
+export type ContextoSalvoDoPlano = {
+  modo: ModoDoPlano;
+  disciplinas: string[];
+  prazo: string | null;
+};
+
 export type Mensagem = { papel: "pessoa" | "assistente"; texto: string };
 
 /** Limite de uso do provedor — distinto de erro no pedido. */
@@ -56,9 +63,11 @@ export class ErroDeLimite extends Error {
 }
 
 export type ContextoDoPlano = {
+  modo: ModoDoPlano;
   edicao: number;
   dataDaProva: string;
   diasRestantes: number;
+  prazoLivre: string | null;
   disciplinas: { nome: string; mediaPorProva: number }[];
   focoPorDisciplina: { nome: string; minutos: number }[];
   minutosUltimos14Dias: number;
@@ -87,7 +96,7 @@ pessoa a corrigir.
 CRITÉRIOS DE UM BOM PLANO:
 - Peso: disciplina que cai mais recebe mais tempo. Cubra pelo menos as seis de
   maior peso; com muitas semanas, cubra todas.
-- Ética e Estatuto tem a melhor relação entre volume cobrado e material a estudar; priorize cedo.
+- No modo OAB, Ética e Estatuto tem a melhor relação entre volume cobrado e material a estudar; priorize cedo.
 - Respeite as horas semanais declaradas quando houver número explícito.
 - Com pouco tempo até a prova, concentre no que mais cai em vez de tentar cobrir tudo.
 - Considere o histórico de foco: disciplina já muito estudada pode ceder espaço.
@@ -115,6 +124,20 @@ function contextoEmTexto(c: ContextoDoPlano) {
 
   const semanasTotais = Math.max(1, Math.ceil(c.diasRestantes / 7));
   const aDetalhar = Math.min(SEMANAS_MAXIMAS, semanasTotais);
+
+  if (c.modo === "livre") {
+    return `DADOS REAIS (use só estes, não invente outros):
+Modo: estudo livre de Direito. Não é preparação para OAB: não mencione Exame de Ordem, edital, peso de prova ou Ética como prioridade automática.
+Prazo: ${c.prazoLivre ?? "a pessoa não informou data; organize as próximas 6 semanas e diga em avisos que ela pode definir um prazo depois"}.
+
+Detalhe exatamente ${aDetalhar} ${aDetalhar === 1 ? "semana" : "semanas"}.
+
+Matérias escolhidas pela pessoa:
+${disciplinas}
+
+Histórico de foco nos últimos 14 dias (total ${c.minutosUltimos14Dias} min):
+${foco}`;
+  }
 
   return `DADOS REAIS (use só estes, não invente outros):
 Exame: ${c.edicao}º Exame de Ordem, 1ª fase em ${c.dataDaProva}.

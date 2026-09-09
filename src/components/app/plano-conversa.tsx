@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { Mensagem, Plano } from "@/lib/ia/plano";
+import type {
+  ContextoSalvoDoPlano,
+  Mensagem,
+  ModoDoPlano,
+  Plano,
+} from "@/lib/ia/plano";
 import {
   type EstadoDoRoadmap,
   type ItemRoadmap,
@@ -127,6 +132,8 @@ export function PlanoConversa({
   planoInicial,
   conversaInicial,
   roadmapInicial,
+  contextoInicial,
+  disciplinasDisponiveis,
   portas,
   nome,
   diasRestantes,
@@ -135,6 +142,8 @@ export function PlanoConversa({
   planoInicial: Plano | null;
   conversaInicial: Mensagem[];
   roadmapInicial: ItemRoadmap[];
+  contextoInicial: ContextoSalvoDoPlano;
+  disciplinasDisponiveis: string[];
   portas: Record<string, PortaDeEntrada>;
   nome: string;
   diasRestantes: number;
@@ -143,6 +152,11 @@ export function PlanoConversa({
   const [plano, setPlano] = useState<Plano | null>(planoInicial);
   const [conversa, setConversa] = useState<Mensagem[]>(conversaInicial);
   const [roadmap, setRoadmap] = useState<ItemRoadmap[]>(roadmapInicial);
+  const [modo, setModo] = useState<ModoDoPlano>(contextoInicial.modo);
+  const [selecionadas, setSelecionadas] = useState<string[]>(
+    contextoInicial.disciplinas,
+  );
+  const [prazoLivre, setPrazoLivre] = useState(contextoInicial.prazo ?? "");
   const [criandoRoadmap, setCriandoRoadmap] = useState(false);
   const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
@@ -236,6 +250,10 @@ export function PlanoConversa({
   async function enviar(mensagem: string) {
     const limpo = mensagem.trim();
     if (!limpo || enviando) return;
+    if (modo === "livre" && selecionadas.length === 0) {
+      setErro("Escolha ao menos uma matéria para montar o plano livre.");
+      return;
+    }
 
     setErro(null);
     setEnviando(true);
@@ -248,7 +266,12 @@ export function PlanoConversa({
       const resposta = await fetch("/api/plano", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem: limpo }),
+        body: JSON.stringify({
+          mensagem: limpo,
+          modo,
+          disciplinas: selecionadas,
+          prazo: prazoLivre,
+        }),
       });
       const dados = await resposta.json();
 
@@ -378,37 +401,125 @@ export function PlanoConversa({
                 <h1 className="texto-aurora w-fit text-[clamp(2rem,4.2vw,2.9rem)] leading-[1.05] font-extrabold tracking-[-0.04em]">
                   Olá, {nome}
                 </h1>
-                <p className="max-w-[46ch] text-[1.05rem] text-body">
-                  Diga quanto tempo você tem por dia e o que já sabe sobre si.
-                  Saio com um cronograma até o {edicao}º Exame — faltam{" "}
-                  <strong className="font-semibold text-ink">
-                    {diasRestantes} {diasRestantes === 1 ? "dia" : "dias"}
-                  </strong>
-                  .
+                <p className="max-w-[50ch] text-[1.05rem] text-body">
+                  {modo === "oab" ? (
+                    <>
+                      Diga quanto tempo você tem por dia e o que já sabe sobre si.
+                      Saio com um cronograma até o {edicao}º Exame — faltam{" "}
+                      <strong className="font-semibold text-ink">
+                        {diasRestantes} {diasRestantes === 1 ? "dia" : "dias"}
+                      </strong>
+                      .
+                    </>
+                  ) : (
+                    "Escolha as matérias que quer estudar e diga quanto tempo você tem. O plano organiza sua rotina, sem presumir que você está se preparando para a OAB."
+                  )}
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                {SUGESTOES.map((s) => (
+              <div className="flex w-fit rounded-full bg-sunk p-1">
+                {(
+                  [
+                    ["oab", "Preparar para a OAB"],
+                    ["livre", "Estudo livre de Direito"],
+                  ] as const
+                ).map(([chave, rotulo]) => (
                   <button
-                    key={s.titulo}
+                    key={chave}
                     type="button"
                     disabled={enviando}
-                    onClick={() => enviar(s.texto)}
-                    className="superficie group flex flex-col gap-3 p-4 text-left transition-colors hover:border-brand-200 disabled:opacity-50"
+                    onClick={() => setModo(chave)}
+                    aria-pressed={modo === chave}
+                    className={`rounded-full px-4 py-2 text-[0.86rem] font-semibold transition-colors disabled:opacity-50 ${
+                      modo === chave
+                        ? "bg-surface text-ink shadow-[var(--shadow-baixa)]"
+                        : "text-muted hover:text-ink"
+                    }`}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
-                      <Icone nome={s.icone} />
-                    </span>
-                    <span className="text-[0.94rem] font-semibold text-ink">
-                      {s.titulo}
-                    </span>
-                    <span className="text-[0.86rem] leading-snug text-muted">
-                      {s.texto}
-                    </span>
+                    {rotulo}
                   </button>
                 ))}
               </div>
+
+              {modo === "oab" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {SUGESTOES.map((s) => (
+                    <button
+                      key={s.titulo}
+                      type="button"
+                      disabled={enviando}
+                      onClick={() => enviar(s.texto)}
+                      className="superficie group flex flex-col gap-3 p-4 text-left transition-colors hover:border-brand-200 disabled:opacity-50"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
+                        <Icone nome={s.icone} />
+                      </span>
+                      <span className="text-[0.94rem] font-semibold text-ink">
+                        {s.titulo}
+                      </span>
+                      <span className="text-[0.86rem] leading-snug text-muted">
+                        {s.texto}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="superficie flex flex-col gap-4 p-5">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <h2 className="font-bold text-ink">Quais matérias entram no roteiro?</h2>
+                      <p className="mt-0.5 text-[0.86rem] text-muted">
+                        Selecione só o que você quer estudar agora.
+                      </p>
+                    </div>
+                    <span className="text-[0.82rem] font-semibold text-brand-700">
+                      {selecionadas.length} selecionada{selecionadas.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {disciplinasDisponiveis.map((disciplina) => {
+                      const marcada = selecionadas.includes(disciplina);
+                      return (
+                        <label
+                          key={disciplina}
+                          className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-3 py-2 text-[0.86rem] transition-colors ${marcada ? "border-brand-300 bg-brand-50 text-brand-800" : "border-line text-body hover:border-brand-200"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={marcada}
+                            onChange={() =>
+                              setSelecionadas((atuais) =>
+                                marcada
+                                  ? atuais.filter((nome) => nome !== disciplina)
+                                  : [...atuais, disciplina],
+                              )
+                            }
+                            className="h-4 w-4 accent-[var(--color-brand-600)]"
+                          />
+                          {disciplina}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <label className="flex max-w-xs flex-col gap-1 text-[0.84rem] font-semibold text-body">
+                    Data da prova ou avaliação <span className="font-normal text-muted">(opcional)</span>
+                    <input
+                      type="date"
+                      value={prazoLivre}
+                      onChange={(evento) => setPrazoLivre(evento.target.value)}
+                      className="rounded-[10px] border border-hairline bg-surface px-3 py-2 text-[0.9rem] font-normal text-ink"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={enviando || selecionadas.length === 0}
+                    onClick={() => enviar("Quero montar meu plano de estudo livre com as matérias selecionadas.")}
+                    className="self-start rounded-full bg-brand-600 px-4 py-2.5 text-[0.88rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    Montar plano livre
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             conversa.map((m, i) =>

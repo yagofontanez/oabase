@@ -11,7 +11,7 @@ import {
   getLeis,
   getProximoExame,
 } from "@/lib/content/queries";
-import type { Mensagem, Plano } from "@/lib/ia/plano";
+import type { ContextoSalvoDoPlano, Mensagem, Plano } from "@/lib/ia/plano";
 import type { ItemRoadmap } from "@/lib/roadmap";
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default async function PlanoPage() {
     await Promise.all([
       supabase
         .from("planos_estudo")
-        .select("plano, conversa, versao_roadmap")
+        .select("plano, conversa, versao_roadmap, contexto")
         .maybeSingle(),
       getDisciplinas(),
       getArtigosIndexaveis(),
@@ -41,6 +41,11 @@ export default async function PlanoPage() {
     ? (registro.conversa as Mensagem[])
     : [];
   const versaoRoadmap = registro?.versao_roadmap ?? 0;
+  const contextoInicial = (registro?.contexto as ContextoSalvoDoPlano | null) ?? {
+    modo: "oab" as const,
+    disciplinas: [],
+    prazo: null,
+  };
   const itensRes =
     versaoRoadmap > 0
       ? await supabase
@@ -81,6 +86,8 @@ export default async function PlanoPage() {
       planoInicial={plano}
       conversaInicial={conversa}
       roadmapInicial={roadmapInicial}
+      contextoInicial={contextoInicial}
+      disciplinasDisponiveis={disciplinas.map((d) => d.nome)}
       portas={portas}
       nome={nome}
       diasRestantes={diasAte(proximo.data)}
