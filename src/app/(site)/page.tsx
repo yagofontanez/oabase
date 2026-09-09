@@ -182,38 +182,37 @@ export default async function Home() {
       />
 
       {/* ═══════════════════════ Hero ═══════════════════════ */}
-      <section className="relative isolate overflow-hidden">
+      <section className="relative isolate overflow-hidden bg-noite text-white">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-[30%] right-[-8%] h-[820px] w-[820px] rounded-full opacity-[0.62] blur-3xl"
+          className="pointer-events-none absolute -top-[32%] right-[-8%] h-[820px] w-[820px] rounded-full opacity-100 blur-3xl"
           style={{
             background:
-              "radial-gradient(circle, rgba(98,179,156,0.38) 0%, rgba(233,162,59,0.16) 45%, rgba(245,248,246,0) 72%)",
+              "radial-gradient(circle, rgba(42,148,120,0.6) 0%, rgba(11,98,80,0.26) 42%, rgba(4,31,28,0) 72%)",
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 opacity-60"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-48 opacity-80"
           style={{
             background:
-              "linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.74) 100%)",
+              "linear-gradient(180deg, transparent 0%, rgba(5,43,38,0.9) 100%)",
           }}
         />
 
-        <Container className="relative grid items-start gap-12 pt-12 pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:gap-14 lg:pt-16 lg:pb-28">
-          <div className="flex flex-col items-start gap-7">
-            <span className="selo">
+        <Container className="relative grid items-center gap-12 pt-14 pb-20 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16 lg:pt-20 lg:pb-24">
+          <div className="flex flex-col items-start gap-8">
+            <span className="inline-flex items-center gap-2 border-b border-ouro-400/60 pb-2 text-[0.78rem] font-bold tracking-[0.13em] text-ouro-200 uppercase">
               <span className="h-1.5 w-1.5 rounded-full bg-ouro-400" />
               {proximo.edicao}º Exame
-              <span className="font-semibold tabular-nums text-brand-800">
+              <span className="font-semibold tabular-nums text-white">
                 <Contagem dataISO={proximo.data} dias={dias} />
               </span>
             </span>
 
-            <h1 className="flex flex-col gap-4">
-              <span className="text-[clamp(2.45rem,4.7vw,3.8rem)] leading-[1.03] font-extrabold tracking-[-0.045em] text-ink">
-                Responda uma questão real agora
-                <span className="-ml-[0.055em]">.</span>
+            <h1 className="flex flex-col gap-5">
+              <span className="max-w-[11ch] text-[clamp(3.1rem,5.6vw,5rem)] leading-[0.97] font-extrabold tracking-[-0.06em] text-white">
+                Estude para passar. Não para assistir aula.
               </span>
               {/* O número sai do acervo, não de uma promessa escrita à mão:
                   "três mil" fixo já esteve na mesma tela que "1.120 questões
@@ -221,16 +220,16 @@ export default async function Home() {
                   enquanto o comentário de questão não existir — prometer na
                   primeira dobra o que o produto não entrega é o defeito mais
                   caro que uma landing pode ter. */}
-              <span className="max-w-[28ch] text-[clamp(1.05rem,1.8vw,1.35rem)] leading-[1.4] font-medium text-body">
-                Depois, mais{" "}
-                <span className="grifo">
+              <span className="max-w-[34ch] text-[clamp(1.08rem,1.8vw,1.35rem)] leading-[1.45] font-medium text-brand-100">
+                Comece por uma questão oficial. Depois, avance pelas{" "}
+                <span className="text-ouro-200 underline decoration-ouro-400/60 decoration-2 underline-offset-4">
                   {questoesNoBanco.toLocaleString("pt-BR")}
                 </span>{" "}
                 — todas com o gabarito oficial da FGV.
               </span>
             </h1>
 
-            <p className="max-w-[46ch] text-[1.02rem] leading-relaxed text-muted">
+            <p className="max-w-[46ch] text-[1.02rem] leading-relaxed text-brand-200">
               Ao lado está a questão 65 do 43º Exame, com o gabarito definitivo
               da FGV. Sem cadastro: clique numa alternativa e veja o comentário.
             </p>
@@ -243,39 +242,41 @@ export default async function Home() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="#planos"
-                className="flex-1 basis-60 rounded-full bg-brand-600 px-7 py-3.5 text-center font-semibold text-white shadow-[0_14px_30px_-14px_rgba(11,98,80,0.9)] transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-[0_18px_34px_-14px_rgba(11,98,80,0.9)]"
+                className="flex-1 basis-60 rounded-full bg-ouro-400 px-7 py-3.5 text-center font-semibold text-noite shadow-[0_14px_30px_-14px_rgba(233,162,59,0.9)] transition-all hover:-translate-y-0.5 hover:bg-ouro-200"
               >
                 Começar por R$&nbsp;1
               </Link>
               <Link
                 href="#guia"
-                className="flex-1 basis-60 rounded-full border border-hairline bg-white/80 px-7 py-3.5 text-center font-semibold text-ink shadow-[0_8px_20px_-18px_rgba(16,32,27,0.5)] transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-white hover:text-brand-700"
+                className="flex-1 basis-60 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-center font-semibold text-white transition-all hover:-translate-y-0.5 hover:border-white/60 hover:bg-white hover:text-brand-800"
               >
                 Como se aprova na 1ª fase
               </Link>
             </div>
 
-            <dl className="mt-2 flex flex-wrap items-center gap-x-7 gap-y-3 rounded-[18px] border border-white/70 bg-white/55 px-5 py-4 text-[0.92rem] shadow-[0_14px_35px_-30px_rgba(16,32,27,0.55)] backdrop-blur-sm">
+            <dl className="mt-2 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-white/15 pt-5 text-[0.92rem]">
               {[
                 [questoesNoBanco.toLocaleString("pt-BR"), "questões no banco"],
                 [`${acervo.exames}`, "exames ingeridos"],
                 ["FGV", "gabarito oficial"],
               ].map(([valor, rotulo]) => (
                 <div key={rotulo} className="flex items-baseline gap-2">
-                  <dd className="text-[1.1rem] font-bold tabular-nums text-brand-600">
+                  <dd className="text-[1.1rem] font-bold tabular-nums text-ouro-200">
                     {valor}
                   </dd>
-                  <dt className="text-muted">{rotulo}</dt>
+                  <dt className="text-brand-200">{rotulo}</dt>
                 </div>
               ))}
             </dl>
           </div>
 
-          {/* A questão precisa continuar sendo o centro da primeira dobra —
-              sem rótulo ou moldura sobreposta, para preservar a leitura e o
-              toque nas alternativas no celular. */}
           <div className="relative mx-auto w-full max-w-[560px] lg:mx-0 lg:max-w-none">
-            <div className="relative z-10">
+            <div aria-hidden="true" className="absolute -top-7 -right-5 h-40 w-40 rounded-full border border-ouro-400/40 bg-ouro-400/10 sm:-right-10 sm:h-56 sm:w-56" />
+            <div className="relative z-10 overflow-hidden rounded-[30px] border border-white/20 bg-white p-1.5 shadow-[0_35px_80px_-30px_rgba(0,0,0,0.7)] sm:p-2">
+              <div className="flex items-center justify-between border-b border-line px-4 py-3 text-[0.74rem] font-bold tracking-[0.1em] text-brand-700 uppercase">
+                <span>Teste antes de assinar</span>
+                <span className="text-ouro-600">questão oficial</span>
+              </div>
               <QuestaoVitrine />
             </div>
           </div>
@@ -283,19 +284,18 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ A 1ª fase em números ═══════════════ */}
-      <section className="relative border-y border-line bg-surface py-16">
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-brand-100" />
+      <section className="relative overflow-hidden bg-ouro-400 py-16">
         <Container className="flex flex-col gap-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 className="text-[1.5rem] font-bold text-ink">
-              A 1ª fase em números
+            <h2 className="text-[1.65rem] font-extrabold tracking-[-0.04em] text-noite">
+              A prova é objetiva. Seu estudo também precisa ser.
             </h2>
-            <p className="text-[0.94rem] text-muted">
+            <p className="text-[0.94rem] text-noite/70">
               Tudo do edital e dos cadernos aplicados — nada é estimativa
             </p>
           </div>
 
-          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="grid border-t border-noite/20 sm:grid-cols-2 lg:grid-cols-3">
             {[
               ["80", "questões objetivas", "quatro alternativas, uma correta"],
               ["40", "acertos para aprovar", "exatamente metade da prova"],
@@ -308,12 +308,12 @@ export default async function Home() {
                 `de ${acervo.exames} exames já ingeridos`,
               ],
             ].map(([valor, rotulo, nota]) => (
-              <div key={rotulo} className="rounded-[18px] bg-brand-50/60 p-6">
-                <dd className="text-[2.5rem] leading-none font-extrabold tracking-[-0.04em] text-brand-700 tabular-nums">
+              <div key={rotulo} className="border-b border-noite/20 p-6 sm:border-r lg:[&:nth-child(3n)]:border-r-0">
+                <dd className="text-[2.7rem] leading-none font-extrabold tracking-[-0.05em] text-noite tabular-nums">
                   {valor}
                 </dd>
-                <dt className="mt-2 font-semibold text-ink">{rotulo}</dt>
-                <dd className="mt-0.5 text-[0.88rem] text-muted">{nota}</dd>
+                <dt className="mt-2 font-semibold text-noite">{rotulo}</dt>
+                <dd className="mt-0.5 text-[0.88rem] text-noite/65">{nota}</dd>
               </div>
             ))}
           </dl>
@@ -321,12 +321,12 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ A forma da prova ═══════════════ */}
-      <section className="py-24">
+      <section className="bg-paper py-24">
         <Container className="grid gap-14 lg:grid-cols-[1fr_1fr] lg:items-center">
-          <Reveal className="flex flex-col gap-5">
-            <span className="selo">Distribuição da prova</span>
-            <h2 className="max-w-[15ch] text-[clamp(1.9rem,3.8vw,2.7rem)] leading-[1.08] font-extrabold tracking-[-0.035em]">
-              Toda prova tem a <span className="grifo">mesma forma</span>
+          <Reveal className="flex flex-col gap-6">
+            <span className="text-[0.78rem] font-bold tracking-[0.13em] text-ouro-600 uppercase">Distribuição da prova</span>
+            <h2 className="max-w-[13ch] text-[clamp(2.3rem,4.2vw,3.45rem)] leading-[1] font-extrabold tracking-[-0.05em]">
+              A prova tem padrão. Use isso a seu favor.
             </h2>
             <div className="flex max-w-[54ch] flex-col gap-4 text-body">
               <p>
@@ -351,14 +351,14 @@ export default async function Home() {
             </div>
             <Link
               href="/estatisticas"
-              className="self-start font-semibold text-brand-600 underline decoration-brand-200 decoration-2 underline-offset-4 transition-colors hover:decoration-brand-500"
+              className="self-start border-b-2 border-ouro-400 pb-1 font-semibold text-brand-700 transition-colors hover:border-brand-600"
             >
               Ver a distribuição de todas as disciplinas
             </Link>
           </Reveal>
 
           <div
-            className="rounded-[26px] p-7 shadow-[var(--shadow-media)] sm:p-9"
+            className="rounded-[32px] border border-brand-700/50 p-7 shadow-[0_30px_60px_-25px_rgba(4,31,28,0.5)] sm:p-9"
             style={{
               background:
                 "linear-gradient(155deg, #0B6250 0%, #073B33 55%, #052B26 100%)",
@@ -370,14 +370,14 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ O ciclo ═══════════════ */}
-      <section className="border-y border-line bg-surface py-24">
+      <section className="bg-brand-800 py-24 text-white">
         <Container className="flex flex-col gap-12">
           <Reveal className="flex max-w-[56ch] flex-col gap-5">
-            <span className="selo">O ciclo</span>
-            <h2 className="text-[clamp(1.9rem,3.8vw,2.7rem)] leading-[1.08] font-extrabold tracking-[-0.035em]">
+            <span className="text-[0.78rem] font-bold tracking-[0.13em] text-ouro-200 uppercase">O ciclo</span>
+            <h2 className="text-[clamp(2.25rem,4.2vw,3.4rem)] leading-[1] font-extrabold tracking-[-0.05em] text-white">
               Ler não reprova ninguém. Errar e não voltar, sim.
             </h2>
-            <p className="text-body">
+            <p className="text-brand-100">
               Quase todo mundo que reprova estudou. O que costuma faltar não é
               conteúdo, é o circuito fechado entre errar, registrar o erro e
               voltar nele na hora certa. É esse circuito que o plano automatiza.
@@ -388,15 +388,15 @@ export default async function Home() {
             {metodo.map((passo, i) => (
               <li
                 key={passo.titulo}
-                className="superficie flex flex-col gap-3.5 p-7"
+                className="flex flex-col gap-4 border-t border-brand-300/50 pt-6 lg:border-t-0 lg:border-l lg:pl-8 lg:first:pl-0 lg:first:border-l-0"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-[0.9rem] font-bold text-brand-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ouro-400 text-[0.9rem] font-bold text-noite">
                   {i + 1}
                 </span>
-                <h3 className="text-[1.4rem] font-bold text-ink">
+                <h3 className="text-[1.5rem] font-bold text-white">
                   {passo.titulo}
                 </h3>
-                <p className="text-[0.95rem] leading-relaxed text-body">
+                <p className="text-[0.95rem] leading-relaxed text-brand-100">
                   {passo.texto}
                 </p>
               </li>
@@ -406,12 +406,12 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ Guia editorial ═══════════════ */}
-      <section id="guia" className="scroll-mt-24 py-24">
+      <section id="guia" className="scroll-mt-24 bg-surface py-24">
         <Container className="flex flex-col gap-14">
           <Reveal className="flex max-w-[58ch] flex-col gap-5">
-            <span className="selo">Guia</span>
-            <h2 className="text-[clamp(1.9rem,3.8vw,2.7rem)] leading-[1.08] font-extrabold tracking-[-0.035em]">
-              Como se <span className="grifo">aprova</span> na 1ª fase
+            <span className="text-[0.78rem] font-bold tracking-[0.13em] text-ouro-600 uppercase">Guia</span>
+            <h2 className="text-[clamp(2.3rem,4.2vw,3.45rem)] leading-[1] font-extrabold tracking-[-0.05em]">
+              Como se aprova na 1ª fase
             </h2>
             <p className="text-body">
               Seis coisas que mudam o resultado. Nenhuma é segredo — todas saem
@@ -420,13 +420,13 @@ export default async function Home() {
             </p>
           </Reveal>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-x-12 gap-y-0 lg:grid-cols-2">
             {guia.map((item, i) => (
               <article
                 key={item.titulo}
-                className="superficie flex flex-col gap-3.5 p-8"
+                className="flex flex-col gap-3.5 border-t border-line py-8 first:border-t-2 first:border-ink"
               >
-                <span className="text-[0.88rem] font-bold text-ouro-600 tabular-nums">
+                <span className="text-[0.88rem] font-bold tracking-[0.1em] text-ouro-600 tabular-nums">
                   0{i + 1}
                 </span>
                 <h3 className="max-w-[26ch] text-[1.35rem] leading-[1.2] font-bold text-ink">
@@ -447,11 +447,11 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ A fronteira aberto / pago ═══════════════ */}
-      <section className="border-y border-line bg-surface py-24">
+      <section className="bg-paper py-24">
         <Container className="flex flex-col gap-12">
           <Reveal className="flex max-w-[54ch] flex-col gap-5">
-            <span className="selo">Como o OABase se divide</span>
-            <h2 className="text-[clamp(1.9rem,3.8vw,2.7rem)] leading-[1.08] font-extrabold tracking-[-0.035em]">
+            <span className="text-[0.78rem] font-bold tracking-[0.13em] text-ouro-600 uppercase">Como o OABase se divide</span>
+            <h2 className="text-[clamp(2.3rem,4.2vw,3.45rem)] leading-[1] font-extrabold tracking-[-0.05em]">
               Consultar é grátis. Treinar é o plano.
             </h2>
             <p className="text-body">
@@ -461,8 +461,8 @@ export default async function Home() {
             </p>
           </Reveal>
 
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="flex flex-col gap-5 rounded-[26px] bg-brand-50 p-8 sm:p-10">
+          <div className="grid overflow-hidden rounded-[30px] border border-line bg-surface shadow-[var(--shadow-media)] lg:grid-cols-2">
+            <div className="flex flex-col gap-5 bg-brand-50 p-8 sm:p-10">
               <div className="flex items-center justify-between gap-4">
                 <span className="selo bg-white/70">Aberto</span>
                 <span className="text-[0.86rem] text-brand-700/70">
@@ -502,7 +502,7 @@ export default async function Home() {
               </ul>
             </div>
 
-            <div className="flex flex-col gap-5 rounded-[26px] bg-vinho-50 p-8 sm:p-10">
+            <div className="flex flex-col gap-5 border-t border-line bg-vinho-50 p-8 sm:p-10 lg:border-t-0 lg:border-l">
               <div className="flex items-center justify-between gap-4">
                 <span className="selo bg-white/70 text-vinho-600">
                   No plano
@@ -539,19 +539,19 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════ Perguntas ═══════════════ */}
-      <section className="py-24">
+      <section className="bg-surface py-24">
         <Container className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
           <Reveal className="flex flex-col gap-5">
-            <span className="selo">Perguntas</span>
-            <h2 className="max-w-[12ch] text-[clamp(1.9rem,3.8vw,2.7rem)] leading-[1.08] font-extrabold tracking-[-0.035em]">
+            <span className="text-[0.78rem] font-bold tracking-[0.13em] text-ouro-600 uppercase">Perguntas</span>
+            <h2 className="max-w-[11ch] text-[clamp(2.3rem,4.2vw,3.45rem)] leading-[1] font-extrabold tracking-[-0.05em]">
               O que costumam perguntar
             </h2>
           </Reveal>
 
-          <dl className="flex flex-col gap-3">
+          <dl className="flex flex-col">
             {perguntas.map((item) => (
-              <div key={item.q} className="superficie flex flex-col gap-2 p-7">
-                <dt className="text-[1.15rem] font-bold text-ink">{item.q}</dt>
+              <div key={item.q} className="flex flex-col gap-2 border-t border-line py-6 first:border-t-2 first:border-ink">
+                <dt className="text-[1.18rem] font-bold text-ink">{item.q}</dt>
                 <dd className="max-w-[66ch] text-[0.95rem] leading-relaxed text-body">
                   {item.a}
                 </dd>
@@ -565,7 +565,7 @@ export default async function Home() {
       <section id="planos" className="scroll-mt-24 pb-24">
         <Container>
           <div
-            className="relative overflow-hidden rounded-[26px] p-8 shadow-[var(--shadow-alta)] sm:p-12 lg:p-14"
+            className="relative overflow-hidden rounded-[32px] p-8 shadow-[var(--shadow-alta)] sm:p-12 lg:p-14"
             style={{
               background:
                 "linear-gradient(150deg, #0B6250 0%, #073B33 52%, #052B26 100%)",
