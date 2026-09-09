@@ -721,10 +721,10 @@ export function PlanoConversa({
 
               <a
                 href="/api/roadmap/pdf"
-                title="Baixa um arquivo PDF do roadmap"
+                title="Baixa o guia completo de estudos em PDF"
                 className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
               >
-                Baixar PDF
+                Baixar guia completo
               </a>
 
               {confirmandoLimpeza ? (

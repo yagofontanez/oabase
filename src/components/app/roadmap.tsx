@@ -106,7 +106,7 @@ export function Roadmap({
             Ajustar plano
           </Link>
           <a href="/api/roadmap/pdf" className="rounded-full border border-hairline bg-surface px-4 py-2 text-[0.84rem] font-semibold text-ink hover:border-brand-300 hover:text-brand-700">
-            Baixar PDF
+            Baixar guia completo
           </a>
           <div className="min-w-56 rounded-[16px] bg-brand-800 px-4 py-3 text-white">
             <div className="flex items-baseline justify-between gap-3">
