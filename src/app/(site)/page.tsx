@@ -182,17 +182,25 @@ export default async function Home() {
       />
 
       {/* ═══════════════════════ Hero ═══════════════════════ */}
-      <section className="relative overflow-hidden">
+      <section className="relative isolate overflow-hidden">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-[30%] right-[-8%] h-[820px] w-[820px] rounded-full opacity-[0.55] blur-3xl"
+          className="pointer-events-none absolute -top-[30%] right-[-8%] h-[820px] w-[820px] rounded-full opacity-[0.62] blur-3xl"
           style={{
             background:
               "radial-gradient(circle, rgba(98,179,156,0.38) 0%, rgba(233,162,59,0.16) 45%, rgba(245,248,246,0) 72%)",
           }}
         />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 opacity-60"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.74) 100%)",
+          }}
+        />
 
-        <Container className="relative grid items-start gap-12 pt-10 pb-16 lg:grid-cols-[0.86fr_1.14fr] lg:gap-12 lg:pt-12 lg:pb-20">
+        <Container className="relative grid items-start gap-12 pt-12 pb-20 lg:grid-cols-[0.86fr_1.14fr] lg:gap-14 lg:pt-16 lg:pb-28">
           <div className="flex flex-col items-start gap-7">
             <span className="selo">
               <span className="h-1.5 w-1.5 rounded-full bg-ouro-400" />
@@ -202,8 +210,8 @@ export default async function Home() {
               </span>
             </span>
 
-            <h1 className="flex flex-col gap-3.5">
-              <span className="text-[clamp(2.2rem,4.2vw,3.35rem)] leading-[1.06] font-extrabold tracking-[-0.035em] text-ink">
+            <h1 className="flex flex-col gap-4">
+              <span className="text-[clamp(2.45rem,4.7vw,3.8rem)] leading-[1.03] font-extrabold tracking-[-0.045em] text-ink">
                 Responda uma questão real agora
                 <span className="-ml-[0.055em]">.</span>
               </span>
@@ -235,19 +243,19 @@ export default async function Home() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="#planos"
-                className="flex-1 basis-60 rounded-full bg-brand-600 px-7 py-3.5 text-center font-semibold text-white shadow-[0_10px_28px_-12px_rgba(11,98,80,0.8)] transition-colors hover:bg-brand-700"
+                className="flex-1 basis-60 rounded-full bg-brand-600 px-7 py-3.5 text-center font-semibold text-white shadow-[0_14px_30px_-14px_rgba(11,98,80,0.9)] transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-[0_18px_34px_-14px_rgba(11,98,80,0.9)]"
               >
                 Começar por R$&nbsp;1
               </Link>
               <Link
                 href="#guia"
-                className="flex-1 basis-60 rounded-full border border-hairline bg-surface px-7 py-3.5 text-center font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+                className="flex-1 basis-60 rounded-full border border-hairline bg-white/80 px-7 py-3.5 text-center font-semibold text-ink shadow-[0_8px_20px_-18px_rgba(16,32,27,0.5)] transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-white hover:text-brand-700"
               >
                 Como se aprova na 1ª fase
               </Link>
             </div>
 
-            <dl className="mt-1 flex flex-wrap items-center gap-x-8 gap-y-3 text-[0.92rem]">
+            <dl className="mt-2 flex flex-wrap items-center gap-x-7 gap-y-3 rounded-[18px] border border-white/70 bg-white/55 px-5 py-4 text-[0.92rem] shadow-[0_14px_35px_-30px_rgba(16,32,27,0.55)] backdrop-blur-sm">
               {[
                 [questoesNoBanco.toLocaleString("pt-BR"), "questões no banco"],
                 [`${acervo.exames}`, "exames ingeridos"],
@@ -263,18 +271,32 @@ export default async function Home() {
             </dl>
           </div>
 
-          {/* O mascote num disco quente atrás, o cartão à frente. A
-              sobreposição é o que dá profundidade — dois blocos lado a lado seriam só duas colunas. */}
-          <div className="relative mx-auto w-full max-w-[560px] lg:mx-0 lg:max-w-none">
+          {/* A moldura translúcida põe a demonstração um plano à frente do
+              fundo. Assim, os dois lados da hero não leem como colunas
+              independentes: a questão é a prova visual da promessa à esquerda. */}
+          <div className="relative mx-auto w-full max-w-[560px] pt-4 lg:mx-0 lg:max-w-none lg:pt-7">
+            <div
+              aria-hidden="true"
+              className="absolute -inset-x-5 top-0 bottom-5 rounded-[34px] border border-white/75 bg-white/30 shadow-[0_24px_70px_-40px_rgba(7,59,51,0.45)]"
+            />
+            <div className="absolute -top-1 right-5 z-20 hidden items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-2 text-[0.76rem] font-semibold text-brand-700 shadow-[0_12px_24px_-16px_rgba(7,59,51,0.5)] sm:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-ouro-400" />
+              Treino na prática
+            </div>
             <div className="relative z-10">
               <QuestaoVitrine />
             </div>
+            <p className="relative z-10 mx-auto mt-4 max-w-[37ch] text-center text-[0.82rem] leading-relaxed text-muted lg:mt-5">
+              Uma questão oficial, uma resposta e o retorno imediato — antes de
+              você criar uma conta.
+            </p>
           </div>
         </Container>
       </section>
 
       {/* ═══════════════ A 1ª fase em números ═══════════════ */}
-      <section className="border-y border-line bg-surface py-16">
+      <section className="relative border-y border-line bg-surface py-16">
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-brand-100" />
         <Container className="flex flex-col gap-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="text-[1.5rem] font-bold text-ink">
