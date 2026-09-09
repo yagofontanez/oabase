@@ -80,19 +80,6 @@ function horas(h: number) {
   return `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
 }
 
-function escaparHtml(texto: string) {
-  return texto.replace(/[&<>'"]/g, (caractere) => {
-    const entidades: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;",
-    };
-    return entidades[caractere];
-  });
-}
-
 function rotuloDoEstado(estado: EstadoDoRoadmap) {
   return {
     a_estudar: "A estudar",
@@ -180,6 +167,7 @@ export function PlanoConversa({
   const [prazoLivre, setPrazoLivre] = useState(contextoInicial.prazo ?? "");
   const [criandoRoadmap, setCriandoRoadmap] = useState(false);
   const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
+  const [exportandoPdf, setExportandoPdf] = useState(false);
   const [filtroRoadmap, setFiltroRoadmap] = useState<
     "todos" | EstadoDoRoadmap
   >("todos");
@@ -424,37 +412,133 @@ export function PlanoConversa({
     setItemAtualizando(null);
   }
 
-  function exportarPdf() {
-    if (!plano) return;
-    // Uma janela própria é mais confiável que esconder o app inteiro com CSS:
-    // o painel tem altura e rolagem controladas, que alguns navegadores
-    // imprimem como uma página vazia. Este documento é estático e completo.
-    const janela = window.open("", "_blank", "noopener,noreferrer");
-    if (!janela) {
-      setErro("O navegador bloqueou a janela de impressão. Libere pop-ups e tente de novo.");
-      return;
-    }
-    const semanas = plano.semanas
-      .map((semana) => {
-        const blocos = semana.blocos
-          .map((bloco, ordem) => {
-            const item = roadmap.find(
-              (atual) => atual.semana === semana.numero && atual.ordem === ordem,
-            );
-            const estado = item?.estado ?? "a_estudar";
-            return `<li><div><strong>${escaparHtml(bloco.disciplina)}</strong><p>${escaparHtml(bloco.objetivo)}</p></div><span class="estado ${estado}">${rotuloDoEstado(estado)}</span><span class="horas">${horas(bloco.horas)}</span></li>`;
-          })
-          .join("");
-        return `<section><header><span>Semana ${semana.numero}</span><h2>${escaparHtml(semana.foco)}</h2></header><ul>${blocos}</ul></section>`;
-      })
-      .join("");
-    const percentual = roadmap.length
-      ? Math.round((concluidos / roadmap.length) * 100)
-      : 0;
+  async function exportarPdf() {
+    if (!plano || exportandoPdf) return;
+    setExportandoPdf(true);
+    setErro(null);
+    try {
+      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+      const pdf = await PDFDocument.create();
+      const regular = await pdf.embedFont(StandardFonts.Helvetica);
+      const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const largura = 595.28;
+      const altura = 841.89;
+      const margem = 46;
+      const tinta = rgb(0.086, 0.125, 0.114);
+      const verde = rgb(0.043, 0.384, 0.314);
+      const verdeClaro = rgb(0.922, 0.961, 0.945);
+      const ouro = rgb(0.914, 0.635, 0.231);
+      const cinza = rgb(0.486, 0.541, 0.522);
+      let pagina = pdf.addPage([largura, altura]);
+      let y = altura - margem;
 
-    janela.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Roadmap de estudos — OABase</title><style>
-      @page { margin: 16mm; } * { box-sizing: border-box; } body { color:#16201d; font: 12px/1.5 Arial, sans-serif; } h1,h2,p { margin:0; } .marca { color:#0b6250; font-weight:700; letter-spacing:.12em; text-transform:uppercase; font-size:10px; } h1 { margin-top:6px; font-size:26px; line-height:1.08; } .resumo { display:flex; gap:18px; margin:18px 0; padding:13px 15px; background:#ebf5f1; border-radius:10px; } .resumo b { display:block; color:#073b33; font-size:16px; } .barra { height:7px; overflow:hidden; border-radius:99px; background:#d6e0db; margin-bottom:22px; } .barra span { display:block; height:100%; background:#e9a23b; width:${percentual}%; } section { break-inside:avoid; border-top:1px solid #d6e0db; padding:15px 0; } section header { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; } section header span { color:#0b6250; font-weight:700; } h2 { font-size:15px; } ul { list-style:none; padding:0; margin:0; } li { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:start; padding:9px 0; border-top:1px solid #edf3f0; } li p { color:#4c5a55; margin-top:2px; } .estado { border-radius:99px; padding:2px 7px; font-size:10px; font-weight:700; background:#edf3f0; color:#4c5a55; } .estado.em_andamento { background:#fae9cc; color:#8c5410; } .estado.concluido { background:#cfe8df; color:#073b33; } .horas { color:#4c5a55; font-weight:700; white-space:nowrap; } footer { margin-top:22px; color:#7c8a85; font-size:10px; } </style></head><body><div class="marca">OABase · roadmap de estudos</div><h1>${plano.semanas.length} ${plano.semanas.length === 1 ? "semana" : "semanas"} de execução</h1><div class="resumo"><div><b>${concluidos}/${roadmap.length}</b>blocos concluídos</div><div><b>${horas(horasConcluidas)}</b>horas concluídas</div><div><b>${horas(totalDeHoras)}</b>horas planejadas</div></div><div class="barra"><span></span></div>${semanas}<footer>Gerado pelo OABase. O conteúdo jurídico deve ser consultado no acervo oficial da plataforma.</footer><script>window.onload = () => window.print();</script></body></html>`);
-    janela.document.close();
+      const textoSeguro = (texto: string) =>
+        texto
+          .normalize("NFC")
+          .replace(/[—–]/g, "-")
+          .replace(/[“”]/g, '"')
+          .replace(/[‘’]/g, "'");
+      const novaPagina = () => {
+        pagina = pdf.addPage([largura, altura]);
+        y = altura - margem;
+        pagina.drawText("OABase  |  Roadmap de estudos", {
+          x: margem,
+          y,
+          size: 9,
+          font: negrito,
+          color: verde,
+        });
+        y -= 24;
+      };
+      const linhas = (texto: string, fonte: typeof regular, tamanho: number, max: number) => {
+        const palavras = textoSeguro(texto).split(/\s+/);
+        const resultado: string[] = [];
+        let linha = "";
+        for (const palavra of palavras) {
+          const teste = linha ? `${linha} ${palavra}` : palavra;
+          if (fonte.widthOfTextAtSize(teste, tamanho) <= max || !linha) linha = teste;
+          else {
+            resultado.push(linha);
+            linha = palavra;
+          }
+        }
+        if (linha) resultado.push(linha);
+        return resultado;
+      };
+      const escrever = (texto: string, fonte: typeof regular, tamanho: number, cor = tinta, larguraMax = largura - margem * 2, espacamento = 4) => {
+        const partes = linhas(texto, fonte, tamanho, larguraMax);
+        const necessario = partes.length * (tamanho + espacamento);
+        if (y - necessario < margem) novaPagina();
+        for (const parte of partes) {
+          pagina.drawText(parte, { x: margem, y, size: tamanho, font: fonte, color: cor });
+          y -= tamanho + espacamento;
+        }
+      };
+
+      pagina.drawText("OABase", { x: margem, y, size: 10, font: negrito, color: verde });
+      y -= 30;
+      pagina.drawText("Roadmap de estudos", { x: margem, y, size: 25, font: negrito, color: tinta });
+      y -= 16;
+      pagina.drawText("Plano acionável, com o progresso registrado até agora.", { x: margem, y, size: 10, font: regular, color: cinza });
+      y -= 28;
+      pagina.drawRectangle({ x: margem, y: y - 54, width: largura - margem * 2, height: 54, color: verdeClaro });
+      const resumo = [
+        [`${concluidos}/${roadmap.length}`, "blocos concluídos"],
+        [horas(horasConcluidas), "horas concluídas"],
+        [horas(totalDeHoras), "horas planejadas"],
+      ];
+      resumo.forEach(([valor, rotulo], indice) => {
+        const x = margem + 15 + indice * 160;
+        pagina.drawText(valor, { x, y: y - 20, size: 15, font: negrito, color: verde });
+        pagina.drawText(rotulo, { x, y: y - 37, size: 8, font: regular, color: cinza });
+      });
+      y -= 72;
+      pagina.drawRectangle({ x: margem, y, width: largura - margem * 2, height: 7, color: rgb(0.84, 0.88, 0.86) });
+      pagina.drawRectangle({ x: margem, y, width: (largura - margem * 2) * (roadmap.length ? concluidos / roadmap.length : 0), height: 7, color: ouro });
+      y -= 28;
+
+      for (const semana of plano.semanas) {
+        if (y < 130) novaPagina();
+        pagina.drawRectangle({ x: margem, y: y - 4, width: 4, height: 28, color: ouro });
+        pagina.drawText(`SEMANA ${semana.numero}`, { x: margem + 13, y: y + 10, size: 8, font: negrito, color: verde });
+        pagina.drawText(textoSeguro(semana.foco), { x: margem + 13, y: y - 5, size: 14, font: negrito, color: tinta });
+        y -= 35;
+        for (const [ordem, bloco] of semana.blocos.entries()) {
+          const item = roadmap.find((atual) => atual.semana === semana.numero && atual.ordem === ordem);
+          const estado = item?.estado ?? "a_estudar";
+          const objetivo = linhas(bloco.objetivo, regular, 9, largura - margem * 2 - 105);
+          const alturaBloco = 32 + objetivo.length * 13;
+          if (y - alturaBloco < margem) novaPagina();
+          pagina.drawRectangle({ x: margem, y: y - alturaBloco + 4, width: largura - margem * 2, height: alturaBloco, color: rgb(0.965, 0.976, 0.969) });
+          pagina.drawText(textoSeguro(bloco.disciplina), { x: margem + 11, y: y - 13, size: 10, font: negrito, color: tinta });
+          pagina.drawText(horas(bloco.horas), { x: largura - margem - 35, y: y - 13, size: 9, font: negrito, color: verde });
+          objetivo.forEach((linha, indice) => pagina.drawText(linha, { x: margem + 11, y: y - 29 - indice * 13, size: 9, font: regular, color: cinza }));
+          pagina.drawText(rotuloDoEstado(estado), { x: largura - margem - 86, y: y - alturaBloco + 14, size: 7.5, font: negrito, color: estado === "concluido" ? verde : estado === "em_andamento" ? rgb(0.55, 0.33, 0.06) : cinza });
+          y -= alturaBloco + 7;
+        }
+        y -= 10;
+      }
+      const paginas = pdf.getPages();
+      paginas.forEach((folha, indice) => folha.drawText(`Página ${indice + 1} de ${paginas.length}`, { x: largura - margem - 58, y: 22, size: 8, font: regular, color: cinza }));
+      const bytes = await pdf.save();
+      // Cópia para ArrayBuffer próprio: o tipo retornado pela biblioteca aceita
+      // SharedArrayBuffer, mas Blob no DOM exige um buffer transferível.
+      const dadosPdf = new Uint8Array(bytes);
+      const arquivo = new Blob([dadosPdf.buffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(arquivo);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "roadmap-de-estudos-oabase.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (erro) {
+      console.error("Falha ao exportar PDF:", erro);
+      setErro("Não consegui gerar o PDF. Tente novamente.");
+    } finally {
+      setExportandoPdf(false);
+    }
   }
 
   /* ---------------- Conversa ---------------- */
@@ -771,10 +855,11 @@ export function PlanoConversa({
               <button
                 type="button"
                 onClick={exportarPdf}
-                title="Abre a impressão do navegador; escolha Salvar como PDF"
-                className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+                disabled={exportandoPdf}
+                title="Baixa um arquivo PDF do roadmap"
+                className="rounded-full border border-hairline px-3 py-1.5 text-[0.84rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700 disabled:opacity-50"
               >
-                Exportar PDF
+                {exportandoPdf ? "Gerando PDF…" : "Baixar PDF"}
               </button>
 
               {confirmandoLimpeza ? (
