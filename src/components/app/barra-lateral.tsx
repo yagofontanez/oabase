@@ -130,34 +130,61 @@ export function BarraLateral({
         </button>
       </div>
 
-      {/* Modo foco fica acima da navegação porque não é uma tela: é o que a
-          pessoa vem fazer. Âmbar, o único botão cheio do trilho. */}
-      <button
-        type="button"
-        onClick={() => abrirWidgetFoco()}
-        title="Modo foco"
-        className={`flex items-center rounded-full bg-ouro-400 font-semibold text-brand-900 transition-colors hover:bg-ouro-200 ${
-          recolhida
-            ? "justify-center px-0 py-2.5"
-            : "gap-2 px-4 py-2.5 text-[0.94rem]"
-        }`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-[17px] w-[17px] shrink-0"
-          aria-hidden="true"
+      {/* A sessão do dia é a ação principal. O relógio solto continua ao lado
+          como ferramenta rápida, mas deixa de competir com a jornada. */}
+      <div className={`flex gap-2 ${recolhida ? "flex-col" : "items-stretch"}`}>
+        <Link
+          href="/app/hoje"
+          title={recolhida ? "Começar a estudar" : undefined}
+          className={`group flex min-w-0 items-center rounded-[14px] bg-ouro-400 font-semibold text-brand-900 transition-colors hover:bg-ouro-200 ${
+            recolhida
+              ? "h-11 justify-center"
+              : "flex-1 gap-3 px-3.5 py-2.5"
+          }`}
         >
-          <circle cx="12" cy="13" r="8" />
-          <path d="M12 9.5V13l2.2 1.6" />
-          <path d="M9 2h6" />
-        </svg>
-        <span className={recolhida ? "sr-only" : undefined}>Modo foco</span>
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-[18px] w-[18px] shrink-0"
+            aria-hidden="true"
+          >
+            <path d="M8 5.5v13l10-6.5z" />
+          </svg>
+          <span className={recolhida ? "sr-only" : "min-w-0"}>
+            <span className="block text-[0.88rem] leading-tight">Estudar agora</span>
+            <span className="mt-0.5 block truncate text-[0.68rem] font-medium text-brand-900/60">
+              sessão organizada do dia
+            </span>
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => abrirWidgetFoco()}
+          title="Abrir cronômetro rápido"
+          className={`flex shrink-0 items-center justify-center rounded-[14px] border border-white/12 text-white/65 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white ${
+            recolhida ? "h-10" : "w-10"
+          }`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-[17px] w-[17px]"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="13" r="8" />
+            <path d="M12 9.5V13l2.2 1.6M9 2h6" />
+          </svg>
+          <span className="sr-only">Cronômetro rápido</span>
+        </button>
+      </div>
 
       {/* A lista rola dentro do trilho; o cabeçalho, o modo foco e o rodapé
           ficam parados. Sem isso, o trilho cresceu com as abas de operação,
@@ -168,7 +195,7 @@ export function BarraLateral({
           A folga horizontal existe para a marca âmbar da tela ativa, que fica
           em `-left-3`: sem ela, a rolagem vertical recorta o eixo x junto e
           a marca desaparece. */}
-      <div className="rolagem-fina -mx-3 min-h-0 flex-1 overflow-y-auto px-3">
+      <div className="rolagem-fina -mx-3 min-h-0 flex-1 overflow-y-auto px-3 pb-2">
         <NavegacaoApp
           orientacao="trilho"
           recolhida={recolhida}
@@ -179,21 +206,9 @@ export function BarraLateral({
 
       <div className="mt-auto flex flex-col gap-3">
         {!recolhida && (
-          <Link
-            href="/"
-            className="flex items-center justify-between gap-2 rounded-[13px] border border-white/10 px-3.5 py-3 transition-colors hover:border-white/25"
-          >
-            <span className="flex flex-col">
-              <span className="text-[0.86rem] font-semibold text-white">
-                Conteúdo aberto
-              </span>
-              <span className="text-[0.8rem] text-white/45">
-                Legislação e exames, sem plano
-              </span>
-            </span>
-            <span aria-hidden="true" className="text-white/35">
-              ↗
-            </span>
+          <Link href="/" className="flex items-center justify-between gap-2 px-2 text-[0.76rem] font-medium text-white/45 transition-colors hover:text-white">
+            <span>Biblioteca pública</span>
+            <span aria-hidden="true">↗</span>
           </Link>
         )}
 

@@ -9,9 +9,9 @@ import { usePathname } from "next/navigation";
  * Cliente por um motivo só: marcar o item ativo depende do caminho atual.
  * Como `/app` é dinâmica de qualquer forma, isso não custa nada em cache.
  *
- * Três apresentações da mesma lista: `trilho` (coluna escura no desktop),
- * `linha` (barra rolável no celular) e o título da seção no cabeçalho, que
- * sai daqui para não haver duas listas de rótulos para manter em sincronia.
+ * O trilho organiza as rotas por jornada; a linha móvel achata os mesmos
+ * grupos, e o cabeçalho resolve o título a partir da fonte completa. Assim a
+ * hierarquia muda sem criar listas divergentes de rótulos.
  */
 
 const ITENS = [
@@ -165,6 +165,53 @@ const ITENS = [
   },
 ];
 
+type ItemDeNavegacao = (typeof ITENS)[number];
+
+function selecionarItens(...hrefs: string[]) {
+  return hrefs
+    .map((href) => ITENS.find((item) => item.href === href))
+    .filter((item): item is ItemDeNavegacao => Boolean(item));
+}
+
+/**
+ * A arquitetura do menu segue a jornada, não a ordem em que as features
+ * chegaram ao produto. Configurações fica no perfil do rodapé e, por isso,
+ * não ocupa uma segunda posição na lista principal.
+ */
+const GRUPOS = [
+  {
+    rotulo: "Visão geral",
+    itens: selecionarItens("/app"),
+  },
+  {
+    rotulo: "Planejamento",
+    itens: selecionarItens(
+      "/app/roadmap",
+      "/app/calendario",
+      "/app/plano",
+      "/app/ementa",
+    ),
+  },
+  {
+    rotulo: "Prática",
+    itens: selecionarItens("/app/estudar", "/app/questoes", "/app/simulado"),
+  },
+  {
+    rotulo: "Progresso",
+    itens: selecionarItens("/app/desempenho", "/app/anotacoes"),
+  },
+  {
+    rotulo: "Comunidade e ajuda",
+    itens: selecionarItens("/app/forum", "/app/suporte"),
+  },
+];
+
+const ITENS_DO_MENU = GRUPOS.flatMap((grupo) => grupo.itens);
+const ITENS_DA_LINHA = [
+  ...selecionarItens("/app/hoje"),
+  ...ITENS_DO_MENU,
+];
+
 function estaAtivo(caminho: string, href: string) {
   return href === "/app" ? caminho === "/app" : caminho.startsWith(href);
 }
@@ -293,6 +340,7 @@ export function TituloDaSecao() {
   const caminho = usePathname();
   const todos = [...ITENS, ...ITENS_ADMIN, ...ITENS_EDITOR];
   const rotulo =
+    (caminho.startsWith("/app/sessao/") ? "Sessão guiada" : null) ??
     FORA_DO_MENU[caminho] ??
     [...todos].reverse().find((i) => estaAtivo(caminho, i.href))?.rotulo;
   if (!rotulo) return null;
@@ -327,7 +375,7 @@ export function NavegacaoApp({
         aria-label="Seções da conta"
         className="rolagem-fina flex gap-1 overflow-x-auto"
       >
-        {ITENS.map((item) => (
+        {ITENS_DA_LINHA.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -369,7 +417,7 @@ export function NavegacaoApp({
     );
   }
 
-  const NoTrilho = ({ item }: { item: (typeof ITENS)[number] }) => (
+  const NoTrilho = ({ item }: { item: ItemDeNavegacao }) => (
     <Link
       href={item.href}
       aria-current={ativo(item.href) ? "page" : undefined}
@@ -399,9 +447,27 @@ export function NavegacaoApp({
   );
 
   return (
-    <nav aria-label="Seções da conta" className="flex flex-col gap-0.5">
-      {ITENS.map((item) => (
-        <NoTrilho key={item.href} item={item} />
+    <nav aria-label="Seções da conta" className="flex flex-col">
+      {GRUPOS.map((grupo, indice) => (
+        <section
+          key={grupo.rotulo}
+          aria-labelledby={recolhida ? undefined : `grupo-navegacao-${indice}`}
+          className={indice === 0 ? "" : recolhida ? "mt-2 border-t border-white/10 pt-2" : "mt-4"}
+        >
+          {!recolhida && (
+            <h2
+              id={`grupo-navegacao-${indice}`}
+              className="px-3 pb-1.5 text-[0.65rem] font-bold tracking-[0.15em] text-white/35 uppercase"
+            >
+              {grupo.rotulo}
+            </h2>
+          )}
+          <div className="flex flex-col gap-0.5">
+            {grupo.itens.map((item) => (
+              <NoTrilho key={item.href} item={item} />
+            ))}
+          </div>
+        </section>
       ))}
 
       {operacao.length > 0 && (
