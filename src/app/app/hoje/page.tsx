@@ -260,7 +260,7 @@ export default async function HojePage({
             <span className="text-[0.74rem] font-bold tracking-[0.15em] text-ouro-200 uppercase">
               Sua prioridade agora
             </span>
-            <h2 className="mt-3 text-[clamp(1.45rem,3vw,2.15rem)] leading-tight font-extrabold tracking-[-0.035em]">
+            <h2 className="mt-3 text-[clamp(1.45rem,3vw,2.15rem)] leading-tight font-extrabold tracking-[-0.035em] text-white">
               {ativo?.disciplina ?? (plano ? "Roadmap concluído" : "Comece pelo seu roadmap")}
             </h2>
             <p className="mt-2 max-w-[66ch] text-[0.96rem] leading-relaxed text-white/72">
