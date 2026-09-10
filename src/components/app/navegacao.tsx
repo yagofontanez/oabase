@@ -28,6 +28,16 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/hoje",
+    rotulo: "Hoje",
+    icone: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v4l2.8 1.8M12 2v2M22 12h-2M4 12H2" />
+      </>
+    ),
+  },
+  {
     href: "/app/estudar",
     rotulo: "Estudar",
     icone: (

@@ -28,15 +28,19 @@ const Relogio = () => (
  */
 export function BotaoFoco({
   variante = "cabecalho",
+  disciplina,
+  minutos,
 }: {
   /** `cabecalho` esconde o rótulo no celular; `acao` nunca esconde. */
   variante?: "cabecalho" | "acao" | "cartao";
+  disciplina?: string;
+  minutos?: number;
 }) {
   if (variante === "cartao") {
     return (
       <button
         type="button"
-        onClick={abrirWidgetFoco}
+        onClick={() => abrirWidgetFoco({ disciplina, minutos })}
         className="group flex flex-col gap-2 rounded-[18px] border border-brand-200 bg-brand-50 p-6 text-left transition-colors hover:border-brand-300"
       >
         <span className="flex items-center gap-2 font-semibold text-ink">
@@ -55,7 +59,7 @@ export function BotaoFoco({
   return (
     <button
       type="button"
-      onClick={abrirWidgetFoco}
+      onClick={() => abrirWidgetFoco({ disciplina, minutos })}
       className="flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-[0.9rem] font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100"
     >
       <Relogio />

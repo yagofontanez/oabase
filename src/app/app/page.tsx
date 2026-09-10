@@ -259,8 +259,8 @@ export default async function PainelPage() {
           titulo: `${revisaoHoje} ${revisaoHoje === 1 ? "questão marcada" : "questões marcadas"} para revisar hoje`,
           texto:
             "A repetição espaçada agendou estas para hoje. Rever no dia certo é o que separa saber de ter visto uma vez.",
-          acao: "Revisar agora",
-          href: "/app/questoes?modo=revisao",
+          acao: "Abrir sessão de hoje",
+          href: "/app/hoje",
         }
       : !planoDeEstudos
         ? {
@@ -273,8 +273,8 @@ export default async function PainelPage() {
           ? {
               titulo: "Responda a primeira questão",
               texto: `${acervo.toLocaleString("pt-BR")} questões reais estão liberadas. A taxa de acerto, o caderno de erros e a fila de revisão nascem da primeira resposta.`,
-              acao: "Começar a resolver",
-              href: "/app/questoes",
+              acao: "Começar sessão de hoje",
+              href: "/app/hoje",
             }
           : focoHoje === 0
             ? {
@@ -283,8 +283,8 @@ export default async function PainelPage() {
                   sequencia > 0
                     ? `Você tem ${sequencia} ${sequencia === 1 ? "dia seguido" : "dias seguidos"} de estudo. Um bloco de 25 minutos mantém a sequência viva.`
                     : "Um bloco de 25 minutos entra na série e passa a alimentar a média até a prova.",
-                acao: "Resolver questões",
-                href: "/app/questoes",
+                acao: "Abrir sessão de hoje",
+                href: "/app/hoje",
               }
             : {
                 titulo: `${horas(focoHoje)} de foco hoje`,
@@ -292,8 +292,8 @@ export default async function PainelPage() {
                   erros > 0
                     ? `Ritmo mantido. Há ${erros} ${erros === 1 ? "questão" : "questões"} no caderno de erros esperando uma segunda tentativa.`
                     : "Ritmo mantido. Siga pelo cronograma da semana ou resolva mais questões.",
-                acao: erros > 0 ? "Abrir o caderno de erros" : "Resolver questões",
-                href: erros > 0 ? "/app/questoes?modo=erros" : "/app/questoes",
+                acao: "Continuar pela sessão de hoje",
+                href: "/app/hoje",
               };
 
   return (

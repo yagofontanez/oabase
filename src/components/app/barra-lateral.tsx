@@ -134,7 +134,7 @@ export function BarraLateral({
           pessoa vem fazer. Âmbar, o único botão cheio do trilho. */}
       <button
         type="button"
-        onClick={abrirWidgetFoco}
+        onClick={() => abrirWidgetFoco()}
         title="Modo foco"
         className={`flex items-center rounded-full bg-ouro-400 font-semibold text-brand-900 transition-colors hover:bg-ouro-200 ${
           recolhida

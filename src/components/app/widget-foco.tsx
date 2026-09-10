@@ -13,6 +13,8 @@ const CHAVE = "oabase:foco";
 const EVENTO_ABRIR = "oabase:foco:abrir";
 const MARGEM = 12;
 
+type OpcoesDoFoco = { disciplina?: string; minutos?: number };
+
 const ROTULO: Record<Fase, string> = {
   foco: "Foco",
   pausa: "Pausa curta",
@@ -54,8 +56,8 @@ function dentroDaTela(x: number, y: number, largura: number, altura: number) {
 }
 
 /** Abre o widget de qualquer lugar — o botão do cabeçalho usa isto. */
-export function abrirWidgetFoco() {
-  window.dispatchEvent(new Event(EVENTO_ABRIR));
+export function abrirWidgetFoco(opcoes: OpcoesDoFoco = {}) {
+  window.dispatchEvent(new CustomEvent<OpcoesDoFoco>(EVENTO_ABRIR, { detail: opcoes }));
 }
 
 function mmss(segundos: number) {
@@ -178,11 +180,25 @@ export function WidgetFoco({
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    const abrir = () =>
+    const abrir = (evento: Event) =>
       setEstado((atual) => {
+        const opcoes = (evento as CustomEvent<OpcoesDoFoco>).detail ?? {};
+        const configuravel = atual.fimEm === null && atual.fase === "foco";
+        const minutos = opcoes.minutos
+          ? Math.min(180, Math.max(1, Math.round(opcoes.minutos)))
+          : null;
         const proximo: Estado = {
           ...atual,
           aberto: true,
+          disciplina:
+            configuravel && opcoes.disciplina
+              ? opcoes.disciplina
+              : atual.disciplina,
+          duracoes:
+            minutos && configuravel
+              ? { ...atual.duracoes, foco: minutos }
+              : atual.duracoes,
+          restante: minutos && configuravel ? minutos * 60 : atual.restante,
           // Abrir pela primeira vez mostra o widget inteiro; se a pessoa já
           // escolheu um tamanho, respeita a escolha dela.
           tamanho: atual.aberto ? atual.tamanho : 3,
