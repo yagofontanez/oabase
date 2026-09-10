@@ -132,7 +132,7 @@ export function RevisaoSemanal({
           <section className="grid overflow-hidden rounded-[24px] bg-brand-900 text-white shadow-[0_18px_45px_rgba(8,58,49,.16)] lg:grid-cols-[1.05fr_.95fr]">
             <div className="p-6 sm:p-8">
               <span className="text-[0.72rem] font-bold tracking-[0.14em] text-ouro-200 uppercase">Ritmo da semana</span>
-              <h2 className="mt-3 text-[clamp(1.45rem,3vw,2.1rem)] font-extrabold tracking-[-0.04em]">
+              <h2 className="mt-3 text-[clamp(1.45rem,3vw,2.1rem)] font-extrabold tracking-[-0.04em] text-white">
                 {metricas.roadmap.pendentes === 0 && metricas.planejado.blocos > 0
                   ? "O combinado coube na semana."
                   : aderencia >= 75
