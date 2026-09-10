@@ -113,6 +113,16 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/calendario",
+    rotulo: "Calendário",
+    icone: (
+      <>
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+        <path d="M8 2.5v5M16 2.5v5M3.5 10h17M8 14h2M14 14h2M8 17.5h2" />
+      </>
+    ),
+  },
+  {
     href: "/app/desempenho",
     rotulo: "Desempenho",
     icone: (

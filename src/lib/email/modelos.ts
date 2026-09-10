@@ -241,6 +241,44 @@ Acertar afasta a próxima revisão; errar aproxima.
   };
 }
 
+/** Lembrete opt-in dos blocos colocados no calendário para hoje. */
+export function lembreteDoCalendario(dados: {
+  nome: string;
+  blocos: number;
+  minutos: number;
+  disciplinas: string;
+  horario: string;
+  site: string;
+}): Modelo {
+  const plural = dados.blocos === 1 ? "bloco" : "blocos";
+  const duracao =
+    dados.minutos >= 60
+      ? `${Math.round((dados.minutos / 60) * 10) / 10}h`
+      : `${dados.minutos} min`;
+  const conteudo = `
+${titulo(`${dados.blocos} ${plural} no seu calendário hoje`)}
+<p style="margin:0 0 12px 0;">Olá, ${escapar(dados.nome)}. Você planejou <strong style="color:${TINTA};">${duracao}</strong> de estudo para hoje, a partir das <strong style="color:${TINTA};">${escapar(dados.horario)}</strong>.</p>
+<p style="margin:0;">Matérias: ${escapar(dados.disciplinas)}.</p>
+${botao(`${dados.site}/app/calendario`, "Abrir meu calendário")}
+<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Se o dia mudou, reagende os blocos no calendário em vez de perder o fio do roadmap.</p>`;
+  const texto = `Olá, ${dados.nome}.
+
+Você planejou ${dados.blocos} ${plural} (${duracao}) para hoje, a partir das ${dados.horario}.
+Matérias: ${dados.disciplinas}.
+
+Abrir calendário: ${dados.site}/app/calendario
+
+— OABase`;
+  return {
+    assunto: `${dados.blocos} ${plural} de estudo para hoje`,
+    html: moldura(
+      conteudo,
+      `${RODAPE_PADRAO}<br><a href="${dados.site}/app/calendario" style="color:${SUAVE};">Alterar lembrete do calendário</a>`,
+    ),
+    texto: `${texto}\n\nAlterar lembrete: ${dados.site}/app/calendario`,
+  };
+}
+
 /**
  * Plano acabando.
  *

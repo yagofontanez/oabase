@@ -95,6 +95,13 @@ Replanejar nunca pode apagar estados, anotações ou versões anteriores.
 
 ## 4. Calendário real
 
+**Status: entregue em setembro de 2026.** A rota `/app/calendario` distribui
+os blocos do roadmap em dias reais, oferece visão semanal e mensal, permite
+arrastar ou editar data e horário, registra dias indisponíveis e reagenda
+pendências vencidas. O mesmo calendário pode ser exportado em `.ics` para
+Google Calendar, Apple Calendar e Outlook; o lembrete matinal é opcional e
+reaproveita o cron diário com idempotência por aluno e data.
+
 Transformar as semanas do roadmap em atividades distribuídas por dia.
 
 Funcionalidades:

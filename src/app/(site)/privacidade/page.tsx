@@ -79,7 +79,8 @@ const secoes: Secao[] = [
           você respondeu e a alternativa marcada, se acertou, o tempo gasto, a
           fila de revisão, os blocos de foco concluídos e a disciplina
           escolhida, os simulados e o cartão-resposta, o cronograma gerado e a
-          conversa que o produziu, e as anotações e ligações do seu quadro.
+          conversa que o produziu, as datas e preferências do calendário, e as
+          anotações e ligações do seu quadro.
         </P>
         <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso
@@ -117,9 +118,10 @@ const secoes: Secao[] = [
           que você comprou.
         </P>
         <P>
-          <strong>Enviar o lembrete diário de revisão</strong> — Base legal:
-          consentimento (art. 7º, I). Você liga e desliga quando quiser em
-          Configurações, e desligar não afeta nada além do lembrete.
+          <strong>Enviar lembretes de estudo e revisão</strong> — Base legal:
+          consentimento (art. 7º, I). O lembrete de revisão é controlado em
+          Configurações; o aviso dos blocos agendados, no Calendário. Você pode
+          desligar cada um sem afetar o restante do serviço.
         </P>
         <P>
           <strong>Medir a dificuldade das questões e comparar desempenho</strong>{" "}
@@ -241,8 +243,9 @@ const secoes: Secao[] = [
           na conta. Respondemos em até 15 dias.
         </P>
         <P>
-          Parte disso você faz sozinho: nome e senha em Configurações, e o
-          lembrete de revisão no interruptor da mesma tela.
+          Parte disso você faz sozinho: nome e senha em Configurações, o
+          lembrete de revisão na mesma tela e o lembrete de estudo no
+          Calendário.
         </P>
         <P>
           Você também pode peticionar à Autoridade Nacional de Proteção de

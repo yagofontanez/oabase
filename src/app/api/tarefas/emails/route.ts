@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { planoAcabando, revisaoDoDia } from "@/lib/email/modelos";
+import {
+  lembreteDoCalendario,
+  planoAcabando,
+  revisaoDoDia,
+} from "@/lib/email/modelos";
 import { enviar } from "@/lib/email/resend";
 import { site } from "@/lib/site";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
@@ -56,6 +60,13 @@ type ParaAvisar = Destinatario & {
   referencia: string;
 };
 
+type ParaLembrarCalendario = Destinatario & {
+  blocos: number;
+  minutos: number;
+  disciplinas: string;
+  horario: string;
+};
+
 function clienteSemSessao() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -88,6 +99,7 @@ export async function GET(request: Request) {
 
   const relatorio = {
     revisao: { enviados: 0, falhas: 0, pendentes: 0 },
+    calendario: { enviados: 0, falhas: 0, pendentes: 0 },
     planoAcabando: { enviados: 0, falhas: 0, pendentes: 0 },
   };
 
@@ -144,6 +156,49 @@ export async function GET(request: Request) {
   relatorio.revisao.pendentes = Math.max(
     0,
     ((revisar ?? []) as ParaRevisar[]).length - filaRevisao.length,
+  );
+
+  /* ---- Blocos do calendário de hoje ---- */
+  const { data: agenda, error: erroAgenda } = await supabase.rpc(
+    "destinatarios_calendario",
+    { p_segredo: segredo },
+  );
+  if (erroAgenda) {
+    console.error("Falha ao listar lembretes do calendário:", erroAgenda);
+    return NextResponse.json({ ...relatorio, erro: "falha" }, { status: 500 });
+  }
+  const filaAgenda = ((agenda ?? []) as ParaLembrarCalendario[]).slice(
+    0,
+    TETO_POR_EXECUCAO,
+  );
+  for (const pessoa of filaAgenda) {
+    const modelo = lembreteDoCalendario({
+      nome: pessoa.nome,
+      blocos: pessoa.blocos,
+      minutos: pessoa.minutos,
+      disciplinas: pessoa.disciplinas,
+      horario: pessoa.horario,
+      site: site.url,
+    });
+    const envio = await enviar({
+      para: pessoa.email,
+      assunto: modelo.assunto,
+      html: modelo.html,
+      texto: modelo.texto,
+      chave: `calendario:${pessoa.user_id}:${hoje}`,
+      etiquetas: [{ name: "tipo", value: "calendario" }],
+    });
+    if (envio.ok) {
+      relatorio.calendario.enviados += 1;
+      await marcar(pessoa.user_id, "calendario", hoje);
+    } else {
+      relatorio.calendario.falhas += 1;
+      console.error("Lembrete do calendário falhou:", envio.erro);
+    }
+  }
+  relatorio.calendario.pendentes = Math.max(
+    0,
+    ((agenda ?? []) as ParaLembrarCalendario[]).length - filaAgenda.length,
   );
 
   const { data: avisar, error: erroAvisar } = await supabase.rpc(
