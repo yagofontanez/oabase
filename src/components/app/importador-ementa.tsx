@@ -256,15 +256,17 @@ export function ImportadorEmenta({
                 </label>
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5 text-[0.82rem] font-semibold text-body">
-                  Data da prova <span className="font-normal text-muted">(opcional)</span>
-                  <input type="date" value={prazo} onChange={(evento) => setPrazo(evento.target.value)} className="rounded-[12px] border border-hairline bg-surface px-3.5 py-3 text-[0.92rem] font-normal text-ink" />
+              <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
+                <label className="flex min-w-0 flex-col gap-1.5 text-[0.82rem] font-semibold text-body">
+                  <span className="flex min-h-5 items-baseline gap-1">
+                    Data da prova <span className="font-normal text-muted">(opcional)</span>
+                  </span>
+                  <input type="date" value={prazo} onChange={(evento) => setPrazo(evento.target.value)} className="h-12 w-full min-w-0 rounded-[12px] border border-hairline bg-surface px-3.5 text-[0.92rem] font-normal text-ink outline-none focus:border-brand-300" />
                 </label>
-                <label className="flex flex-col gap-1.5 text-[0.82rem] font-semibold text-body">
-                  Horas disponíveis por semana
-                  <span className="flex items-center rounded-[12px] border border-hairline bg-surface px-3.5">
-                    <input type="number" min={1} max={60} step={0.5} value={horas} onChange={(evento) => setHoras(Number(evento.target.value))} className="w-full bg-transparent py-3 text-[0.92rem] font-normal text-ink outline-none" />
+                <label className="flex min-w-0 flex-col gap-1.5 text-[0.82rem] font-semibold text-body">
+                  <span className="flex min-h-5 items-baseline">Horas disponíveis por semana</span>
+                  <span className="flex h-12 items-center rounded-[12px] border border-hairline bg-surface px-3.5 focus-within:border-brand-300">
+                    <input type="number" min={1} max={60} step={0.5} value={horas} onChange={(evento) => setHoras(Number(evento.target.value))} className="h-full w-full min-w-0 bg-transparent text-[0.92rem] font-normal text-ink outline-none" />
                     <span className="text-[0.8rem] font-normal text-muted">horas</span>
                   </span>
                 </label>
@@ -361,8 +363,14 @@ export function ImportadorEmenta({
                 <div className="rounded-[12px] bg-paper p-3"><dd className="text-[1.2rem] font-extrabold text-brand-700">{topicos.length}</dd><dt className="text-[0.72rem] text-muted">tópicos</dt></div>
                 <div className="rounded-[12px] bg-paper p-3"><dd className="text-[1.2rem] font-extrabold text-brand-700">{vinculados}</dd><dt className="text-[0.72rem] text-muted">ligados ao acervo</dt></div>
               </dl>
-              <label className="flex flex-col gap-1 text-[0.78rem] font-semibold text-body">Data da prova <span className="font-normal text-muted">(opcional)</span><input type="date" value={prazo} onChange={(evento) => setPrazo(evento.target.value)} className="rounded-[10px] border border-hairline px-3 py-2 text-[0.86rem] font-normal text-ink" /></label>
-              <label className="flex flex-col gap-1 text-[0.78rem] font-semibold text-body">Horas por semana<input type="number" min={1} max={60} step={0.5} value={horas} onChange={(evento) => setHoras(Number(evento.target.value))} className="rounded-[10px] border border-hairline px-3 py-2 text-[0.86rem] font-normal text-ink" /></label>
+              <label className="flex flex-col gap-1 text-[0.78rem] font-semibold text-body">
+                <span className="flex items-baseline gap-1">Data da prova <span className="font-normal text-muted">(opcional)</span></span>
+                <input type="date" value={prazo} onChange={(evento) => setPrazo(evento.target.value)} className="h-10 w-full min-w-0 rounded-[10px] border border-hairline px-3 text-[0.86rem] font-normal text-ink outline-none focus:border-brand-300" />
+              </label>
+              <label className="flex flex-col gap-1 text-[0.78rem] font-semibold text-body">
+                <span>Horas por semana</span>
+                <input type="number" min={1} max={60} step={0.5} value={horas} onChange={(evento) => setHoras(Number(evento.target.value))} className="h-10 w-full min-w-0 rounded-[10px] border border-hairline px-3 text-[0.86rem] font-normal text-ink outline-none focus:border-brand-300" />
+              </label>
               {temPlano && <p className="rounded-[10px] bg-ouro-50 px-3 py-2.5 text-[0.76rem] leading-relaxed text-ouro-700">O roadmap atual será substituído. O progresso da versão anterior continua preservado no banco.</p>}
               {erro && <p role="alert" className="rounded-[10px] bg-vinho-50 px-3 py-2.5 text-[0.8rem] text-vinho-700">{erro}</p>}
               <button type="button" onClick={() => void gerar()} disabled={gerando || topicos.length === 0} className="rounded-full bg-brand-600 px-5 py-3 text-[0.88rem] font-semibold text-white hover:bg-brand-700 disabled:opacity-55">
