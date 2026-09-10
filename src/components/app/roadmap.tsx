@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ReplanejadorRoadmap } from "@/components/app/replanejador-roadmap";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
+import type { DiagnosticoDoReplanejamento } from "@/lib/replanejamento";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import type { EstadoDoRoadmap, ItemRoadmap } from "@/lib/roadmap";
 
@@ -26,6 +28,8 @@ export function Roadmap({
   leituras,
   questoes,
   disciplinaSlug,
+  diagnosticoReplanejamento,
+  versao,
 }: {
   itensIniciais: ItemRoadmap[];
   ativoId: string;
@@ -33,6 +37,8 @@ export function Roadmap({
   leituras: LeituraDoRoadmap[];
   questoes: QuestaoDaFila[];
   disciplinaSlug: string | null;
+  diagnosticoReplanejamento: DiagnosticoDoReplanejamento;
+  versao: number;
 }) {
   const [itens, setItens] = useState(itensIniciais);
   const ativo = itens.find((item) => item.id === ativoId) ?? itens[0];
@@ -119,6 +125,11 @@ export function Roadmap({
           </div>
         </div>
       </header>
+
+      <ReplanejadorRoadmap
+        diagnostico={diagnosticoReplanejamento}
+        versao={versao}
+      />
 
       <div className="grid min-h-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="superficie h-fit overflow-hidden xl:sticky xl:top-6">

@@ -56,6 +56,13 @@ export type ContextoSalvoDoPlano = {
     horasPorSemana: number;
     topicos: { titulo: string; disciplina: string | null }[];
   };
+  ultimoReplanejamento?: {
+    realizadoEm: string;
+    versaoAnterior: number;
+    motivo: string;
+    horasAnteriores: number;
+    horasAtuais: number;
+  };
 };
 
 export type Mensagem = { papel: "pessoa" | "assistente"; texto: string };

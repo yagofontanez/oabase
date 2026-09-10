@@ -70,6 +70,13 @@ roadmap, claramente marcados como conteúdo externo.
 
 ## 3. Replanejamento automático
 
+**Status: entregue em setembro de 2026.** O roadmap agora detecta blocos que
+ficaram em semanas anteriores e planos que ultrapassariam a data da prova. A
+pessoa pode informar uma nova disponibilidade, conferir duração, conclusão
+prevista e distribuição semanal antes de confirmar. A confirmação inaugura
+uma versão, preserva conclusões, estados e anotações na versão vigente e não
+altera as linhas da versão anterior.
+
 Quando a execução divergir do plano, o sistema deve oferecer uma correção
 explícita:
 
