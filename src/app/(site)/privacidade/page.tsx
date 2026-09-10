@@ -82,7 +82,9 @@ const secoes: Secao[] = [
           conversa que o produziu, as datas e preferências do calendário, as
           sessões guiadas com leituras marcadas, sínteses e pendências, os
           fechamentos semanais com suas reflexões e compromissos, e as
-          anotações e ligações do seu quadro.
+          anotações e ligações do seu quadro. No caderno de lei seca, também
+          guardamos os trechos destacados, notas, marcações de leitura,
+          favoritos e datas de revisão que você escolher.
         </P>
         <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso

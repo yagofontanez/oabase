@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { ReplanejadorRoadmap } from "@/components/app/replanejador-roadmap";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
+import {
+  MemoriaDoCaderno,
+  TextoLegalDestacado,
+} from "@/components/texto-legal-destacado";
+import type { DestaqueLeiSeca } from "@/lib/caderno-lei-seca";
 import type { DiagnosticoDoReplanejamento } from "@/lib/replanejamento";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import type { EstadoDoRoadmap, ItemRoadmap } from "@/lib/roadmap";
@@ -13,6 +18,8 @@ export type LeituraDoRoadmap = {
   rotulo: string;
   caput: string;
   comentario: string[];
+  nota: string;
+  destaques: DestaqueLeiSeca[];
 };
 
 const ESTADOS: [EstadoDoRoadmap, string][] = [
@@ -236,7 +243,8 @@ export function Roadmap({
                   {leituras.map((leitura) => (
                     <article key={leitura.href} className="py-4 first:pt-0">
                       <Link href={leitura.href} className="font-bold text-brand-700 hover:underline">{leitura.rotulo}</Link>
-                      <p className="lei-texto mt-1.5 line-clamp-4 text-[0.96rem]">{leitura.caput}</p>
+                      <p className="lei-texto mt-1.5 line-clamp-4 text-[0.96rem]"><TextoLegalDestacado texto={leitura.caput} destaques={leitura.destaques} /></p>
+                      <MemoriaDoCaderno destaques={leitura.destaques} nota={leitura.nota} />
                       {leitura.comentario[0] && <p className="mt-2 line-clamp-3 text-[0.82rem] text-muted">{leitura.comentario[0]}</p>}
                     </article>
                   ))}

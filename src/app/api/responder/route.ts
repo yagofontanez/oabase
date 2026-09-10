@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { memoriasDosArtigos } from "@/lib/caderno-lei-seca-servidor";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 
 /**
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
     tem_comentario: boolean;
   };
 
-  const artigos = ((vinculados ?? []) as LinhaArtigo[]).map((a) => ({
+  let artigos = ((vinculados ?? []) as LinhaArtigo[]).map((a) => ({
     href: `/legislacao/${a.lei_slug}/${a.artigo_slug}`,
     rotulo: `Art. ${a.numero} ${a.lei_sigla}`,
     caput: a.caput.slice(0, 180),
@@ -117,6 +118,27 @@ export async function POST(request: Request) {
       comentado: a.tem_comentario,
     }));
   }
+
+  // Uma regra marcada durante outra leitura precisa reaparecer quando a
+  // questão trouxer o mesmo dispositivo. O vínculo continua vindo do acervo;
+  // nota e destaque são apenas a memória privada de quem está estudando.
+  const candidatos = artigos.length > 0 ? artigos : sugestoes;
+  const referencias = candidatos.map((artigo) => {
+    const partes = artigo.href.split("/");
+    return { leiSlug: partes[2] ?? "", artigoSlug: partes[3] ?? "" };
+  });
+  const memorias = await memoriasDosArtigos(referencias);
+  const comMemoria = candidatos.map((artigo, indice) => {
+    const referencia = referencias[indice];
+    const memoria = memorias[`${referencia.leiSlug}/${referencia.artigoSlug}`];
+    return {
+      ...artigo,
+      nota: memoria?.nota ?? "",
+      destaques: memoria?.destaques ?? [],
+    };
+  });
+  if (artigos.length > 0) artigos = comMemoria;
+  else sugestoes = comMemoria;
 
   /* Questões parecidas. A pergunta que vem logo depois de errar é "onde mais
      isto cai?", e três questões do mesmo assunto respondem melhor do que

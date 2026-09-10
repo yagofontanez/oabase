@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -25,6 +26,52 @@ import urllib.request
 
 URL = "https://api.groq.com/openai/v1/chat/completions"
 MODELO = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
+
+def _segundos_de_espera(valor: str | None) -> float | None:
+    """Converte durações de limite da Groq, como ``7.66s`` e ``2m59.56s``.
+
+    ``Retry-After`` vem em segundos inteiros. Os cabeçalhos
+    ``x-ratelimit-reset-*`` usam esta notação curta e são o plano B quando o
+    proxy não repassa o primeiro.
+    """
+    if not valor:
+        return None
+
+    try:
+        return float(valor)
+    except ValueError:
+        pass
+
+    encontrado = re.fullmatch(
+        r"(?:(?P<minutos>\d+(?:\.\d+)?)m)?(?:(?P<segundos>\d+(?:\.\d+)?)s)?",
+        valor.strip(),
+    )
+    if not encontrado:
+        return None
+
+    minutos = float(encontrado.group("minutos") or 0)
+    segundos = float(encontrado.group("segundos") or 0)
+    return minutos * 60 + segundos
+
+
+def _espera_de_limite(headers: object, minimo: float) -> float:
+    """Usa a espera explícita da API antes do recuo local."""
+    get = getattr(headers, "get", None)
+    if not callable(get):
+        return minimo
+
+    # A API documenta Retry-After para 429. Alguns proxies, porém, só deixam
+    # passar os cabeçalhos de reset; token é o limitador mais comum nesta carga.
+    for cabecalho in (
+        "retry-after",
+        "x-ratelimit-reset-tokens",
+        "x-ratelimit-reset-requests",
+    ):
+        espera = _segundos_de_espera(get(cabecalho))
+        if espera is not None:
+            return max(minimo, espera)
+    return minimo
 
 
 def conversar(
@@ -73,10 +120,7 @@ def conversar(
         except urllib.error.HTTPError as e:
             espera = 10.0 * (tentativa + 1)
             if e.code == 429:
-                try:
-                    espera = max(espera, float(e.headers.get("retry-after")))
-                except (TypeError, ValueError):
-                    pass
+                espera = _espera_de_limite(e.headers, espera)
             print(f"    (rede: {e}; espera {espera:.0f}s)", file=sys.stderr)
             time.sleep(espera)
         except (urllib.error.URLError, TimeoutError) as e:

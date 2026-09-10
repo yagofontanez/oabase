@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roadmap, type LeituraDoRoadmap } from "@/components/app/roadmap";
 import { RoadmapVazio } from "@/components/app/roadmap-vazio";
 import type { QuestaoDaFila } from "@/components/app/resolvedor";
+import { memoriasDosArtigos } from "@/lib/caderno-lei-seca-servidor";
 import {
   getArtigosDaDisciplina,
   getDisciplinas,
@@ -124,16 +125,27 @@ export default async function RoadmapPage({
   const artigosDaDisciplina = disciplina
     ? await getArtigosDaDisciplina(disciplina.slug, 3)
     : [];
+  const memorias = await memoriasDosArtigos(
+    artigosDaDisciplina.map((artigo) => ({
+      leiSlug: artigo.leiSlug,
+      artigoSlug: artigo.slug,
+    })),
+  );
   const leituras: LeituraDoRoadmap[] = disciplina
     ? artigosDaDisciplina
         .sort((a, b) => b.incidencia - a.incidencia)
         .slice(0, 3)
-        .map((artigo) => ({
-          href: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
-          rotulo: `Art. ${artigo.numero} ${siglas.get(artigo.leiSlug) ?? ""}`.trim(),
-          caput: artigo.caput,
-          comentario: artigo.comentario,
-        }))
+        .map((artigo) => {
+          const memoria = memorias[`${artigo.leiSlug}/${artigo.slug}`];
+          return {
+            href: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
+            rotulo: `Art. ${artigo.numero} ${siglas.get(artigo.leiSlug) ?? ""}`.trim(),
+            caput: artigo.caput,
+            comentario: artigo.comentario,
+            nota: memoria?.nota ?? "",
+            destaques: memoria?.destaques ?? [],
+          };
+        })
     : [];
 
   const { data: filaBruta } = disciplina

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CadernoDoArtigo } from "@/components/caderno-artigo";
 import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
@@ -176,14 +177,11 @@ export default async function ArtigoPage({ params }: Props) {
               <h2 className="text-[0.86rem] font-semibold text-muted">
                 Texto legal
               </h2>
-              <div className="lei-texto mt-5">
-                <p>{artigo.caput}</p>
-                {artigo.paragrafos.map((p) => (
-                  <p key={p} className="text-[1.02rem] text-body">
-                    {p}
-                  </p>
-                ))}
-              </div>
+              <CadernoDoArtigo
+                leiSlug={lei.slug}
+                artigoSlug={artigo.slug}
+                partes={[artigo.caput, ...artigo.paragrafos]}
+              />
             </section>
 
             <section className="mt-14">

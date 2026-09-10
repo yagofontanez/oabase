@@ -59,6 +59,17 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/lei-seca",
+    rotulo: "Lei seca",
+    icone: (
+      <>
+        <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v15H5.5A1.5 1.5 0 0 0 4 19.5z" />
+        <path d="M4 19.5A1.5 1.5 0 0 1 5.5 21H19M8 8h7M8 12h5" />
+        <path d="M16.5 3v7l-2-1.2-2 1.2V3" />
+      </>
+    ),
+  },
+  {
     href: "/app/simulado",
     rotulo: "Simulado",
     icone: (
@@ -205,7 +216,12 @@ const GRUPOS = [
   },
   {
     rotulo: "Prática",
-    itens: selecionarItens("/app/estudar", "/app/questoes", "/app/simulado"),
+    itens: selecionarItens(
+      "/app/estudar",
+      "/app/questoes",
+      "/app/lei-seca",
+      "/app/simulado",
+    ),
   },
   {
     rotulo: "Progresso",

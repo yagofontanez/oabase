@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SessaoGuiada, type MaterialDaSessao } from "@/components/app/sessao-guiada";
 import type { QuestaoDaFila } from "@/components/app/resolvedor";
+import { memoriasDosArtigos } from "@/lib/caderno-lei-seca-servidor";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
 import { minutosDaSessao, type SessaoEmAndamento } from "@/lib/sessao-estudo";
 import { supabaseServidor } from "@/lib/supabase/servidor";
@@ -72,12 +73,23 @@ export default async function SessaoPage({
   const disciplina = disciplinas.find((entrada) => entrada.nome === bloco.disciplina);
   const artigos = disciplina ? await getArtigosDaDisciplina(disciplina.slug, 4) : [];
   const siglas = new Map(leis.map((lei) => [lei.slug, lei.sigla]));
-  const materiais: MaterialDaSessao[] = artigos.map((artigo) => ({
-    id: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
-    rotulo: `Art. ${artigo.numero} ${siglas.get(artigo.leiSlug) ?? ""}`.trim(),
-    caput: artigo.caput,
-    comentario: artigo.comentario,
-  }));
+  const memorias = await memoriasDosArtigos(
+    artigos.map((artigo) => ({
+      leiSlug: artigo.leiSlug,
+      artigoSlug: artigo.slug,
+    })),
+  );
+  const materiais: MaterialDaSessao[] = artigos.map((artigo) => {
+    const memoria = memorias[`${artigo.leiSlug}/${artigo.slug}`];
+    return {
+      id: `/legislacao/${artigo.leiSlug}/${artigo.slug}`,
+      rotulo: `Art. ${artigo.numero} ${siglas.get(artigo.leiSlug) ?? ""}`.trim(),
+      caput: artigo.caput,
+      comentario: artigo.comentario,
+      nota: memoria?.nota ?? "",
+      destaques: memoria?.destaques ?? [],
+    };
+  });
 
   const { data: filaBruta } = disciplina
     ? await supabase.rpc("fila_de_questoes", {

@@ -161,6 +161,13 @@ para medi-la.
 
 ## 7. Caderno de lei seca
 
+**Status: entregue em setembro de 2026.** Cada página de artigo agora permite
+selecionar e colorir trechos, escrever nota pessoal, marcar leitura, agendar
+revisão, sinalizar aparição em questão e registrar para qual prova o
+dispositivo é importante. `/app/lei-seca` organiza o acervo pessoal com busca,
+filtros e fila vencida; destaques e notas reaparecem no roadmap, na sessão
+guiada e junto aos dispositivos mostrados depois de responder uma questão.
+
 Permitir interação pessoal com os dispositivos do acervo:
 
 - destacar trechos;

@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
+import {
+  MemoriaDoCaderno,
+  TextoLegalDestacado,
+} from "@/components/texto-legal-destacado";
+import type { DestaqueLeiSeca } from "@/lib/caderno-lei-seca";
 import type {
   FaseDaSessao,
   ModoDaSessao,
@@ -15,6 +20,8 @@ export type MaterialDaSessao = {
   rotulo: string;
   caput: string;
   comentario: string[];
+  nota: string;
+  destaques: DestaqueLeiSeca[];
 };
 
 type Bloco = {
@@ -410,7 +417,8 @@ export function SessaoGuiada({
                       <h3 className="font-bold text-brand-700">{material.rotulo}</h3>
                       <label className="flex items-center gap-2 text-[0.76rem] font-semibold text-muted"><input type="checkbox" checked={materiaisLidos.includes(material.id)} onChange={(evento) => setMateriaisLidos((atuais) => evento.target.checked ? [...atuais, material.id] : atuais.filter((item) => item !== material.id))} className="h-4 w-4 accent-brand-600" />Marcar como lido</label>
                     </div>
-                    <p className="lei-texto mt-3 whitespace-pre-line text-[0.97rem]">{material.caput}</p>
+                    <p className="lei-texto mt-3 whitespace-pre-line text-[0.97rem]"><TextoLegalDestacado texto={material.caput} destaques={material.destaques} /></p>
+                    <MemoriaDoCaderno destaques={material.destaques} nota={material.nota} />
                     {material.comentario.length > 0 && <div className="comentario mt-4 text-[0.88rem] text-body">{material.comentario.map((paragrafo, indice) => <p key={indice}>{paragrafo}</p>)}</div>}
                     <Link href={material.id} target="_blank" className="mt-3 inline-block text-[0.78rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4">Abrir página completa em outra aba →</Link>
                   </article>

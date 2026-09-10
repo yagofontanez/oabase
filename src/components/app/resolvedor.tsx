@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import { MemoriaDoCaderno } from "@/components/texto-legal-destacado";
+import type { DestaqueLeiSeca } from "@/lib/caderno-lei-seca";
 
 const LETRAS = ["A", "B", "C", "D"] as const;
 type Letra = (typeof LETRAS)[number];
@@ -25,6 +27,8 @@ type ArtigoLigado = {
   rotulo: string;
   caput: string;
   comentado: boolean;
+  nota: string;
+  destaques: DestaqueLeiSeca[];
 };
 
 type Resultado = {
@@ -480,6 +484,10 @@ export function Resolvedor({
                           <span className="line-clamp-2 text-[0.85rem] text-muted">
                             {a.caput}
                           </span>
+                          <MemoriaDoCaderno
+                            destaques={a.destaques}
+                            nota={a.nota}
+                          />
                         </Link>
                       </li>
                     ))}
