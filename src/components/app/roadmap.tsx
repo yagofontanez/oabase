@@ -176,7 +176,14 @@ export function Roadmap({
                   <h2 className="mt-1 text-[1.45rem] font-extrabold text-ink">{ativo.disciplina}</h2>
                   <p className="mt-1 max-w-[68ch] text-[0.95rem] text-body">{ativo.objetivo}</p>
                 </div>
-                <span className="rounded-full bg-brand-50 px-3 py-1.5 text-[0.82rem] font-bold text-brand-700">{ativo.horas}h previstas</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-brand-50 px-3 py-1.5 text-[0.82rem] font-bold text-brand-700">{ativo.horas}h previstas</span>
+                  {ativo.estado !== "concluido" && (
+                    <Link href={`/app/sessao/${ativo.id}`} className="rounded-full bg-ouro-400 px-4 py-2 text-[0.82rem] font-bold text-noite hover:bg-ouro-300">
+                      Iniciar sessão guiada
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
             <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_1fr]">

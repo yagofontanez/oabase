@@ -119,6 +119,12 @@ verdade.
 
 ## 5. Sessão de estudo guiada
 
+**Status: entregue em setembro de 2026.** Cada bloco agora abre uma mesa de
+execução própria em `/app/sessao/<bloco>`, com cronômetro contínuo ou Pomodoro,
+lei seca na própria tela, questões dirigidas, checklist e caderno. O fechamento
+registra foco, leituras marcadas, respostas realmente gravadas, síntese e
+pendências; o bloco só é concluído quando a pessoa confirma essa escolha.
+
 Ao iniciar um bloco, abrir um modo de execução com:
 
 - cronômetro ou Pomodoro;

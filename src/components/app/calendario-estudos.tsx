@@ -91,6 +91,11 @@ function EditorDoItem({
       <Link href={`/app/roadmap?item=${item.id}`} className="mt-4 block text-[0.78rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4">
         Abrir materiais e questões →
       </Link>
+      {item.estado !== "concluido" && (
+        <Link href={`/app/sessao/${item.id}`} className="mt-2 inline-flex rounded-full bg-ouro-400 px-4 py-2 text-[0.78rem] font-bold text-noite">
+          Iniciar sessão guiada
+        </Link>
+      )}
     </aside>
   );
 }

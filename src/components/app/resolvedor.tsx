@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const LETRAS = ["A", "B", "C", "D"] as const;
@@ -129,7 +130,15 @@ function ReportarErro({
   );
 }
 
-export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
+export function Resolvedor({
+  fila,
+  onResponder,
+  rodapeConcluido,
+}: {
+  fila: QuestaoDaFila[];
+  onResponder?: (resultado: { questaoId: string; acertou: boolean }) => void;
+  rodapeConcluido?: ReactNode;
+}) {
   const [indice, setIndice] = useState(0);
   // A alternativa marcada é guardada por questão, e não numa variável que
   // precisa ser zerada a cada avanço: assim voltar para a anterior mostra o
@@ -182,7 +191,15 @@ export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
         setErro(dados.erro ?? "Não consegui registrar a resposta.");
         return;
       }
-      setResultados((atual) => ({ ...atual, [questao.id]: dados as Resultado }));
+      const resultadoRegistrado = dados as Resultado;
+      setResultados((atual) => ({
+        ...atual,
+        [questao.id]: resultadoRegistrado,
+      }));
+      onResponder?.({
+        questaoId: questao.id,
+        acertou: resultadoRegistrado.acertou,
+      });
     } catch {
       setErro("Sem conexão com o servidor. Tente de novo.");
     } finally {
@@ -233,18 +250,22 @@ export function Resolvedor({ fila }: { fila: QuestaoDaFila[] }) {
             : "Troque o filtro acima ou escolha outro exame para montar uma nova fila."}
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            href="/app/questoes"
-            className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.92rem] font-semibold text-white transition-colors hover:bg-brand-700"
-          >
-            Montar outra fila
-          </Link>
-          <Link
-            href="/app/desempenho"
-            className="rounded-full border border-hairline px-5 py-2.5 text-[0.92rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
-          >
-            Ver desempenho
-          </Link>
+          {rodapeConcluido ?? (
+            <>
+              <Link
+                href="/app/questoes"
+                className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.92rem] font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                Montar outra fila
+              </Link>
+              <Link
+                href="/app/desempenho"
+                className="rounded-full border border-hairline px-5 py-2.5 text-[0.92rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+              >
+                Ver desempenho
+              </Link>
+            </>
+          )}
         </div>
       </div>
     );

@@ -79,7 +79,8 @@ const secoes: Secao[] = [
           você respondeu e a alternativa marcada, se acertou, o tempo gasto, a
           fila de revisão, os blocos de foco concluídos e a disciplina
           escolhida, os simulados e o cartão-resposta, o cronograma gerado e a
-          conversa que o produziu, as datas e preferências do calendário, e as
+          conversa que o produziu, as datas e preferências do calendário, as
+          sessões guiadas com leituras marcadas, sínteses e pendências, e as
           anotações e ligações do seu quadro.
         </P>
         <P>

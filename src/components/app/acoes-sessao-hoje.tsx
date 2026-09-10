@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { abrirWidgetFoco } from "@/components/app/widget-foco";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import type { EstadoDoRoadmap } from "@/lib/roadmap";
@@ -16,6 +17,7 @@ export function AcoesSessaoHoje({
   disciplinaSlug: string | null;
   minutos: number;
 }) {
+  const router = useRouter();
   const [estado, setEstado] = useState(estadoInicial);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
@@ -47,8 +49,11 @@ export function AcoesSessaoHoje({
   }
 
   function iniciar() {
+    if (itemId) {
+      router.push(`/app/sessao/${itemId}?minutos=${minutos}`);
+      return;
+    }
     abrirWidgetFoco({ disciplina: disciplinaSlug ?? undefined, minutos });
-    if (estado === "a_estudar") void atualizar("em_andamento");
   }
 
   return (
