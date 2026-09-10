@@ -135,6 +135,17 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/revisao-semanal",
+    rotulo: "Revisão semanal",
+    icone: (
+      <>
+        <path d="M5 3.5v3M19 3.5v3M3.5 8.5h17" />
+        <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
+        <path d="m8 14 2.2 2.2L16.5 10" />
+      </>
+    ),
+  },
+  {
     href: "/app/forum",
     rotulo: "Fórum",
     icone: (
@@ -198,7 +209,11 @@ const GRUPOS = [
   },
   {
     rotulo: "Progresso",
-    itens: selecionarItens("/app/desempenho", "/app/anotacoes"),
+    itens: selecionarItens(
+      "/app/revisao-semanal",
+      "/app/desempenho",
+      "/app/anotacoes",
+    ),
   },
   {
     rotulo: "Comunidade e ajuda",
@@ -213,7 +228,9 @@ const ITENS_DA_LINHA = [
 ];
 
 function estaAtivo(caminho: string, href: string) {
-  return href === "/app" ? caminho === "/app" : caminho.startsWith(href);
+  return href === "/app"
+    ? caminho === "/app"
+    : caminho === href || caminho.startsWith(`${href}/`);
 }
 
 /**

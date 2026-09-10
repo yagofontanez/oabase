@@ -80,7 +80,8 @@ const secoes: Secao[] = [
           fila de revisão, os blocos de foco concluídos e a disciplina
           escolhida, os simulados e o cartão-resposta, o cronograma gerado e a
           conversa que o produziu, as datas e preferências do calendário, as
-          sessões guiadas com leituras marcadas, sínteses e pendências, e as
+          sessões guiadas com leituras marcadas, sínteses e pendências, os
+          fechamentos semanais com suas reflexões e compromissos, e as
           anotações e ligações do seu quadro.
         </P>
         <P>

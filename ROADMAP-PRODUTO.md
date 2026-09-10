@@ -139,6 +139,13 @@ pendências. Esses dados alimentam a revisão semanal e o replanejamento.
 
 ## 6. Revisão semanal assistida
 
+**Status: entregue em setembro de 2026.** A rota
+`/app/revisao-semanal` fecha cada semana com métricas recalculadas no banco,
+compara plano e execução, aponta matérias sem foco, recupera a memória das
+sessões guiadas e transforma recomendações explicáveis em um compromisso
+salvo para a semana seguinte. O histórico preserva a fotografia que sustentou
+cada decisão, sem inventar nota de domínio.
+
 No final de cada semana, apresentar um fechamento baseado em dados reais:
 
 - blocos concluídos e pendentes;
