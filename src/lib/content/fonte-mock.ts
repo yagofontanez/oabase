@@ -25,10 +25,14 @@ export const fonteMock: FonteDeConteudo = {
   async getArtigosIndexaveis() {
     return artigos.filter((a) => a.indexavel);
   },
-  async getArtigosMaisBuscados(limite) {
+  async getRotasDeArtigosMaisBuscados(limite) {
     return [...artigos]
       .sort((a, b) => b.incidencia - a.incidencia)
-      .slice(0, limite);
+      .slice(0, limite)
+      .map((artigo) => ({
+        leiSlug: artigo.leiSlug,
+        artigoSlug: artigo.slug,
+      }));
   },
   async getArtigosDaDisciplina(disciplinaSlug, limite) {
     return artigos

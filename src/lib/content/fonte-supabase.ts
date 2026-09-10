@@ -42,6 +42,11 @@ type LinhaArtigo = {
   disciplinas: { slug: string } | { slug: string }[] | null;
 };
 
+type LinhaRotaArtigo = {
+  slug: string;
+  leis: { slug: string } | { slug: string }[];
+};
+
 /** PostgREST devolve relação como objeto ou array conforme a cardinalidade. */
 function um<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
@@ -216,14 +221,22 @@ export const fonteSupabase: FonteDeConteudo = {
     return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
   },
 
-  async getArtigosMaisBuscados(limite) {
+  async getRotasDeArtigosMaisBuscados(limite) {
+    // `generateStaticParams` precisa apenas dos dois segmentos da URL.
+    // Buscar caput, parágrafos e comentário fazia o Postgres ordenar linhas
+    // largas desnecessariamente e já estourou o statement timeout do build.
     const { data, error } = await supabaseAnon()
       .from("artigos")
-      .select(CAMPOS_ARTIGO)
+      .select("slug, leis!inner(slug)")
       .order("incidencia", { ascending: false })
       .limit(limite);
-    erro("artigos mais buscados", error);
-    return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+    erro("rotas de artigos mais buscados", error);
+    return ((data ?? []) as unknown as LinhaRotaArtigo[])
+      .map((linha) => ({
+        leiSlug: um(linha.leis)?.slug ?? "",
+        artigoSlug: linha.slug,
+      }))
+      .filter((rota) => rota.leiSlug.length > 0);
   },
 
   async getArtigosDaDisciplina(disciplinaSlug, limite) {

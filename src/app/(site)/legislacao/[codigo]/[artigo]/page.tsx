@@ -9,7 +9,7 @@ import { daLei, formatarData, formatarNumeroDeArtigo } from "@/lib/format";
 import { abs, site } from "@/lib/site";
 import {
   getArtigo,
-  getArtigosMaisBuscados,
+  getRotasDeArtigosMaisBuscados,
   getArtigosRelacionados,
   getIncidenciaDoArtigo,
   getDisciplina,
@@ -27,8 +27,22 @@ export const revalidate = 3600;
 export const dynamicParams = true;
 type Props = { params: Promise<{ codigo: string; artigo: string }> };
 export async function generateStaticParams() {
-  const populares = await getArtigosMaisBuscados(500);
-  return populares.map((a) => ({ codigo: a.leiSlug, artigo: a.slug }));
+  try {
+    const populares = await getRotasDeArtigosMaisBuscados(500);
+    return populares.map((rota) => ({
+      codigo: rota.leiSlug,
+      artigo: rota.artigoSlug,
+    }));
+  } catch (erro) {
+    // Esta lista é uma otimização, não a fonte de verdade: com
+    // `dynamicParams`, qualquer artigo continua sendo gerado na primeira
+    // visita. Uma oscilação do banco não deve derrubar o deploy inteiro.
+    console.warn(
+      "Não foi possível pré-renderizar os artigos populares; as páginas serão geradas sob demanda.",
+      erro,
+    );
+    return [];
+  }
 }
 
 /**

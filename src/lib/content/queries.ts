@@ -41,8 +41,8 @@ export const getArtigosIndexaveis = cache(() => fonte.getArtigosIndexaveis());
  * primeira visita — é o que impede o build de explodir quando a base
  * chegar a dezenas de milhares de URLs.
  */
-export const getArtigosMaisBuscados = cache((limite = 500) =>
-  fonte.getArtigosMaisBuscados(limite),
+export const getRotasDeArtigosMaisBuscados = cache((limite = 500) =>
+  fonte.getRotasDeArtigosMaisBuscados(limite),
 );
 export const getArtigosDaDisciplina = cache(
   (disciplinaSlug: string, limite = 3) =>

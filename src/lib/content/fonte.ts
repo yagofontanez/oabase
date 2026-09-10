@@ -27,7 +27,10 @@ export type FonteDeConteudo = {
   /** Só o número. Baixar a lei inteira para chamar `.length` custa caro. */
   contarArtigos(leiSlug: string): Promise<number>;
   getArtigosIndexaveis(): Promise<Artigo[]>;
-  getArtigosMaisBuscados(limite: number): Promise<Artigo[]>;
+  /** Só os parâmetros de rota dos artigos pré-renderizados no build. */
+  getRotasDeArtigosMaisBuscados(
+    limite: number,
+  ): Promise<{ leiSlug: string; artigoSlug: string }[]>;
   /** Top dispositivos de uma matéria para uma sessão curta de estudo. */
   getArtigosDaDisciplina(disciplinaSlug: string, limite: number): Promise<Artigo[]>;
   getArtigosRelacionados(artigo: Artigo, limite: number): Promise<Artigo[]>;
