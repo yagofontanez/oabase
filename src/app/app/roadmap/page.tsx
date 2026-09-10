@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Roadmap, type LeituraDoRoadmap } from "@/components/app/roadmap";
+import { RoadmapVazio } from "@/components/app/roadmap-vazio";
 import type { QuestaoDaFila } from "@/components/app/resolvedor";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
 import type { Plano } from "@/lib/ia/plano";
@@ -41,16 +41,18 @@ export default async function RoadmapPage({
     getLeis(),
   ]);
   const registro = registroRes.data;
-  if (!registro?.plano || !registro.versao_roadmap) redirect("/app/plano");
+  if (!registro?.plano) return <RoadmapVazio temPlano={false} />;
 
-  const { data: linhas } = await supabase
-    .from("roadmap_itens")
-    .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
-    .eq("versao", registro.versao_roadmap)
-    .order("semana")
-    .order("ordem");
+  const { data: linhas } = registro.versao_roadmap
+    ? await supabase
+        .from("roadmap_itens")
+        .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
+        .eq("versao", registro.versao_roadmap)
+        .order("semana")
+        .order("ordem")
+    : { data: [] };
   const itens = (linhas ?? []) as ItemRoadmap[];
-  if (itens.length === 0) redirect("/app/plano");
+  if (itens.length === 0) return <RoadmapVazio temPlano />;
 
   const ativo =
     itens.find((item) => item.id === itemPedido) ??
