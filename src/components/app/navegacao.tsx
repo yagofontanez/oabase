@@ -91,6 +91,16 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/ementa",
+    rotulo: "Ementa",
+    icone: (
+      <>
+        <path d="M5 3.5h10l4 4V20.5H5z" />
+        <path d="M15 3.5v4h4M8 12h8M8 15.5h8M8 9h3" />
+      </>
+    ),
+  },
+  {
     href: "/app/roadmap",
     rotulo: "Roadmap",
     icone: (

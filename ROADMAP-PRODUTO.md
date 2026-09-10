@@ -46,6 +46,12 @@ agora.
 
 ## 2. Importação de ementa
 
+**Status: entregue em setembro de 2026.** A rota `/app/ementa` aceita texto,
+lista manual e PDF, extrai somente tópicos, sugere vínculos com as disciplinas
+do acervo e exige uma revisão editável antes de substituir o roadmap. O PDF é
+lido em memória e descartado; tópicos externos continuam identificados como
+material do aluno ou professor.
+
 Permitir que a pessoa cole ou envie a ementa de uma disciplina da faculdade.
 O sistema identifica e organiza os tópicos, e a pessoa confirma a estrutura
 antes de gerar o roadmap.

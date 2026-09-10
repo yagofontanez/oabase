@@ -172,6 +172,7 @@ export function PlanoConversa({
   );
   const [confirmandoLimpeza, setConfirmandoLimpeza] = useState(false);
   const [limpando, setLimpando] = useState(false);
+  const planoDeEmenta = contextoInicial.origem === "ementa";
 
   /* Largura do painel do cronograma, em % da área útil. Preferência de quem
      usa — quem lê o plano num monitor largo quer mais documento; quem está
@@ -498,9 +499,14 @@ export function PlanoConversa({
                         Selecione só o que você quer estudar agora.
                       </p>
                     </div>
-                    <span className="text-[0.82rem] font-semibold text-brand-700">
-                      {selecionadas.length} selecionada{selecionadas.length === 1 ? "" : "s"}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-[0.82rem] font-semibold text-brand-700">
+                        {selecionadas.length} selecionada{selecionadas.length === 1 ? "" : "s"}
+                      </span>
+                      <Link href="/app/ementa" className="text-[0.8rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4">
+                        Importar ementa ou PDF →
+                      </Link>
+                    </div>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {disciplinasDisponiveis.map((disciplina) => {
@@ -626,63 +632,76 @@ export function PlanoConversa({
       {/* ---- Caixa de envio ---- */}
       <div className="shrink-0 bg-gradient-to-t from-paper via-paper to-transparent pb-5">
         <div className="mx-auto w-full max-w-[720px] px-5 sm:px-8">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void enviar(texto);
-            }}
-            className="superficie flex items-end gap-2 rounded-[24px] p-2 pl-4 focus-within:border-brand-300 focus-within:shadow-[var(--shadow-media)]"
-          >
-            <textarea
-              ref={caixa}
-              value={texto}
-              onChange={(e) => {
-                setTexto(e.target.value);
-                ajustarAltura();
-              }}
-              onKeyDown={(e) => {
-                // Enter envia porque isto é uma conversa, não um formulário.
-                // Quebra de linha continua acessível no Shift.
-                if (e.key === "Enter" && !e.shiftKey) {
+          {planoDeEmenta && plano ? (
+            <div className="superficie flex flex-wrap items-center justify-between gap-3 rounded-[20px] px-4 py-3.5">
+              <span className="max-w-[48ch] text-[0.82rem] leading-relaxed text-muted">
+                Este plano veio de uma ementa confirmada. Ajuste os tópicos pela importação para não perder a estrutura do documento.
+              </span>
+              <Link href="/app/ementa" className="shrink-0 rounded-full bg-brand-600 px-4 py-2 text-[0.82rem] font-semibold text-white">
+                Revisar ementa
+              </Link>
+            </div>
+          ) : (
+            <>
+              <form
+                onSubmit={(e) => {
                   e.preventDefault();
                   void enviar(texto);
-                }
-              }}
-              rows={1}
-              placeholder={
-                plano
-                  ? "Peça um ajuste: menos horas, trocar a ordem, focar numa disciplina…"
-                  : "Ex.: só tenho 1 hora por dia durante a semana"
-              }
-              className="max-h-[190px] min-h-[42px] w-full resize-none bg-transparent py-2.5 text-[1rem] text-ink outline-none placeholder:text-muted"
-            />
-            <button
-              type="submit"
-              disabled={enviando || texto.trim().length === 0}
-              title="Enviar"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition-colors hover:bg-brand-700 disabled:bg-sunk disabled:text-muted"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-[18px] w-[18px]"
-                aria-hidden="true"
+                }}
+                className="superficie flex items-end gap-2 rounded-[24px] p-2 pl-4 focus-within:border-brand-300 focus-within:shadow-[var(--shadow-media)]"
               >
-                <path d="M12 19V5M6 11l6-6 6 6" />
-              </svg>
-              <span className="sr-only">Enviar</span>
-            </button>
-          </form>
+                <textarea
+                  ref={caixa}
+                  value={texto}
+                  onChange={(e) => {
+                    setTexto(e.target.value);
+                    ajustarAltura();
+                  }}
+                  onKeyDown={(e) => {
+                    // Enter envia porque isto é uma conversa, não um formulário.
+                    // Quebra de linha continua acessível no Shift.
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void enviar(texto);
+                    }
+                  }}
+                  rows={1}
+                  placeholder={
+                    plano
+                      ? "Peça um ajuste: menos horas, trocar a ordem, focar numa disciplina…"
+                      : "Ex.: só tenho 1 hora por dia durante a semana"
+                  }
+                  className="max-h-[190px] min-h-[42px] w-full resize-none bg-transparent py-2.5 text-[1rem] text-ink outline-none placeholder:text-muted"
+                />
+                <button
+                  type="submit"
+                  disabled={enviando || texto.trim().length === 0}
+                  title="Enviar"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition-colors hover:bg-brand-700 disabled:bg-sunk disabled:text-muted"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-[18px] w-[18px]"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 19V5M6 11l6-6 6 6" />
+                  </svg>
+                  <span className="sr-only">Enviar</span>
+                </button>
+              </form>
 
-          <p className="mt-2.5 px-1 text-center text-[0.79rem] text-muted">
-            Enter envia · Shift+Enter quebra linha. O plano organiza o seu tempo
-            e não ensina matéria — todo conteúdo jurídico do OABase vem do
-            acervo, não do modelo.
-          </p>
+              <p className="mt-2.5 px-1 text-center text-[0.79rem] text-muted">
+                Enter envia · Shift+Enter quebra linha. O plano organiza o seu tempo
+                e não ensina matéria — todo conteúdo jurídico do OABase vem do
+                acervo, não do modelo.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

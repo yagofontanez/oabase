@@ -50,6 +50,12 @@ export type ContextoSalvoDoPlano = {
   modo: ModoDoPlano;
   disciplinas: string[];
   prazo: string | null;
+  origem?: "conversa" | "ementa";
+  ementa?: {
+    titulo: string;
+    horasPorSemana: number;
+    topicos: { titulo: string; disciplina: string | null }[];
+  };
 };
 
 export type Mensagem = { papel: "pessoa" | "assistente"; texto: string };
