@@ -90,7 +90,7 @@ export function BarraLateral({
   return (
     <aside
       className={`trilho-fundo hidden h-full shrink-0 flex-col gap-6 py-5 text-white lg:flex ${
-        recolhida ? "w-[78px] px-4" : "w-[248px] px-5"
+        recolhida ? "w-[78px] px-4" : "w-[268px] px-5"
       } ${pronta ? "transition-[width] duration-200" : ""}`}
     >
       <div
@@ -132,59 +132,51 @@ export function BarraLateral({
 
       {/* A sessão do dia é a ação principal. O relógio solto continua ao lado
           como ferramenta rápida, mas deixa de competir com a jornada. */}
-      <div className={`flex gap-2 ${recolhida ? "flex-col" : "items-stretch"}`}>
-        <Link
-          href="/app/hoje"
-          title={recolhida ? "Começar a estudar" : undefined}
-          className={`group flex min-w-0 items-center rounded-[14px] bg-ouro-400 font-semibold text-brand-900 transition-colors hover:bg-ouro-200 ${
-            recolhida
-              ? "h-11 justify-center"
-              : "flex-1 gap-3 px-3.5 py-2.5"
-          }`}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-[18px] w-[18px] shrink-0"
-            aria-hidden="true"
+      {recolhida ? (
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/app/hoje"
+            title="Começar a estudar"
+            className="flex h-11 items-center justify-center rounded-[14px] bg-ouro-400 text-brand-900 transition-colors hover:bg-ouro-200"
           >
-            <path d="M8 5.5v13l10-6.5z" />
-          </svg>
-          <span className={recolhida ? "sr-only" : "min-w-0"}>
-            <span className="block text-[0.88rem] leading-tight">Estudar agora</span>
-            <span className="mt-0.5 block truncate text-[0.68rem] font-medium text-brand-900/60">
-              sessão organizada do dia
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]" aria-hidden="true">
+              <path d="M8 5.5v13l10-6.5z" />
+            </svg>
+            <span className="sr-only">Estudar agora</span>
+          </Link>
+          <button type="button" onClick={() => abrirWidgetFoco()} title="Abrir cronômetro rápido" className="flex h-10 items-center justify-center rounded-[14px] border border-white/12 text-white/65 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-[17px] w-[17px]" aria-hidden="true">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9.5V13l2.2 1.6M9 2h6" />
+            </svg>
+            <span className="sr-only">Cronômetro rápido</span>
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-[18px] bg-ouro-400 p-1.5 text-brand-900 shadow-[0_12px_28px_rgba(4,31,28,.16)]">
+          <Link href="/app/hoje" className="flex items-center gap-2.5 rounded-[13px] px-2.5 py-2.5 transition-colors hover:bg-white/18">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-900 text-ouro-200">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <path d="M8 5.5v13l10-6.5z" />
+              </svg>
             </span>
-          </span>
-        </Link>
-        <button
-          type="button"
-          onClick={() => abrirWidgetFoco()}
-          title="Abrir cronômetro rápido"
-          className={`flex shrink-0 items-center justify-center rounded-[14px] border border-white/12 text-white/65 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white ${
-            recolhida ? "h-10" : "w-10"
-          }`}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-[17px] w-[17px]"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="13" r="8" />
-            <path d="M12 9.5V13l2.2 1.6M9 2h6" />
-          </svg>
-          <span className="sr-only">Cronômetro rápido</span>
-        </button>
-      </div>
+            <span className="min-w-0">
+              <strong className="block text-[0.9rem] leading-tight">Estudar agora</strong>
+              <span className="mt-0.5 block text-[0.68rem] font-medium text-brand-900/65">
+                Sessão guiada para hoje
+              </span>
+            </span>
+          </Link>
+          <button type="button" onClick={() => abrirWidgetFoco()} className="flex w-full items-center gap-2 rounded-[11px] bg-brand-900/10 px-3 py-2 text-left text-[0.7rem] font-semibold text-brand-900/70 transition-colors hover:bg-brand-900/15 hover:text-brand-900">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9.5V13l2.2 1.6M9 2h6" />
+            </svg>
+            <span>Cronômetro rápido</span>
+            <span className="ml-auto font-medium opacity-65">sem roteiro</span>
+          </button>
+        </div>
+      )}
 
       {/* A lista rola dentro do trilho; o cabeçalho, o modo foco e o rodapé
           ficam parados. Sem isso, o trilho cresceu com as abas de operação,
