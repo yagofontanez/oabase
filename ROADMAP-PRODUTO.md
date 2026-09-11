@@ -267,6 +267,12 @@ anotações privadas ficam ocultos por padrão.
 
 ## 12. Modo prova da faculdade
 
+**Status: entregue em setembro de 2026.** `/app/prova` permite cadastrar uma
+avaliação fora da OAB com data, disciplina, horas semanais, tópicos, materiais
+indicados e dificuldade percebida. O roteiro é regressivo, prioriza o que a
+pessoa declarou como difícil e reserva a última semana para revisão e simulado;
+a origem dessa prioridade fica explícita e não usa incidência do Exame de Ordem.
+
 Criar um fluxo específico dentro do estudo livre:
 
 - nome da disciplina;

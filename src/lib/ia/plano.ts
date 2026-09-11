@@ -50,11 +50,17 @@ export type ContextoSalvoDoPlano = {
   modo: ModoDoPlano;
   disciplinas: string[];
   prazo: string | null;
-  origem?: "conversa" | "ementa";
+  origem?: "conversa" | "ementa" | "prova";
   ementa?: {
     titulo: string;
     horasPorSemana: number;
-    topicos: { titulo: string; disciplina: string | null }[];
+    topicos: {
+      titulo: string;
+      disciplina: string | null;
+      dificuldade?: 1 | 2 | 3;
+      materiais?: string[];
+    }[];
+    avaliacao?: string;
   };
   ultimoReplanejamento?: {
     realizadoEm: string;

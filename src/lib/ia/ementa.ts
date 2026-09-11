@@ -10,6 +10,12 @@ export type TopicoDaEmenta = {
   disciplina: string | null;
 };
 
+export type TopicoDaProva = {
+  titulo: string;
+  dificuldade: 1 | 2 | 3;
+  materiais: string[];
+};
+
 export type EmentaOrganizada = {
   titulo: string;
   topicos: TopicoDaEmenta[];
@@ -206,5 +212,72 @@ export function montarPlanoDaEmenta({
     horasPorSemana,
     semanas,
     avisos,
+  };
+}
+
+/**
+ * Roteiro regressivo para uma avaliação da faculdade. A dificuldade declarada
+ * pela pessoa ordena a primeira passada (não é uma estatística da OAB) e a
+ * última semana fica reservada para revisão dos tópicos já vistos.
+ */
+export function montarPlanoDaProva({
+  disciplina,
+  avaliacao,
+  topicos,
+  horasPorSemana,
+  semanasDisponiveis,
+  prazo,
+}: {
+  disciplina: string;
+  avaliacao: string;
+  topicos: TopicoDaProva[];
+  horasPorSemana: number;
+  semanasDisponiveis: number;
+  prazo: string;
+}): Plano {
+  const semanasTotais = Math.max(1, Math.min(12, semanasDisponiveis));
+  const temRevisao = semanasTotais > 1 && topicos.length > 1;
+  const semanasDeConteudo = temRevisao ? semanasTotais - 1 : semanasTotais;
+  const ordenados = [...topicos].sort((a, b) => b.dificuldade - a.dificuldade);
+  const porSemana = Array.from({ length: semanasDeConteudo }, (_, indice) => {
+    const inicio = Math.floor((indice * ordenados.length) / semanasDeConteudo);
+    const fim = Math.floor(((indice + 1) * ordenados.length) / semanasDeConteudo);
+    return ordenados.slice(inicio, fim);
+  });
+  const semanas = porSemana.map((daSemana, indice) => {
+    const carga = Math.max(0.01, Math.floor((horasPorSemana / Math.max(1, daSemana.length)) * 100) / 100);
+    return {
+      numero: indice + 1,
+      foco: daSemana.length === 1
+        ? daSemana[0].titulo
+        : `${daSemana[0]?.titulo ?? "Conteúdo da avaliação"} + ${Math.max(0, daSemana.length - 1)} tópicos`,
+      blocos: daSemana.map((topico, ordem) => ({
+        disciplina,
+        horas: ordem === daSemana.length - 1
+          ? Math.max(0.01, Math.round((horasPorSemana - carga * (daSemana.length - 1)) * 100) / 100)
+          : carga,
+        objetivo: `Estudar “${topico.titulo}” (dificuldade ${topico.dificuldade}/3).${topico.materiais.length ? ` Materiais: ${topico.materiais.join(", ")}.` : ""}`.slice(0, 260),
+      })),
+    };
+  });
+  if (temRevisao) {
+    semanas.push({
+      numero: semanasTotais,
+      foco: "Revisão final e simulado da avaliação",
+      blocos: [{
+        disciplina,
+        horas: horasPorSemana,
+        objetivo: `Revisar os ${topicos.length} tópicos de “${avaliacao}”, refazer exercícios e simular a prova.`.slice(0, 260),
+      }],
+    });
+  }
+  return {
+    diagnostico: `Plano regressivo para ${avaliacao || "a avaliação"}: ${topicos.length} tópicos organizados em ${semanas.length} semanas, priorizando os assuntos mais difíceis e reservando a reta final para revisão.`,
+    horasPorSemana,
+    semanas,
+    avisos: [
+      `A dificuldade foi informada por você e não representa incidência ou peso do Exame de Ordem.`,
+      `A última semana concentra revisão e simulado; ajuste a carga se a avaliação exigir trabalhos ou leituras extras.`,
+    ],
   };
 }

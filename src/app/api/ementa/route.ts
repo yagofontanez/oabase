@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getDisciplinas } from "@/lib/content/queries";
 import {
   montarPlanoDaEmenta,
+  montarPlanoDaProva,
   organizarEmenta,
   type TopicoDaEmenta,
+  type TopicoDaProva,
 } from "@/lib/ia/ementa";
 import { ErroDeLimite, type ContextoSalvoDoPlano, type Mensagem } from "@/lib/ia/plano";
 import { blocosDoPlano } from "@/lib/roadmap";
@@ -96,6 +98,29 @@ function lerTopicos(valor: FormDataEntryValue | null, disciplinasPermitidas: Set
   return topicos;
 }
 
+function lerTopicosDaProva(valor: FormDataEntryValue | null): TopicoDaProva[] {
+  if (typeof valor !== "string") return [];
+  let bruto: unknown;
+  try { bruto = JSON.parse(valor); } catch { return []; }
+  if (!Array.isArray(bruto)) return [];
+  const vistos = new Set<string>();
+  return bruto.slice(0, MAX_TOPICOS).flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const linha = item as Record<string, unknown>;
+    const titulo = String(linha.titulo ?? "").replace(/\s+/g, " ").trim().slice(0, 180);
+    const chave = titulo.toLocaleLowerCase("pt-BR");
+    if (titulo.length < 3 || vistos.has(chave)) return [];
+    vistos.add(chave);
+    const dificuldade = Number(linha.dificuldade);
+    const materiais = String(linha.materiais ?? "")
+      .split(/[,\n]/)
+      .map((material) => material.replace(/\s+/g, " ").trim().slice(0, 160))
+      .filter(Boolean)
+      .slice(0, 5);
+    return [{ titulo, dificuldade: dificuldade === 1 || dificuldade === 3 ? dificuldade : 2, materiais }];
+  });
+}
+
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
   const {
@@ -147,6 +172,62 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
+  }
+
+  if (acao === "gerar_prova") {
+    const disciplina = textoDoCampo(formulario.get("disciplina"), 120);
+    const avaliacao = textoDoCampo(formulario.get("avaliacao"), 120) || "Avaliação da faculdade";
+    const prazo = textoDoCampo(formulario.get("prazo"), 10);
+    const horasBrutas = Number(formulario.get("horas"));
+    const horasPorSemana = Number.isFinite(horasBrutas)
+      ? Math.min(60, Math.max(1, Math.round(horasBrutas * 2) / 2))
+      : 5;
+    const topicos = lerTopicosDaProva(formulario.get("topicos"));
+    const hoje = hojeEmBrasilia();
+    if (!disciplina) return NextResponse.json({ erro: "Informe a disciplina." }, { status: 400 });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(prazo) || prazo < hoje) {
+      return NextResponse.json({ erro: "Informe uma data de prova hoje ou futura." }, { status: 400 });
+    }
+    if (topicos.length === 0) return NextResponse.json({ erro: "Adicione ao menos um tópico válido." }, { status: 400 });
+    const semanasDisponiveis = Math.max(1, Math.ceil(diasEntreDatas(hoje, prazo) / 7));
+    const plano = montarPlanoDaProva({ disciplina, avaliacao, topicos, horasPorSemana, semanasDisponiveis, prazo });
+    const { data: registro } = await supabase.from("planos_estudo").select("conversa, versao_roadmap").maybeSingle();
+    const conversaAnterior = Array.isArray(registro?.conversa) ? (registro.conversa as Mensagem[]) : [];
+    const contexto: ContextoSalvoDoPlano = {
+      modo: "livre",
+      disciplinas: [disciplina],
+      prazo,
+      origem: "prova",
+      ementa: {
+        titulo: `${disciplina} — ${avaliacao}`.slice(0, 120),
+        horasPorSemana,
+        avaliacao,
+        topicos: topicos.map((topico) => ({ ...topico, disciplina })),
+      },
+    };
+    const registroDaProva: Mensagem[] = [{
+      papel: "pessoa" as const,
+      texto: `Montei um plano para ${disciplina}, avaliação “${avaliacao}”, em ${prazo}.`,
+    }, { papel: "assistente" as const, texto: plano.diagnostico }];
+    const conversa: Mensagem[] = [...conversaAnterior, ...registroDaProva].slice(-20);
+    const versaoRoadmap = (registro?.versao_roadmap ?? 0) + 1;
+    const { error: erroPlano } = await supabase.from("planos_estudo").upsert({
+      user_id: user.id, plano, conversa, contexto, versao_roadmap: versaoRoadmap,
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: "user_id" });
+    if (erroPlano) return NextResponse.json({ erro: "Montei o plano, mas não consegui salvar." }, { status: 500 });
+    const { data: roadmap, error: erroRoadmap } = await supabase.from("roadmap_itens").upsert(
+      blocosDoPlano(plano).map((bloco) => ({ user_id: user.id, versao: versaoRoadmap, ...bloco })),
+      { onConflict: "user_id,versao,semana,ordem" },
+    ).select("id, semana, ordem, disciplina, objetivo, horas, estado");
+    if (erroRoadmap) return NextResponse.json({ plano, roadmap: [], aviso: "O plano foi salvo, mas o roadmap precisa ser criado novamente." });
+    await supabase.rpc("registrar_versao_roadmap", {
+      p_versao: versaoRoadmap, p_origem: "manual",
+      p_motivo: `Plano de prova da faculdade: ${disciplina} — ${avaliacao}`.slice(0, 500),
+      p_diagnostico: plano.diagnostico, p_plano: plano, p_contexto: contexto,
+      p_versao_anterior: registro?.versao_roadmap || null,
+    });
+    return NextResponse.json({ plano, roadmap: roadmap ?? [] });
   }
 
   if (acao !== "gerar") {
