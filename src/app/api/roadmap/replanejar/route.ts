@@ -268,6 +268,22 @@ export async function POST(request: Request) {
     );
   }
 
+  const { error: erroHistorico } = await supabase.rpc(
+    "registrar_versao_roadmap",
+    {
+      p_versao: novaVersao,
+      p_origem: "replanejamento",
+      p_motivo: `Roadmap redistribuído por ${motivo}, com ${horasPorSemana}h disponíveis por semana.`.slice(0, 500),
+      p_diagnostico: proposta.plano.diagnostico,
+      p_plano: proposta.plano,
+      p_contexto: proximoContexto,
+      p_versao_anterior: registro.versao_roadmap,
+    },
+  );
+  if (erroHistorico) {
+    console.error("Falha ao detalhar histórico do replanejamento:", erroHistorico);
+  }
+
   return NextResponse.json({
     ok: true,
     versao: novaVersao,

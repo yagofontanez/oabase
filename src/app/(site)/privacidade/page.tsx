@@ -88,7 +88,9 @@ const secoes: Secao[] = [
           guardamos a frente, o verso, a fonte vinculada e o histórico das
           avaliações usadas para calcular o próximo intervalo. Nas metas do
           roadmap, guardamos os alvos, o progresso calculado e os subtópicos
-          que você criar ou marcar manualmente.
+          que você criar ou marcar manualmente. Também preservamos as versões
+          anteriores do roadmap, com o motivo das alterações, para que você
+          possa consultar a evolução do planejamento.
         </P>
         <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso

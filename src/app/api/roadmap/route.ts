@@ -71,5 +71,21 @@ export async function POST() {
     );
   }
 
+  const { error: erroHistorico } = await supabase.rpc(
+    "registrar_versao_roadmap",
+    {
+      p_versao: versao,
+      p_origem: "manual",
+      p_motivo: "Roadmap interativo criado a partir do plano existente.",
+      p_diagnostico: plano.diagnostico,
+      p_plano: plano,
+      p_contexto: null,
+      p_versao_anterior: versao > 1 ? versao - 1 : null,
+    },
+  );
+  if (erroHistorico) {
+    console.error("Falha ao detalhar histórico do roadmap:", erroHistorico);
+  }
+
   return NextResponse.json({ roadmap: roadmap ?? [] });
 }

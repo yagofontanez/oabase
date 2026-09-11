@@ -240,5 +240,20 @@ export async function POST(request: Request) {
       aviso: "O plano foi salvo, mas o roadmap precisa ser criado novamente.",
     });
   }
+  const { error: erroHistorico } = await supabase.rpc(
+    "registrar_versao_roadmap",
+    {
+      p_versao: versaoRoadmap,
+      p_origem: "ementa",
+      p_motivo: `Ementa “${titulo}” importada com ${topicos.length} tópicos e ${horasPorSemana}h por semana.`.slice(0, 500),
+      p_diagnostico: plano.diagnostico,
+      p_plano: plano,
+      p_contexto: contexto,
+      p_versao_anterior: registro?.versao_roadmap || null,
+    },
+  );
+  if (erroHistorico) {
+    console.error("Falha ao detalhar histórico da ementa:", erroHistorico);
+  }
   return NextResponse.json({ plano, roadmap: roadmap ?? [] });
 }

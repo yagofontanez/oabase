@@ -223,6 +223,13 @@ continua disponível para atividades que o sistema não consegue medir.
 
 ## 10. Histórico e versões do roadmap
 
+**Status: entregue em setembro de 2026.** `/app/roadmap/historico` apresenta
+uma linha do tempo somente para consulta, com o motivo e a origem de cada
+versão, fotografia dos blocos, metas, anotações e execução registrada. A tela
+compara carga, itens incluídos, removidos, divididos ou redistribuídos. Novos
+planos por conversa, ementa e replanejamento registram contexto e diagnóstico;
+versões anteriores à funcionalidade são mantidas e identificadas como legadas.
+
 Criar uma linha do tempo com:
 
 - roadmaps anteriores;

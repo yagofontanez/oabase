@@ -372,6 +372,7 @@ const ITENS_EDITOR = [
 const FORA_DO_MENU: Record<string, string> = {
   "/app/assinar": "Assinar",
   "/app/redacao/comentarios": "Comentários",
+  "/app/roadmap/historico": "Histórico do roadmap",
 };
 
 /**

@@ -241,6 +241,26 @@ export async function POST(request: Request) {
     });
   }
 
+  const { error: erroHistorico } = await supabase.rpc(
+    "registrar_versao_roadmap",
+    {
+      p_versao: versaoRoadmap,
+      p_origem: "ia",
+      p_motivo: registro?.versao_roadmap
+        ? `Ajuste solicitado na conversa: ${pedido}`.slice(0, 500)
+        : `Plano inicial criado por conversa: ${pedido}`.slice(0, 500),
+      p_diagnostico: plano.diagnostico,
+      p_plano: plano,
+      p_contexto: contextoSalvo,
+      p_versao_anterior: registro?.versao_roadmap || null,
+    },
+  );
+  if (erroHistorico) {
+    // O trigger já garantiu a versão genérica; esta chamada acrescenta a
+    // explicação humana e a fotografia completa sem derrubar o plano salvo.
+    console.error("Falha ao detalhar histórico do roadmap:", erroHistorico);
+  }
+
   return NextResponse.json({
     plano,
     conversa: proximaConversa.slice(-20),
