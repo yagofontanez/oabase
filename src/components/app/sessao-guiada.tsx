@@ -8,6 +8,10 @@ import {
   TextoLegalDestacado,
 } from "@/components/texto-legal-destacado";
 import type { DestaqueLeiSeca } from "@/lib/caderno-lei-seca";
+import {
+  configuracaoDaMeta,
+  type MetaDoRoadmap,
+} from "@/lib/metas-roadmap";
 import type {
   FaseDaSessao,
   ModoDaSessao,
@@ -59,6 +63,11 @@ function minutosLegiveis(segundos: number) {
   return resto ? `${horas}h ${resto}min` : `${horas}h`;
 }
 
+function progressoLegivel(meta: MetaDoRoadmap) {
+  if (meta.tipo !== "foco") return `${meta.progresso}/${meta.alvo}`;
+  return `${minutosLegiveis(meta.progresso * 60)}/${minutosLegiveis(meta.alvo * 60)}`;
+}
+
 async function chamar(corpo: Record<string, unknown>) {
   const resposta = await fetch("/api/sessao-estudo", {
     method: "POST",
@@ -75,6 +84,7 @@ export function SessaoGuiada({
   materiais,
   questoes,
   minutosIniciais,
+  metas,
   sessaoInicial,
   outraSessaoItemId,
 }: {
@@ -82,6 +92,7 @@ export function SessaoGuiada({
   materiais: MaterialDaSessao[];
   questoes: QuestaoDaFila[];
   minutosIniciais: number;
+  metas: MetaDoRoadmap[];
   sessaoInicial: SessaoEmAndamento | null;
   outraSessaoItemId: string | null;
 }) {
@@ -137,6 +148,7 @@ export function SessaoGuiada({
     Number(questoes.length > 0 && respondidasAoVivo > 0) +
     Number(anotacao.trim().length > 0);
   const totalChecklist = 2 + idsMateriais.length + Number(questoes.length > 0);
+  const metasPendentes = metas.filter((meta) => meta.progresso < meta.alvo).length;
 
   useEffect(() => {
     if (!relogio.rodando) return;
@@ -403,6 +415,51 @@ export function SessaoGuiada({
             </div>
             <button type="button" onClick={() => { pausar(); setFechamento(true); }} disabled={!sessaoId} className="mt-5 w-full rounded-full bg-brand-600 py-2.5 text-[0.84rem] font-semibold text-white disabled:opacity-40">Encerrar e registrar</button>
           </section>
+
+          {metas.length > 0 && (
+            <section className="superficie p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="rotulo">Metas do bloco</span>
+                <Link
+                  href={`/app/roadmap?item=${bloco.id}`}
+                  className="text-[0.7rem] font-semibold text-brand-700"
+                >
+                  editar
+                </Link>
+              </div>
+              <div className="mt-4 flex flex-col gap-3">
+                {metas.map((meta) => {
+                  const percentual = Math.min(
+                    100,
+                    Math.round((meta.progresso / meta.alvo) * 100),
+                  );
+                  return (
+                    <div key={meta.id}>
+                      <div className="flex items-baseline justify-between gap-3 text-[0.75rem]">
+                        <span className="truncate font-semibold text-body">
+                          {meta.titulo}
+                        </span>
+                        <span className="shrink-0 text-muted tabular-nums">
+                          {progressoLegivel(meta)}
+                        </span>
+                      </div>
+                      <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-sunk">
+                        <span
+                          className="block h-full rounded-full bg-brand-500"
+                          style={{ width: `${percentual}%` }}
+                        />
+                      </span>
+                      <span className="mt-1 block text-[0.64rem] text-muted">
+                        {configuracaoDaMeta(meta.tipo).automatico
+                          ? "recalculada ao encerrar"
+                          : "controle manual no roadmap"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </aside>
 
         <main className="flex min-w-0 flex-col gap-5">
@@ -466,7 +523,7 @@ export function SessaoGuiada({
             </div>
             <label className="mt-5 flex flex-col gap-1.5 text-[0.78rem] font-semibold text-muted">O que ficou claro?<textarea value={resumo} onChange={(evento) => setResumo(evento.target.value)} maxLength={4000} rows={4} placeholder="Escreva com suas palavras o principal aprendizado…" className="rounded-[12px] border border-hairline px-3.5 py-3 text-[0.88rem] font-normal text-ink outline-none focus:border-brand-300" /></label>
             <label className="mt-4 flex flex-col gap-1.5 text-[0.78rem] font-semibold text-muted">O que ficou pendente?<textarea value={pendencias} onChange={(evento) => setPendencias(evento.target.value)} maxLength={4000} rows={3} placeholder="Dúvida, leitura ou exercício que deve voltar depois…" className="rounded-[12px] border border-hairline px-3.5 py-3 text-[0.88rem] font-normal text-ink outline-none focus:border-brand-300" /></label>
-            <label className="mt-4 flex items-start gap-3 rounded-[13px] border border-brand-200 bg-brand-50 p-4 text-[0.84rem] font-semibold text-brand-800"><input type="checkbox" checked={concluirBloco} onChange={(evento) => setConcluirBloco(evento.target.checked)} className="mt-0.5 h-4 w-4 accent-brand-600" /><span>Concluir este bloco no roadmap<small className="mt-1 block font-normal text-brand-700">Desmarcado, ele continua “em andamento” com todo o registro preservado.</small></span></label>
+            <label className="mt-4 flex items-start gap-3 rounded-[13px] border border-brand-200 bg-brand-50 p-4 text-[0.84rem] font-semibold text-brand-800"><input type="checkbox" checked={concluirBloco} onChange={(evento) => setConcluirBloco(evento.target.checked)} className="mt-0.5 h-4 w-4 accent-brand-600" /><span>Concluir este bloco no roadmap<small className="mt-1 block font-normal text-brand-700">{metasPendentes > 0 ? `${metasPendentes} ${metasPendentes === 1 ? "meta ainda está pendente" : "metas ainda estão pendentes"}. A conclusão manual continua disponível.` : "Desmarcado, ele continua “em andamento” com todo o registro preservado."}</small></span></label>
             <div className="mt-6 flex flex-wrap justify-end gap-2"><button type="button" onClick={() => setFechamento(false)} disabled={ocupado} className="rounded-full border border-hairline px-5 py-2.5 text-[0.84rem] font-semibold text-muted">Continuar estudando</button><button type="button" onClick={() => void encerrar()} disabled={ocupado} className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.84rem] font-semibold text-white disabled:opacity-50">{ocupado ? "Registrando…" : "Encerrar sessão"}</button></div>
           </section>
         </div>

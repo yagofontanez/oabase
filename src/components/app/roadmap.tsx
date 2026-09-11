@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { MetasDoBloco } from "@/components/app/metas-do-bloco";
 import { ReplanejadorRoadmap } from "@/components/app/replanejador-roadmap";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
 import {
@@ -9,6 +10,10 @@ import {
   TextoLegalDestacado,
 } from "@/components/texto-legal-destacado";
 import type { DestaqueLeiSeca } from "@/lib/caderno-lei-seca";
+import type {
+  MetaDoRoadmap,
+  ResumoDeMetasDoBloco,
+} from "@/lib/metas-roadmap";
 import type { DiagnosticoDoReplanejamento } from "@/lib/replanejamento";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import type { EstadoDoRoadmap, ItemRoadmap } from "@/lib/roadmap";
@@ -37,6 +42,8 @@ export function Roadmap({
   disciplinaSlug,
   diagnosticoReplanejamento,
   versao,
+  metasIniciais,
+  progressoMetasInicial,
 }: {
   itensIniciais: ItemRoadmap[];
   ativoId: string;
@@ -46,8 +53,11 @@ export function Roadmap({
   disciplinaSlug: string | null;
   diagnosticoReplanejamento: DiagnosticoDoReplanejamento;
   versao: number;
+  metasIniciais: MetaDoRoadmap[];
+  progressoMetasInicial: Record<string, ResumoDeMetasDoBloco>;
 }) {
   const [itens, setItens] = useState(itensIniciais);
+  const [progressoMetas, setProgressoMetas] = useState(progressoMetasInicial);
   const ativo = itens.find((item) => item.id === ativoId) ?? itens[0];
   const [anotacao, setAnotacao] = useState(ativo?.anotacao ?? "");
   const [salvando, setSalvando] = useState(false);
@@ -154,19 +164,30 @@ export function Roadmap({
                     <span className="text-[0.72rem] text-muted">{feitos}/{daSemana.length}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    {daSemana.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/app/roadmap?item=${item.id}`}
-                        className={`flex items-start gap-2.5 rounded-[10px] px-2.5 py-2.5 transition-colors ${item.id === ativo.id ? "bg-brand-50 text-brand-800" : "text-body hover:bg-paper"}`}
-                      >
-                        <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.estado === "concluido" ? "bg-brand-500" : item.estado === "em_andamento" ? "bg-ouro-400" : "bg-hairline"}`} />
-                        <span className="min-w-0">
-                          <span className="block truncate text-[0.84rem] font-semibold">{item.disciplina}</span>
-                          <span className="line-clamp-2 text-[0.75rem] leading-snug text-muted">{item.objetivo}</span>
-                        </span>
-                      </Link>
-                    ))}
+                    {daSemana.map((item) => {
+                      const metas = progressoMetas[item.id];
+                      return (
+                        <Link
+                          key={item.id}
+                          href={`/app/roadmap?item=${item.id}`}
+                          className={`flex items-start gap-2.5 rounded-[10px] px-2.5 py-2.5 transition-colors ${item.id === ativo.id ? "bg-brand-50 text-brand-800" : "text-body hover:bg-paper"}`}
+                        >
+                          <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.estado === "concluido" ? "bg-brand-500" : item.estado === "em_andamento" ? "bg-ouro-400" : "bg-hairline"}`} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[0.84rem] font-semibold">{item.disciplina}</span>
+                            <span className="line-clamp-2 text-[0.75rem] leading-snug text-muted">{item.objetivo}</span>
+                            {metas && (
+                              <span className="mt-1.5 flex items-center gap-2 text-[0.66rem] font-semibold text-brand-700">
+                                <span className="h-1 flex-1 overflow-hidden rounded-full bg-brand-100">
+                                  <span className="block h-full rounded-full bg-brand-500" style={{ width: `${metas.percentual}%` }} />
+                                </span>
+                                {metas.percentual}%
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </section>
               );
@@ -231,6 +252,21 @@ export function Roadmap({
               </div>
             </div>
           </section>
+
+          <MetasDoBloco
+            roadmapItemId={ativo.id}
+            metasIniciais={metasIniciais}
+            aoAtualizarResumo={(resumo) =>
+              setProgressoMetas((atuais) => {
+                if (!resumo) {
+                  const proximos = { ...atuais };
+                  delete proximos[ativo.id];
+                  return proximos;
+                }
+                return { ...atuais, [ativo.id]: resumo };
+              })
+            }
+          />
 
           <section className="grid gap-5 lg:grid-cols-2">
             <div className="superficie p-5 sm:p-6">

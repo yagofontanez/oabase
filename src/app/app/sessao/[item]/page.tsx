@@ -4,6 +4,7 @@ import { SessaoGuiada, type MaterialDaSessao } from "@/components/app/sessao-gui
 import type { QuestaoDaFila } from "@/components/app/resolvedor";
 import { memoriasDosArtigos } from "@/lib/caderno-lei-seca-servidor";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
+import { metaDaLinha } from "@/lib/metas-roadmap";
 import { minutosDaSessao, type SessaoEmAndamento } from "@/lib/sessao-estudo";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 
@@ -71,7 +72,16 @@ export default async function SessaoPage({
   if (!bloco) notFound();
 
   const disciplina = disciplinas.find((entrada) => entrada.nome === bloco.disciplina);
-  const artigos = disciplina ? await getArtigosDaDisciplina(disciplina.slug, 4) : [];
+  const [artigos, metasRes] = await Promise.all([
+    disciplina ? getArtigosDaDisciplina(disciplina.slug, 4) : Promise.resolve([]),
+    supabase.rpc("metas_do_bloco", { p_roadmap_item_id: bloco.id }),
+  ]);
+  if (metasRes.error) {
+    throw new Error(`Não foi possível carregar as metas: ${metasRes.error.message}`);
+  }
+  const metas = ((metasRes.data ?? []) as Record<string, unknown>[]).map(
+    metaDaLinha,
+  );
   const siglas = new Map(leis.map((lei) => [lei.slug, lei.sigla]));
   const memorias = await memoriasDosArtigos(
     artigos.map((artigo) => ({
@@ -143,6 +153,7 @@ export default async function SessaoPage({
       materiais={materiais}
       questoes={questoes}
       minutosIniciais={minutos}
+      metas={metas}
       sessaoInicial={sessaoInicial}
       outraSessaoItemId={
         linha && linha.roadmap_item_id !== bloco.id ? linha.roadmap_item_id : null

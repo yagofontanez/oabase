@@ -202,6 +202,13 @@ Regras:
 
 ## 9. Metas personalizadas por bloco
 
+**Status: entregue em setembro de 2026.** Cada bloco aceita metas de leitura,
+questões, tempo de foco, resumos, revisão de anotações e um checklist próprio
+de subtópicos. As quatro primeiras avançam somente pelas evidências das
+sessões guiadas; as demais deixam explícito o controle manual. O progresso
+aparece no bloco, no trilho lateral, durante a sessão e no PDF. Ao replanejar,
+as metas e o progresso acumulado acompanham o bloco correspondente.
+
 Além do estado do bloco, permitir definir um resultado verificável:
 
 - ler determinada quantidade de artigos;

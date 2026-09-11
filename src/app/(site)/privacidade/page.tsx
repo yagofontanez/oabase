@@ -86,7 +86,9 @@ const secoes: Secao[] = [
           guardamos os trechos destacados, notas, marcações de leitura,
           favoritos e datas de revisão que você escolher. Nos flashcards,
           guardamos a frente, o verso, a fonte vinculada e o histórico das
-          avaliações usadas para calcular o próximo intervalo.
+          avaliações usadas para calcular o próximo intervalo. Nas metas do
+          roadmap, guardamos os alvos, o progresso calculado e os subtópicos
+          que você criar ou marcar manualmente.
         </P>
         <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso

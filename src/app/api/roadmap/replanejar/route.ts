@@ -148,27 +148,53 @@ export async function POST(request: Request) {
 
   const agora = new Date().toISOString();
   const novaVersao = registro.versao_roadmap + 1;
-  const { error: erroNovosItens } = await supabase.from("roadmap_itens").upsert(
-    proposta.itens.map((item) => ({
-      user_id: user.id,
-      versao: novaVersao,
-      semana: item.semana,
-      ordem: item.ordem,
-      disciplina: item.disciplina,
-      objetivo: item.objetivo,
-      horas: item.horas,
-      estado: item.estado,
-      anotacao: item.anotacao,
-      iniciado_em: item.iniciadoEm,
-      concluido_em: item.concluidoEm,
-      atualizado_em: agora,
-    })),
-    { onConflict: "user_id,versao,semana,ordem" },
-  );
+  const { data: novosItens, error: erroNovosItens } = await supabase
+    .from("roadmap_itens")
+    .upsert(
+      proposta.itens.map((item) => ({
+        user_id: user.id,
+        versao: novaVersao,
+        semana: item.semana,
+        ordem: item.ordem,
+        disciplina: item.disciplina,
+        objetivo: item.objetivo,
+        horas: item.horas,
+        estado: item.estado,
+        anotacao: item.anotacao,
+        iniciado_em: item.iniciadoEm,
+        concluido_em: item.concluidoEm,
+        atualizado_em: agora,
+      })),
+      { onConflict: "user_id,versao,semana,ordem" },
+    )
+    .select("id, semana, ordem");
   if (erroNovosItens) {
     console.error("Falha ao gravar proposta de replanejamento:", erroNovosItens);
     return NextResponse.json(
       { erro: "Não consegui criar a nova versão do roadmap." },
+      { status: 500 },
+    );
+  }
+
+  const idsNovos = new Map(
+    (novosItens ?? []).map((item) => [
+      `${item.semana}:${item.ordem}`,
+      item.id,
+    ]),
+  );
+  const mapeamentos = proposta.itens.flatMap((item) => {
+    const destinoId = idsNovos.get(`${item.semana}:${item.ordem}`);
+    return item.origemItemId && destinoId
+      ? [{ origem_id: item.origemItemId, destino_id: destinoId }]
+      : [];
+  });
+  const { error: erroMetas } = await supabase.rpc("copiar_metas_roadmap", {
+    p_mapeamentos: mapeamentos,
+  });
+  if (erroMetas) {
+    console.error("Falha ao preservar metas no replanejamento:", erroMetas);
+    return NextResponse.json(
+      { erro: "Não consegui preservar as metas na nova versão do roadmap." },
       { status: 500 },
     );
   }

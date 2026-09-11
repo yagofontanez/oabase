@@ -2,6 +2,7 @@ import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import type { Plano } from "@/lib/ia/plano";
+import { metaDaLinha, type MetaDoRoadmap } from "@/lib/metas-roadmap";
 import type { EstadoDoRoadmap, ItemRoadmap } from "@/lib/roadmap";
 import { site } from "@/lib/site";
 
@@ -103,14 +104,27 @@ export async function GET() {
     return new Response("Monte um plano antes de baixar o PDF.", { status: 404 });
   }
   const plano = registro.plano as Plano;
-  const { data, error: erroRoadmap } = await supabase
-    .from("roadmap_itens")
-    .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
-    .eq("versao", registro.versao_roadmap)
-    .order("semana")
-    .order("ordem");
-  if (erroRoadmap) return new Response("Não consegui ler o roadmap.", { status: 500 });
-  const roadmap = (data ?? []) as ItemRoadmap[];
+  const [roadmapRes, metasRes] = await Promise.all([
+    supabase
+      .from("roadmap_itens")
+      .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
+      .eq("versao", registro.versao_roadmap)
+      .order("semana")
+      .order("ordem"),
+    supabase.rpc("metas_do_roadmap", { p_versao: registro.versao_roadmap }),
+  ]);
+  if (roadmapRes.error || metasRes.error) {
+    return new Response("Não consegui ler o roadmap.", { status: 500 });
+  }
+  const roadmap = (roadmapRes.data ?? []) as ItemRoadmap[];
+  const metasPorBloco = new Map<string, MetaDoRoadmap[]>();
+  for (const linha of (metasRes.data ?? []) as Record<string, unknown>[]) {
+    const itemId = String(linha.roadmap_item_id);
+    metasPorBloco.set(itemId, [
+      ...(metasPorBloco.get(itemId) ?? []),
+      metaDaLinha(linha),
+    ]);
+  }
 
   // Um caderno por disciplina, sem repetir o mesmo material em toda semana.
   // Questões vêm da função protegida: não há gabarito entre as colunas.
@@ -300,11 +314,24 @@ export async function GET() {
       for (const [ordem, bloco] of semana.blocos.entries()) {
         const item = roadmap.find((atual) => atual.semana === semana.numero && atual.ordem === ordem);
         const estadoAtual = item?.estado ?? "a_estudar";
+        const metas = item ? metasPorBloco.get(item.id) ?? [] : [];
         const objetivo = quebrar(bloco.objetivo, regular, 9, larguraBarra - 110);
         const anotacao = item?.anotacao?.trim()
           ? quebrar(`Anotação: ${item.anotacao}`, regular, 8, larguraBarra - 22)
           : [];
-        const alturaBloco = 34 + objetivo.length * 13 + anotacao.length * 11;
+        const resumoMetas = metas.length
+          ? quebrar(
+              `Metas: ${metas.filter((meta) => meta.progresso >= meta.alvo).length}/${metas.length} concluídas`,
+              negrito,
+              8,
+              larguraBarra - 22,
+            )
+          : [];
+        const alturaBloco =
+          34 +
+          objetivo.length * 13 +
+          anotacao.length * 11 +
+          resumoMetas.length * 11;
         if (y - alturaBloco < A4.margem) novaPagina();
         pagina.drawRectangle({ x: A4.margem, y: y - alturaBloco + 4, width: larguraBarra, height: alturaBloco, color: rgb(0.965, 0.976, 0.969) });
         pagina.drawText(textoSeguro(bloco.disciplina, negrito), { x: A4.margem + 11, y: y - 13, size: 10, font: negrito, color: tinta });
@@ -321,6 +348,20 @@ export async function GET() {
             color: verde,
           });
         });
+        resumoMetas.forEach((linha, indice) => {
+          pagina.drawText(linha, {
+            x: A4.margem + 11,
+            y:
+              y -
+              30 -
+              objetivo.length * 13 -
+              anotacao.length * 11 -
+              indice * 11,
+            size: 8,
+            font: negrito,
+            color: ouro,
+          });
+        });
         pagina.drawText(estado(estadoAtual), {
           x: A4.largura - A4.margem - 88,
           y: y - alturaBloco + 14,
@@ -331,6 +372,51 @@ export async function GET() {
         y -= alturaBloco + 7;
       }
       y -= 10;
+    }
+
+    if (metasPorBloco.size > 0) {
+      tituloDeSecao(
+        "Metas verificáveis",
+        "O progresso abaixo foi calculado com as evidências registradas no OABase. Checklists e revisão de anotações permanecem sob controle manual.",
+      );
+      for (const item of roadmap) {
+        const metas = metasPorBloco.get(item.id) ?? [];
+        if (metas.length === 0) continue;
+        if (y < 120) novaPagina();
+        escreverTexto(
+          `SEMANA ${item.semana}  |  ${item.disciplina}`,
+          negrito,
+          8,
+          ouro,
+        );
+        escreverTexto(item.objetivo, negrito, 12, tinta, undefined, 5);
+        y -= 7;
+        for (const meta of metas) {
+          const concluida = meta.progresso >= meta.alvo;
+          escreverTexto(
+            `${concluida ? "[x]" : "[ ]"} ${meta.titulo} - ${meta.progresso}/${meta.alvo}`,
+            negrito,
+            9,
+            concluida ? verde : tinta,
+            undefined,
+            4,
+            8,
+          );
+          for (const subtopico of meta.subtopicos) {
+            escreverTexto(
+              `   ${subtopico.concluido ? "[x]" : "[ ]"} ${subtopico.texto}`,
+              regular,
+              8.5,
+              subtopico.concluido ? verde : cinza,
+              undefined,
+              4,
+              14,
+            );
+          }
+          y -= 4;
+        }
+        y -= 14;
+      }
     }
 
     tituloDeSecao(

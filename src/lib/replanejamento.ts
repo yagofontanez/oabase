@@ -25,6 +25,7 @@ export type DiagnosticoDoReplanejamento = {
 };
 
 export type ItemProposto = {
+  origemItemId: string | null;
   semana: number;
   ordem: number;
   disciplina: string;
@@ -247,6 +248,7 @@ export function montarPropostaDeReplanejamento({
       }
       const horasDaParte = arredondar(Math.min(horasRestantes, capacidade));
       partes.push({
+        origemItemId: partes.length === 0 ? item.id : null,
         semana,
         ordem: proximaOrdem(semana),
         disciplina: item.disciplina,
@@ -280,6 +282,7 @@ export function montarPropostaDeReplanejamento({
   // capacidade futura. A versão anterior também permanece intacta no banco.
   for (const item of concluidos) {
     propostos.push({
+      origemItemId: item.id,
       semana: 1,
       ordem: proximaOrdem(1),
       disciplina: item.disciplina,

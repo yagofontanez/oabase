@@ -11,6 +11,10 @@ import {
 } from "@/lib/content/queries";
 import type { ContextoSalvoDoPlano, Plano } from "@/lib/ia/plano";
 import {
+  metaDaLinha,
+  type ResumoDeMetasDoBloco,
+} from "@/lib/metas-roadmap";
+import {
   diagnosticarReplanejamento,
   type ItemParaReplanejar,
 } from "@/lib/replanejamento";
@@ -122,9 +126,33 @@ export default async function RoadmapPage({
     prazo,
   });
   const siglas = new Map(leis.map((lei) => [lei.slug, lei.sigla]));
-  const artigosDaDisciplina = disciplina
-    ? await getArtigosDaDisciplina(disciplina.slug, 3)
-    : [];
+  const [artigosDaDisciplina, metasRes, resumosMetasRes] = await Promise.all([
+    disciplina
+      ? getArtigosDaDisciplina(disciplina.slug, 3)
+      : Promise.resolve([]),
+    supabase.rpc("metas_do_bloco", { p_roadmap_item_id: ativo.id }),
+    supabase.rpc("progresso_metas_roadmap", {
+      p_versao: registro.versao_roadmap,
+    }),
+  ]);
+  if (metasRes.error || resumosMetasRes.error) {
+    throw new Error(
+      `Não foi possível carregar as metas: ${metasRes.error?.message ?? resumosMetasRes.error?.message}`,
+    );
+  }
+  const metas = ((metasRes.data ?? []) as Record<string, unknown>[]).map(
+    metaDaLinha,
+  );
+  const progressoMetas = Object.fromEntries(
+    ((resumosMetasRes.data ?? []) as Record<string, unknown>[]).map((linha) => [
+      String(linha.roadmap_item_id),
+      {
+        total: Number(linha.metas_total),
+        concluidas: Number(linha.metas_concluidas),
+        percentual: Number(linha.percentual),
+      } satisfies ResumoDeMetasDoBloco,
+    ]),
+  );
   const memorias = await memoriasDosArtigos(
     artigosDaDisciplina.map((artigo) => ({
       leiSlug: artigo.leiSlug,
@@ -185,6 +213,8 @@ export default async function RoadmapPage({
       disciplinaSlug={disciplina?.slug ?? null}
       diagnosticoReplanejamento={diagnosticoReplanejamento}
       versao={registro.versao_roadmap}
+      metasIniciais={metas}
+      progressoMetasInicial={progressoMetas}
     />
   );
 }
