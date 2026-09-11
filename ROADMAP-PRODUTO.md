@@ -244,6 +244,14 @@ recomendação.
 
 ## 11. Compartilhamento com professor ou grupo
 
+**Status: entregue em setembro de 2026.** A pessoa gera em
+`/app/roadmap/compartilhar` um link privado, somente para leitura, com validade
+e revogação imediata. A versão atual do roteiro é fixada no acesso; progresso,
+anotações e revisões têm consentimentos separados, com conteúdo privado oculto
+por padrão. O token puro aparece uma única vez e o banco guarda somente seu
+hash. A página compartilhada não identifica a conta, não entra no sitemap e
+recebe `noindex`, `nofollow`, `noarchive` e política sem referência.
+
 Permitir gerar um link privado e revogável, inicialmente somente para leitura,
 com:
 

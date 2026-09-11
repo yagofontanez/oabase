@@ -93,6 +93,15 @@ const secoes: Secao[] = [
           possa consultar a evolução do planejamento.
         </P>
         <P>
+          <strong>Ao compartilhar um roadmap:</strong> você escolhe a validade
+          do link e, separadamente, quais anotações e revisões semanais deseja
+          mostrar. O roteiro e o progresso só ficam disponíveis a quem possuir
+          o endereço secreto; nome, e-mail e os demais dados da conta não são
+          incluídos. Guardamos apenas o hash do token, além das escolhas de
+          compartilhamento, contagem e data da última abertura. Você pode
+          revogar o acesso a qualquer momento.
+        </P>
+        <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso
           gerados pela hospedagem, mantidos por prazo legal. O Marco Civil da
           Internet (art. 15) obriga a guarda dos registros de acesso a

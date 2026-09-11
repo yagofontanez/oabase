@@ -125,6 +125,9 @@ export function Roadmap({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link href="/app/roadmap/compartilhar" className="rounded-full border border-hairline bg-surface px-4 py-2 text-[0.84rem] font-semibold text-ink hover:border-brand-300 hover:text-brand-700">
+            Compartilhar
+          </Link>
           <Link href="/app/roadmap/historico" className="rounded-full border border-hairline bg-surface px-4 py-2 text-[0.84rem] font-semibold text-ink hover:border-brand-300 hover:text-brand-700">
             Ver histórico
           </Link>
