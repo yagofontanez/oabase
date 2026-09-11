@@ -182,6 +182,13 @@ bloco ou relacionado a uma questão respondida.
 
 ## 8. Flashcards vinculados à fonte
 
+**Status: entregue em setembro de 2026.** `/app/flashcards` reúne criação,
+biblioteca e sessão de revisão com quatro níveis de lembrança. Destaques do
+Caderno de Lei Seca e enunciados de súmula viram cartões sem perder o link
+para a fonte; cartões livres aparecem como anotação pessoal. O banco valida o
+trecho oficial, calcula o próximo intervalo, preserva o histórico e coloca os
+cartões vencidos na agenda de `/app/hoje`.
+
 Criar revisão espaçada de cartões sem gerar afirmações jurídicas livres por
 IA.
 

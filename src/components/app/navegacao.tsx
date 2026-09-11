@@ -70,6 +70,17 @@ const ITENS = [
     ),
   },
   {
+    href: "/app/flashcards",
+    rotulo: "Flashcards",
+    icone: (
+      <>
+        <rect x="4" y="5" width="14" height="15" rx="2" />
+        <path d="M8 5V3.5A1.5 1.5 0 0 1 9.5 2H19a1.5 1.5 0 0 1 1.5 1.5V16A1.5 1.5 0 0 1 19 17.5h-1" />
+        <path d="M8 10h6M8 14h4" />
+      </>
+    ),
+  },
+  {
     href: "/app/simulado",
     rotulo: "Simulado",
     icone: (
@@ -220,6 +231,7 @@ const GRUPOS = [
       "/app/estudar",
       "/app/questoes",
       "/app/lei-seca",
+      "/app/flashcards",
       "/app/simulado",
     ),
   },

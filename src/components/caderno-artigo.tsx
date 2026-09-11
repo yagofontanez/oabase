@@ -255,12 +255,20 @@ export function CadernoDoArtigo({
                 Selecione um trecho do texto acima para destacá-lo.
               </p>
             </div>
-            <Link
-              href="/app/lei-seca"
-              className="text-[0.76rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4"
-            >
-              Abrir caderno completo →
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={`/app/flashcards?artigo=${encodeURIComponent(`${leiSlug}/${artigoSlug}`)}`}
+                className="text-[0.76rem] font-semibold text-ouro-700 underline decoration-ouro-200 underline-offset-4"
+              >
+                Criar flashcard →
+              </Link>
+              <Link
+                href="/app/lei-seca"
+                className="text-[0.76rem] font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4"
+              >
+                Abrir caderno completo →
+              </Link>
+            </div>
           </div>
 
           {selecao && (
@@ -404,15 +412,23 @@ export function CadernoDoArtigo({
                     <p className="line-clamp-3 flex-1 text-[0.74rem] leading-relaxed text-body">
                       “{destaque.trecho}”
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => void removerDestaque(destaque)}
-                      disabled={salvando}
-                      className="shrink-0 text-[0.68rem] font-semibold text-vinho-600"
-                      aria-label={`Remover destaque: ${destaque.trecho.slice(0, 40)}`}
-                    >
-                      remover
-                    </button>
+                    <span className="flex shrink-0 flex-col items-end gap-1.5">
+                      <Link
+                        href={`/app/flashcards?artigo=${encodeURIComponent(`${leiSlug}/${artigoSlug}`)}&trecho=${encodeURIComponent(destaque.trecho)}`}
+                        className="text-[0.68rem] font-semibold text-brand-700"
+                      >
+                        virar cartão
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => void removerDestaque(destaque)}
+                        disabled={salvando}
+                        className="text-[0.68rem] font-semibold text-vinho-600"
+                        aria-label={`Remover destaque: ${destaque.trecho.slice(0, 40)}`}
+                      >
+                        remover
+                      </button>
+                    </span>
                   </div>
                 ))}
               </div>

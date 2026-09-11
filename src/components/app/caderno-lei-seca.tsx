@@ -229,12 +229,20 @@ export function CadernoLeiSeca({
                           Importante para: <strong>{item.importantePara}</strong>
                         </p>
                       )}
-                      <Link
-                        href={`/legislacao/${item.leiSlug}/${item.artigoSlug}`}
-                        className="mt-5 self-start rounded-full border border-brand-200 px-4 py-2 text-[0.76rem] font-semibold text-brand-700 hover:bg-brand-50"
-                      >
-                        {revisarAgora ? "Revisar artigo agora →" : "Abrir e editar →"}
-                      </Link>
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <Link
+                          href={`/legislacao/${item.leiSlug}/${item.artigoSlug}`}
+                          className="rounded-full border border-brand-200 px-4 py-2 text-[0.76rem] font-semibold text-brand-700 hover:bg-brand-50"
+                        >
+                          {revisarAgora ? "Revisar artigo agora →" : "Abrir e editar →"}
+                        </Link>
+                        <Link
+                          href={`/app/flashcards?artigo=${encodeURIComponent(`${item.leiSlug}/${item.artigoSlug}`)}`}
+                          className="rounded-full bg-brand-50 px-4 py-2 text-[0.76rem] font-semibold text-brand-700 hover:bg-brand-100"
+                        >
+                          Criar flashcard
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 );

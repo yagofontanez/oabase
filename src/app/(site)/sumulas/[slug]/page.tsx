@@ -115,6 +115,13 @@ export default async function SumulaPage({ params }: Props) {
           <p>{sumula.texto}</p>
         </blockquote>
 
+        <Link
+          href={`/app/flashcards?sumula=${sumula.slug}&trecho=${encodeURIComponent(sumula.texto)}`}
+          className="-mt-5 self-start rounded-full border border-brand-200 bg-brand-50 px-4 py-2.5 text-[0.8rem] font-semibold text-brand-700"
+        >
+          Criar flashcard desta súmula →
+        </Link>
+
         {sumula.comentario.length > 0 ? (
           <section className="flex flex-col gap-3">
             <h2 className="text-[0.86rem] font-semibold text-muted">

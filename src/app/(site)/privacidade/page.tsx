@@ -84,7 +84,9 @@ const secoes: Secao[] = [
           fechamentos semanais com suas reflexões e compromissos, e as
           anotações e ligações do seu quadro. No caderno de lei seca, também
           guardamos os trechos destacados, notas, marcações de leitura,
-          favoritos e datas de revisão que você escolher.
+          favoritos e datas de revisão que você escolher. Nos flashcards,
+          guardamos a frente, o verso, a fonte vinculada e o histórico das
+          avaliações usadas para calcular o próximo intervalo.
         </P>
         <P>
           <strong>Dados técnicos:</strong> endereço IP e registros de acesso

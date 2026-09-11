@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AcoesSessaoHoje } from "@/components/app/acoes-sessao-hoje";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
+import { hojeEmBrasilia } from "@/lib/calendario";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
 import type { ContextoSalvoDoPlano, Plano } from "@/lib/ia/plano";
 import type { ItemRoadmap } from "@/lib/roadmap";
@@ -29,6 +30,7 @@ const COLUNAS_ETAPAS: Record<number, string> = {
   1: "lg:grid-cols-1",
   2: "lg:grid-cols-2",
   3: "lg:grid-cols-3",
+  4: "lg:grid-cols-2 xl:grid-cols-4",
 };
 
 function paraQuestao(linha: LinhaQuestao): QuestaoDaFila {
@@ -54,27 +56,48 @@ function limitarMinutos(valor: string | undefined) {
 
 function distribuirTempo(
   total: number,
-  opcoes: { revisao: boolean; leitura: boolean; questoes: boolean; execucao: boolean },
+  opcoes: {
+    flashcards: boolean;
+    revisao: boolean;
+    leitura: boolean;
+    questoes: boolean;
+    execucao: boolean;
+  },
 ) {
   const quantidade =
     Number(opcoes.revisao) +
     Number(opcoes.leitura) +
     Number(opcoes.questoes) +
     Number(opcoes.execucao);
-  if (quantidade === 0) return { revisao: 0, leitura: 0, questoes: 0, execucao: total };
+  if (quantidade === 0) {
+    return {
+      flashcards: opcoes.flashcards ? total : 0,
+      revisao: 0,
+      leitura: 0,
+      questoes: 0,
+      execucao: opcoes.flashcards ? 0 : total,
+    };
+  }
+  const flashcards = opcoes.flashcards
+    ? Math.min(10, Math.max(5, Math.round(total * 0.15)))
+    : 0;
+  const disponivel = total - flashcards;
   if (quantidade === 1) {
     return {
-      revisao: opcoes.revisao ? total : 0,
-      leitura: opcoes.leitura ? total : 0,
-      questoes: opcoes.questoes ? total : 0,
-      execucao: opcoes.execucao ? total : 0,
+      flashcards,
+      revisao: opcoes.revisao ? disponivel : 0,
+      leitura: opcoes.leitura ? disponivel : 0,
+      questoes: opcoes.questoes ? disponivel : 0,
+      execucao: opcoes.execucao ? disponivel : 0,
     };
   }
 
-  const revisao = opcoes.revisao ? Math.min(10, Math.max(5, Math.round(total * 0.125))) : 0;
-  const restante = total - revisao;
+  const revisao = opcoes.revisao
+    ? Math.min(10, Math.max(5, Math.round(disponivel * 0.125)))
+    : 0;
+  const restante = disponivel - revisao;
   if (opcoes.execucao) {
-    return { revisao, leitura: 0, questoes: 0, execucao: restante };
+    return { flashcards, revisao, leitura: 0, questoes: 0, execucao: restante };
   }
   let leitura = 0;
   let questoes = 0;
@@ -90,7 +113,7 @@ function distribuirTempo(
   } else {
     questoes = restante;
   }
-  return { revisao, leitura, questoes, execucao: 0 };
+  return { flashcards, revisao, leitura, questoes, execucao: 0 };
 }
 
 function quantidadeDeQuestoes(minutos: number, disponiveis: number) {
@@ -105,14 +128,27 @@ export default async function HojePage({
 }) {
   const { minutos: minutosBrutos } = await searchParams;
   const minutos = limitarMinutos(minutosBrutos);
+  const hoje = hojeEmBrasilia();
   const supabase = await supabaseServidor();
 
-  const [registroRes, disciplinas, leis, assinaturaRes, desempenhoRes] = await Promise.all([
+  const [
+    registroRes,
+    disciplinas,
+    leis,
+    assinaturaRes,
+    desempenhoRes,
+    flashcardsRes,
+  ] = await Promise.all([
     supabase.from("planos_estudo").select("plano, versao_roadmap, contexto").maybeSingle(),
     getDisciplinas(),
     getLeis(),
     supabase.from("assinaturas").select("plano").eq("status", "ativa").limit(1),
     supabase.rpc("meu_desempenho"),
+    supabase
+      .from("flashcards")
+      .select("id", { count: "exact", head: true })
+      .eq("suspenso", false)
+      .lte("proxima_revisao", hoje),
   ]);
   const registro = registroRes.data;
   const plano = (registro?.plano as Plano | null) ?? null;
@@ -157,7 +193,9 @@ export default async function HojePage({
   const exigeMaterialExterno = Boolean(
     ativo && !disciplina && artigos.length === 0 && novasDisponiveis.length === 0,
   );
+  const flashcardsVencidos = flashcardsRes.count ?? 0;
   const distribuicao = distribuirTempo(minutos, {
+    flashcards: flashcardsVencidos > 0,
     revisao: revisoesDisponiveis.length > 0,
     leitura: artigos.length > 0,
     questoes: novasDisponiveis.length > 0,
@@ -188,6 +226,14 @@ export default async function HojePage({
     timeZone: "America/Sao_Paulo",
   }).format(new Date());
   const etapas = [
+    distribuicao.flashcards > 0
+      ? {
+          titulo: "Flashcards vencidos",
+          minutos: distribuicao.flashcards,
+          detalhe: `${flashcardsVencidos} ${flashcardsVencidos === 1 ? "cartão aguardando" : "cartões aguardando"} na revisão espaçada`,
+          href: "/app/flashcards?modo=revisao",
+        }
+      : null,
     distribuicao.revisao > 0
       ? {
           titulo: "Revisão vencida",
@@ -284,9 +330,10 @@ export default async function HojePage({
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Resumo da sessão">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Resumo da sessão">
         {[
           [ativo ? `Semana ${ativo.semana}` : "—", "próximo bloco"],
+          [String(flashcardsVencidos), "flashcards vencidos"],
           [String(revisoesVencidas), "revisões vencidas"],
           [String(questoes.length), "questões nesta sessão"],
           [String(artigos.length), "leituras indicadas"],
