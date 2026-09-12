@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "fronteira": "node --env-file=.env.local scripts/fronteira.mjs"
+    "fronteira": "node --env-file=.env.local scripts/fronteira.mjs",
+    "mcp": "tsx src/mcp/server.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "@xyflow/react": "^12.11.6",
@@ -17,7 +19,9 @@
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "unpdf": "^1.8.1"
+    "tsx": "^4.23.13",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@netlify/functions": "^6.0.0",

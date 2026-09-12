@@ -16,6 +16,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## MCP de estudos
+
+O OABase também pode ser conectado a clientes compatíveis com Model Context
+Protocol. O servidor está documentado em [docs/MCP.md](docs/MCP.md) e oferece
+busca de legislação, súmulas, questões, explicações publicadas, progresso e
+sessões de estudo — sem ferramentas administrativas.
+
+```bash
+OABASE_ACCESS_TOKEN=... pnpm mcp
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
