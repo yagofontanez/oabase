@@ -37,6 +37,7 @@ const ESTATICAS: {
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/mcp", priority: 0.6, changeFrequency: "monthly" },
   // `/sobre` é sinal de procedência: conteúdo jurídico é avaliado por quem
   // assina e com base em quê. Prioridade acima das outras institucionais.
   { path: "/sobre", priority: 0.5, changeFrequency: "monthly" },

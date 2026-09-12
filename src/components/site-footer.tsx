@@ -22,6 +22,7 @@ const colunas = [
     titulo: "Produto",
     links: [
       { href: "/precos", label: "Planos" },
+      { href: "/mcp", label: "MCP de estudos" },
       { href: "/criar-conta", label: "Criar conta" },
       { href: "/entrar", label: "Entrar" },
     ],
