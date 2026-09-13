@@ -2,8 +2,8 @@
  * Fonte única dos planos. Consumida pela seção da landing e por /precos —
  * duas listas de preço mantidas à mão divergem na primeira alteração.
  *
- * A estrutura segue o ciclo do exame: a oferta principal não é uma
- * mensalidade perpétua, é acesso até a data da prova.
+ * A estrutura atende tanto o uso contínuo na graduação quanto o ciclo
+ * fechado do Exame de Ordem.
  */
 export type Plano = {
   chave: string;
@@ -25,10 +25,10 @@ export const planos: Plano[] = [
     preco: "R$ 1",
     precoNumerico: 1,
     periodo: "por 7 dias",
-    resumo: "Acesso completo para ver se o método funciona pra você.",
+    resumo: "Acesso completo para montar um plano e experimentar o método.",
     itens: [
-      "Banco de questões completo",
-      "Gabarito oficial da FGV em todas elas",
+      "Roadmap para faculdade ou OAB",
+      "Sessões de foco e revisão",
       "Cancela sozinho, sem cobrança automática",
     ],
     destaque: false,
@@ -41,11 +41,12 @@ export const planos: Plano[] = [
     precoNumerico: 15,
     periodo: "por mês",
     resumo:
-      "Para quem quer entrar barato e decidir depois quanto tempo vai ficar.",
+      "Para acompanhar as provas do semestre ou estudar para a OAB no seu ritmo.",
     itens: [
-      "Banco de questões completo",
+      "Roadmap para qualquer avaliação",
+      "Banco completo de questões da OAB",
       "Caderno de erros automático",
-      "Cronograma até a data do exame",
+      "Calendário e sessões de foco",
       "Cancela quando quiser",
     ],
     destaque: false,
@@ -63,7 +64,7 @@ export const planos: Plano[] = [
       "Simulados cronometrados",
       "Caderno de erros automático",
       "Revisão espaçada",
-      "Cronograma até a data do exame",
+      "Roadmap até a data do exame",
       "Estatísticas de desempenho por disciplina",
     ],
     destaque: true,
@@ -75,10 +76,11 @@ export const planos: Plano[] = [
     preco: "R$ 199",
     precoNumerico: 199,
     periodo: "por 12 meses",
-    resumo: "Para quem vai encarar mais de uma edição — ou prefere folga.",
+    resumo: "Para atravessar o ano letivo e chegar à OAB com todo o histórico junto.",
     itens: [
       "Tudo do plano Até a prova",
-      "Cobre dois exames seguidos",
+      "Planos para as provas da faculdade",
+      "Cobre dois exames da OAB seguidos",
       "Estatísticas de evolução no ano",
     ],
     destaque: false,

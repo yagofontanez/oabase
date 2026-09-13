@@ -4,12 +4,24 @@ import { useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+
+const Alerta = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px] shrink-0" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8v5" />
+    <path d="M12 16.2h.01" />
+  </svg>
+);
+
+const Girando = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] shrink-0 animate-spin" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.2" strokeOpacity="0.3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+  </svg>
+);
+
 const SENHA_MINIMA = 8;
-export function FormularioCriarConta({
-  checkoutAtivo,
-}: {
-  checkoutAtivo: boolean;
-}) {
+export function FormularioCriarConta() {
   const router = useRouter();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -67,12 +79,13 @@ export function FormularioCriarConta({
     );
   }
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={enviar} className="flex flex-col gap-4" noValidate>
       {erro && (
         <p
           role="alert"
-          className="rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
+          className="flex items-start gap-2.5 rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
         >
+          <span className="mt-0.5"><Alerta /></span>
           {erro}
         </p>
       )}
@@ -112,16 +125,16 @@ export function FormularioCriarConta({
       <button
         type="submit"
         disabled={enviando}
-        className="mt-1 rounded-full bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-[0_10px_28px_-14px_rgba(11,98,80,0.9)] transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:shadow-none"
+        aria-busy={enviando}
+        className="mt-1 flex items-center justify-center gap-2.5 rounded-full bg-vinho-600 px-6 py-3.5 font-semibold text-white shadow-[0_10px_28px_-14px_rgba(106,34,57,0.75)] transition-[background-color,transform] active:scale-[0.98] hover:bg-vinho-700 disabled:cursor-not-allowed disabled:bg-vinho-200 disabled:shadow-none disabled:active:scale-100"
       >
+        {enviando && <Girando />}
         {enviando ? "Criando conta…" : "Criar conta"}
       </button>
 
-      <p className="text-[0.82rem] text-muted">
-        Criar conta é grátis. A cobrança só existe quando você escolher um plano
-        {checkoutAtivo
-          ? " — e você tem 7 dias para desistir e receber de volta."
-          : " — e hoje o checkout ainda não está ativo."}
+      <p className="auth-nota-plano text-[0.82rem] text-muted">
+        Criar conta é grátis. Você só paga quando escolher um plano — e tem 7
+        dias para desistir e receber o valor de volta.
       </p>
     </form>
   );

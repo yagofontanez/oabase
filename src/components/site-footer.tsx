@@ -44,7 +44,7 @@ export function SiteFooter() {
           <div className="flex flex-col gap-3">
             <Wordmark />
             <p className="max-w-[32ch] text-[0.92rem] text-muted">
-              {site.tagline}. Estude pelo que a banca realmente cobra.
+              {site.tagline}. Planeje, estude e revise sem perder o fio.
             </p>
           </div>
 

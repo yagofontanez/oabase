@@ -1,10 +1,10 @@
 export const site = {
   name: "OABase",
-  tagline: "Base de estudos para o Exame da Ordem",
+  tagline: "Seu sistema de estudos em Direito",
   // Até 155 caracteres: o buscador trunca por volta de 160, e o que passa
   // disso vira reticência no resultado em vez de argumento para o clique.
   description:
-    "Legislação artigo por artigo, provas anteriores com gabarito oficial da FGV e estatísticas reais do Exame de Ordem. Estude pelo que mais cai.",
+    "Planeje provas da faculdade ou a OAB, registre seu foco e revise com contexto. Legislação oficial e estudo jurídico no mesmo lugar.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://oabase.com.br",
   locale: "pt_BR",
   twitter: "@oabase",

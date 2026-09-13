@@ -1,23 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MolduraAuth } from "@/components/auth/moldura";
-import { diasAte, getProximoExame } from "@/lib/content/queries";
 import { FormularioRecuperar } from "./formulario";
-/* Ver a nota em /entrar: acervo e contagem regressiva envelhecem no build. */
-export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Recuperar senha",
   robots: { index: false, follow: true },
 };
-export default async function RecuperarSenhaPage() {
-  const proximo = await getProximoExame();
+export default function RecuperarSenhaPage() {
   return (
     <MolduraAuth
       eyebrow="Acesso à conta"
       titulo="Redefinir sua senha"
       descricao="Informe o e-mail da conta e enviamos um link para você criar uma senha nova."
-      proximoExame={proximo}
-      dias={diasAte(proximo.data)}
       rodape={
         <>
           Lembrou?{" "}

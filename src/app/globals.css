@@ -206,6 +206,44 @@
     animation: oab-pulso 1.1s ease-in-out infinite;
   }
 
+  /* ---- Mascote nas telas de conta: o único ponto saturado da moldura
+       escura, e por isso o único que se move sozinho — um aceno contínuo
+       e discreto, não uma entrada chamativa. ---- */
+  .mascote-flutua {
+    animation: oab-flutua 4.6s ease-in-out infinite;
+  }
+
+  /* ---- Cenas das telas de acesso. O movimento comunica continuidade no
+       login e construção no cadastro, sem depender de vídeo ou imagem. ---- */
+  .auth-flutua {
+    animation: auth-flutua 5.2s ease-in-out infinite;
+  }
+  .auth-flutua-atrasada {
+    animation: auth-flutua 5.2s 1.1s ease-in-out infinite;
+  }
+  .auth-orbita {
+    border-top-color: rgba(233, 162, 59, 0.58);
+    animation: auth-orbita 18s linear infinite;
+  }
+  .auth-orbita-reversa {
+    animation-direction: reverse;
+    animation-duration: 13s;
+  }
+  .auth-ponto {
+    animation: auth-ponto 2.4s ease-in-out infinite;
+  }
+  .auth-atraso-1 {
+    animation-delay: 0.8s;
+  }
+  .auth-progresso {
+    width: 68%;
+    transform-origin: left;
+    animation: auth-progresso 4.8s ease-in-out infinite;
+  }
+  .auth-pulso-suave {
+    animation: auth-pulso 2.2s ease-in-out infinite;
+  }
+
   /* ---- Tecla: atalho de teclado nas ferramentas de edição.
        Elas são feitas para a mão não sair do teclado, e um atalho que não
        aparece na tela é um atalho que ninguém usa. ---- */
@@ -501,6 +539,64 @@
   }
 }
 
+@keyframes oab-flutua {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes auth-flutua {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.35deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(0.35deg);
+  }
+}
+
+@keyframes auth-orbita {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes auth-ponto {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes auth-progresso {
+  0%,
+  100% {
+    transform: scaleX(0.72);
+  }
+  55% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes auth-pulso {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(233, 162, 59, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(233, 162, 59, 0);
+  }
+}
+
 @keyframes oab-entrada {
   from {
     opacity: 0;
@@ -522,5 +618,22 @@
     animation: none;
     color: var(--color-muted);
     -webkit-text-fill-color: var(--color-muted);
+  }
+}
+
+/* Em notebooks baixos e celulares na horizontal, a tarefa continua inteira
+   no primeiro viewport. As explicações reaparecem assim que há altura; os
+   campos e as ações nunca são cortados para acomodar decoração. */
+@media (max-height: 760px) {
+  .auth-descricao,
+  .auth-nota-plano {
+    display: none;
+  }
+  .auth-conteudo {
+    margin-top: 1rem;
+  }
+  .auth-rodape {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
   }
 }

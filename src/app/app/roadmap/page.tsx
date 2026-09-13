@@ -102,6 +102,9 @@ export default async function RoadmapPage({
   const plano = registro.plano as Plano;
   const contexto = registro.contexto as ContextoSalvoDoPlano | null;
   const prazo = contexto?.modo === "livre" ? contexto.prazo : proximoExame.data;
+  const prazoExcedidoJaAceito =
+    contexto?.ultimoReplanejamento?.versaoAnterior ===
+    registro.versao_roadmap - 1;
   const minutosDeFocoRegistrados = (focoRes.data ?? []).reduce(
     (total, sessao) => total + Number(sessao.minutos),
     0,
@@ -124,6 +127,7 @@ export default async function RoadmapPage({
     atualizadoEm: registro.atualizado_em,
     minutosDeFocoRegistrados,
     prazo,
+    prazoExcedidoJaAceito,
   });
   const siglas = new Map(leis.map((lei) => [lei.slug, lei.sigla]));
   const [artigosDaDisciplina, metasRes, resumosMetasRes] = await Promise.all([

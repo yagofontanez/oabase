@@ -129,6 +129,8 @@ export default function RootLayout({
                 },
                 areaServed: "BR",
                 knowsAbout: [
+                  "Ensino jurídico",
+                  "Graduação em Direito",
                   "Exame de Ordem",
                   "OAB",
                   "Direito brasileiro",

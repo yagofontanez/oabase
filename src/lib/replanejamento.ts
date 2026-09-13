@@ -105,6 +105,7 @@ export function diagnosticarReplanejamento({
   atualizadoEm,
   minutosDeFocoRegistrados,
   prazo,
+  prazoExcedidoJaAceito = false,
   agora,
 }: {
   itens: ItemParaReplanejar[];
@@ -112,6 +113,7 @@ export function diagnosticarReplanejamento({
   atualizadoEm: string;
   minutosDeFocoRegistrados: number;
   prazo: string | null;
+  prazoExcedidoJaAceito?: boolean;
   agora?: Date;
 }): DiagnosticoDoReplanejamento {
   const hoje = hojeEmBrasilia(agora);
@@ -142,7 +144,9 @@ export function diagnosticarReplanejamento({
     semanasAtePrazo !== null && semanasRestantesNoPlano > semanasAtePrazo;
 
   return {
-    sugerido: atrasados.length > 0 || ultrapassaPrazo,
+    sugerido:
+      atrasados.length > 0 ||
+      (ultrapassaPrazo && !prazoExcedidoJaAceito),
     semanaAtual,
     atrasados: atrasados.length,
     emAndamento,
@@ -315,7 +319,7 @@ export function montarPropostaDeReplanejamento({
     diagnostico: `O que ainda falta foi redistribuído em ${semanasNecessarias} ${semanasNecessarias === 1 ? "semana" : "semanas"}, com limite de ${horasPorSemana}h semanais. O progresso já registrado foi preservado.`,
     horasPorSemana,
     semanas,
-    avisos: [...avisos, ...planoAtual.avisos].slice(0, 4),
+    avisos: [...new Set([...avisos, ...planoAtual.avisos])].slice(0, 4),
   };
   const resumoSemanas = semanas.map((item) => {
     const blocos = propostos.filter(
