@@ -81,18 +81,6 @@ function headersCors(origin: string | null): Record<string, string> {
     : {};
 }
 
-function hostPermitido(request: Request) {
-  const permitidos = new Set([
-    URL_MCP.host,
-    new URL(SITE).host,
-    ...(process.env.MCP_ALLOWED_HOSTS ?? "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-  ]);
-  return permitidos.has(new URL(request.url).host);
-}
-
 function consumirLimite(chave: string, quantidade: number) {
   const agora = Date.now();
   if (agora - ultimaLimpeza >= 60_000) {
@@ -154,10 +142,8 @@ export async function responderMcp(request: Request) {
   const requestId = crypto.randomUUID();
   let status = 500;
   try {
-    if (!hostPermitido(request)) {
-      status = 403;
-      return json(status, { erro: "Host não permitido." });
-    }
+    // A Netlify já restringe os hosts associados ao site e pode reescrever o
+    // host interno do Request. URLs OAuth nunca são montadas a partir dele.
     const origem = origemPermitida(request);
     if (origem === false) {
       status = 403;
