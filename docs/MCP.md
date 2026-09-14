@@ -78,11 +78,15 @@ incluem prompts, conteúdo jurídico nem tokens.
 MCP_TRANSPORT=http \
 MCP_HOST=127.0.0.1 \
 MCP_PORT=8787 \
-MCP_PUBLIC_URL=https://mcp.oabase.com.br/mcp \
-MCP_ALLOWED_HOSTS=mcp.oabase.com.br \
+MCP_PUBLIC_URL=https://oabase.com.br/api/mcp \
+MCP_ALLOWED_HOSTS=oabase.com.br \
 MCP_ALLOWED_ORIGINS=https://chatgpt.com,https://claude.ai \
 pnpm mcp
 ```
+
+Na implantação principal da Netlify, a mesma fábrica é servida como Route
+Handler em `https://oabase.com.br/api/mcp`; não é necessário manter um
+processo Node separado. A página explicativa continua em `/mcp`.
 
 O modo HTTP:
 

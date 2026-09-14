@@ -5,6 +5,7 @@ import test from "node:test";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContextoMcp } from "./contexto.js";
+import { responderMcp } from "./http-web.js";
 import { criarServidorMcp } from "./servidor.js";
 
 type Resposta = { data: unknown; error: null };
@@ -254,4 +255,14 @@ test("HTTP publica discovery e rejeita requisição sem identidade", async () =>
       }),
     ]);
   }
+});
+
+test("Route Handler serverless exige OAuth sem iniciar o protocolo", async () => {
+  const resposta = await responderMcp(new Request("https://oabase.com.br/api/mcp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }),
+  }));
+  assert.equal(resposta.status, 401);
+  assert.match(resposta.headers.get("www-authenticate") ?? "", /oauth-protected-resource/);
 });

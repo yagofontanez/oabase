@@ -4,8 +4,8 @@ import {
   type CallToolResult,
 } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import type { ContextoMcp } from "./contexto.js";
-import { falha, falhaDoBanco, sucesso, type ErroDoBanco } from "./respostas.js";
+import type { ContextoMcp } from "./contexto";
+import { falha, falhaDoBanco, sucesso, type ErroDoBanco } from "./respostas";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oabase.com.br";
 const ENTRAR = new URL("/entrar", SITE).toString();
