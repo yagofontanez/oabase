@@ -70,8 +70,13 @@ export function FormularioEntrar() {
     // O destino é lido só agora, do próprio endereço. Usar `useSearchParams`
     // obrigaria um limite de Suspense e tiraria o formulário do HTML inicial
     // — numa tela de login, o campo tem que estar lá antes do JS rodar.
+    const destinoPedido = new URLSearchParams(window.location.search).get("proximo");
+    // `proximo` também preserva o pedido OAuth. Só aceitamos caminho interno:
+    // sem isso, um link de login poderia virar redirecionamento para phishing.
     const proximo =
-      new URLSearchParams(window.location.search).get("proximo") ?? "/app";
+      destinoPedido?.startsWith("/") && !destinoPedido.startsWith("//")
+        ? destinoPedido
+        : "/app";
 
     // `refresh` faz o servidor reler o cookie de sessão antes de navegar.
     router.refresh();

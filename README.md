@@ -20,12 +20,15 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 O OABase também pode ser conectado a clientes compatíveis com Model Context
 Protocol. O servidor está documentado em [docs/MCP.md](docs/MCP.md) e oferece
-busca de legislação, súmulas, questões, explicações publicadas, progresso e
+busca de fontes jurídicas, roadmap, questões, revisões e o ciclo completo de
 sessões de estudo — sem ferramentas administrativas.
 
 ```bash
 OABASE_ACCESS_TOKEN=... pnpm mcp
 ```
+
+O token manual é exclusivo do modo local. O endpoint HTTP usa OAuth 2.1 por
+aluno; configuração, segurança e testes estão descritos no documento.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

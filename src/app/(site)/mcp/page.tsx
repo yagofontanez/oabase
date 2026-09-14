@@ -13,18 +13,25 @@ export const metadata: Metadata = {
 
 const ferramentas = [
   ["buscar_legislacao", "Encontre artigos e súmulas por texto ou número."],
-  ["buscar_sumulas", "Consulte enunciados oficiais com a fonte."],
+  ["buscar_sumulas", "Consulte exclusivamente súmulas oficiais com a fonte."],
   ["buscar_questoes", "Monte uma fila sem revelar o gabarito antes da hora."],
-  ["explicar_questao", "Leia apenas comentários autorais já publicados."],
-  ["registrar_resposta", "Responda e deixe o banco fazer a correção."],
+  ["explicar_questao", "Leia o comentário autoral depois de responder."],
+  ["registrar_resposta", "Responda sem duplicar tentativas em caso de retry."],
   ["ver_meu_progresso", "Veja acertos, erros e revisões vencidas."],
-  ["o_que_estudar_agora", "Receba o próximo bloco do seu roadmap."],
-  ["abrir_sessao_de_estudo", "Comece uma sessão de foco ligada ao plano."],
+  ["consultar_roadmap", "Consulte blocos, datas e metas do plano vigente."],
+  ["preparar_sessao_de_estudo", "Encaixe revisões e metas no tempo disponível."],
+  ["abrir_sessao_de_estudo", "Comece uma sessão de foco ligada ao roadmap."],
+  ["salvar_sessao_de_estudo", "Preserve o andamento sem encerrar a sessão."],
+  ["encerrar_sessao_de_estudo", "Registre foco, síntese e pendências reais."],
+  ["consultar_revisoes_pendentes", "Reúna questões e flashcards vencidos."],
+  ["revisar_flashcard", "Avalie a lembrança e reagende a próxima revisão."],
+  ["consultar_revisao_semanal", "Leia a semana com métricas calculadas no banco."],
 ] as const;
 
 const perguntas = [
-  ["O MCP consegue ver meus dados?", "Só quando você fornece o token da sua própria sessão. A mesma RLS do OABase continua decidindo o que pode ser lido, e uma conta nunca enxerga dados de outra."],
-  ["O assistente pode inventar uma explicação?", "A ferramenta de explicação só devolve comentário autoral publicado. Quando a questão ainda não foi comentada, o MCP informa isso em vez de preencher a lacuna com texto não revisado."],
+  ["O MCP consegue ver meus dados?", "Só depois de você conectar e autorizar sua própria conta. Cada requisição é validada separadamente e a mesma RLS do OABase continua decidindo o que pode ser lido."],
+  ["O assistente pode ver a correção antes da resposta?", "Não. A fila não contém o gabarito e até o comentário autoral só é liberado depois que o OABase confirma uma tentativa sua."],
+  ["Uma falha pode duplicar minha resposta?", "Não quando o cliente repete a mesma chave de idempotência: o banco devolve o primeiro resultado sem criar outra tentativa."],
   ["Ele tem acesso ao painel administrativo?", "Não. O servidor não oferece ferramentas de pagamentos, clientes, moderação, redação editorial ou qualquer operação interna."],
 ] as const;
 
@@ -48,12 +55,12 @@ export default function McpPage() {
             <p className="mt-4 max-w-[54ch] text-[0.94rem] leading-relaxed text-brand-100">O cliente de IA chama uma ferramenta do OABase, o banco aplica as permissões e a resposta volta com o contexto necessário para continuar o estudo.</p>
             <div className="mt-7 grid gap-2.5 sm:grid-cols-3">{[["1", "Você pergunta", "“O que estudo agora?”"], ["2", "O MCP consulta", "roadmap e revisões"], ["3", "Você executa", "com fonte e registro"]].map(([numero, titulo, detalhe]) => <div key={numero} className="rounded-[15px] bg-white/8 p-3.5"><span className="text-[0.7rem] font-bold text-ouro-200">{numero}</span><strong className="mt-2 block text-[0.8rem] text-white">{titulo}</strong><span className="mt-1 block text-[0.72rem] leading-relaxed text-brand-100">{detalhe}</span></div>)}</div>
           </div>
-          <div className="border-t border-white/10 bg-white/6 p-7 sm:p-10 lg:border-t-0 lg:border-l"><span className="text-[0.7rem] font-bold tracking-[0.14em] text-ouro-200 uppercase">Um exemplo</span><div className="mt-4 rounded-[17px] border border-white/10 bg-noite p-5 font-mono text-[0.78rem] leading-relaxed text-brand-100"><p><span className="text-ouro-200">Você:</span> Tenho 40 minutos e três revisões vencidas. O que faço?</p><p className="mt-4 border-t border-white/10 pt-4"><span className="text-ouro-200">Assistente:</span> Vou consultar suas revisões e o próximo bloco do roadmap, sem revelar gabarito antes de você responder.</p><p className="mt-4 border-t border-white/10 pt-4 text-white"><span className="text-brand-300">OABase:</span> 3 revisões vencidas · próximo bloco: Direito Constitucional · 40 min disponíveis.</p></div><p className="mt-4 text-[0.78rem] leading-relaxed text-brand-100">A IA organiza a próxima ação. A legislação e a correção continuam vindo do OABase.</p></div>
+          <div className="border-t border-white/10 bg-white/6 p-7 sm:p-10 lg:border-t-0 lg:border-l"><span className="text-[0.7rem] font-bold tracking-[0.14em] text-ouro-200 uppercase">Um exemplo</span><div className="mt-4 rounded-[17px] border border-white/10 bg-noite p-5 font-mono text-[0.78rem] leading-relaxed text-brand-100"><p><span className="text-ouro-200">Você:</span> Tenho 40 minutos. O que faço?</p><p className="mt-4 border-t border-white/10 pt-4"><span className="text-ouro-200">Assistente:</span> Vou encaixar as revisões vencidas e uma meta do próximo bloco nesse tempo.</p><p className="mt-4 border-t border-white/10 pt-4 text-white"><span className="text-brand-300">OABase:</span> 10 min de revisão · 30 min de Direito Constitucional · meta: direitos fundamentais.</p></div><p className="mt-4 text-[0.78rem] leading-relaxed text-brand-100">A divisão do tempo vem dos seus dados. A legislação e a correção continuam vindo do OABase.</p></div>
         </section>
 
         <section className="mt-20 grid gap-10 lg:grid-cols-[.7fr_1.3fr]"><div><span className="rotulo">Ferramentas</span><h2 className="mt-1 text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.03em] sm:text-[2.3rem]">Tudo que o assistente pode fazer</h2></div><div className="grid gap-3 sm:grid-cols-2">{ferramentas.map(([nome, descricao]) => <article key={nome} className="rounded-[16px] border border-line bg-surface p-5"><code className="text-[0.78rem] font-bold text-brand-700">{nome}</code><p className="mt-2 text-[0.84rem] leading-relaxed text-body">{descricao}</p></article>)}</div></section>
 
-        <section className="mt-20 grid gap-10 lg:grid-cols-[.7fr_1.3fr]"><div><span className="rotulo">Comece em dois minutos</span><h2 className="mt-1 text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.03em] sm:text-[2.3rem]">Conecte um cliente local</h2><p className="mt-4 max-w-[36ch] text-[0.9rem] leading-relaxed text-body">O modo local é o caminho mais simples: o cliente inicia o servidor e conversa com ele via stdio.</p></div><div className="flex flex-col gap-5"><div><span className="text-[0.75rem] font-bold text-muted uppercase">1 · No terminal</span><pre className="mt-2 overflow-x-auto rounded-[16px] bg-noite p-5 text-[0.78rem] leading-relaxed text-brand-100"><code>OABASE_ACCESS_TOKEN=... pnpm mcp</code></pre></div><div><span className="text-[0.75rem] font-bold text-muted uppercase">2 · No cliente MCP</span><pre className="mt-2 overflow-x-auto rounded-[16px] bg-noite p-5 text-[0.72rem] leading-relaxed text-brand-100"><code>{CONFIGURACAO}</code></pre></div><p className="text-[0.78rem] leading-relaxed text-muted">A URL e a chave anônima do Supabase também precisam estar no ambiente. O token é o access token da sua sessão, nunca uma service role.</p></div></section>
+        <section className="mt-20 grid gap-10 lg:grid-cols-[.7fr_1.3fr]"><div><span className="rotulo">Duas formas de conectar</span><h2 className="mt-1 text-[1.9rem] leading-[1.08] font-semibold tracking-[-0.03em] sm:text-[2.3rem]">Local para desenvolver. OAuth para usar.</h2><p className="mt-4 max-w-[38ch] text-[0.9rem] leading-relaxed text-body">No modo remoto, seu assistente abre a autorização do OABase e cada chamada fica ligada à sua conta. O token manual permanece apenas para desenvolvimento local via stdio.</p></div><div className="flex flex-col gap-5"><div><span className="text-[0.75rem] font-bold text-muted uppercase">Desenvolvimento local</span><pre className="mt-2 overflow-x-auto rounded-[16px] bg-noite p-5 text-[0.78rem] leading-relaxed text-brand-100"><code>OABASE_ACCESS_TOKEN=... pnpm mcp</code></pre></div><div><span className="text-[0.75rem] font-bold text-muted uppercase">Configuração stdio</span><pre className="mt-2 overflow-x-auto rounded-[16px] bg-noite p-5 text-[0.72rem] leading-relaxed text-brand-100"><code>{CONFIGURACAO}</code></pre></div><p className="text-[0.78rem] leading-relaxed text-muted">Em produção, use o endpoint HTTPS do OABase. O cliente descobre o OAuth automaticamente; não cole token em prompt ou ferramenta.</p></div></section>
 
         <section className="mt-20 rounded-[22px] border border-ouro-200 bg-ouro-50 p-6 sm:p-8"><span className="text-[0.7rem] font-bold tracking-[0.14em] text-ouro-700 uppercase">Regra de confiança</span><h2 className="mt-2 text-[1.45rem] font-bold text-ink">A IA não substitui a fonte.</h2><p className="mt-2 max-w-[75ch] text-[0.9rem] leading-relaxed text-body">O MCP reduz a decisão de “o que fazer agora”. Quando o assunto é Direito, a resposta precisa apontar para legislação, súmula ou comentário publicado. Se não houver fonte no acervo, o assistente deve dizer que não há base suficiente.</p></section>
 

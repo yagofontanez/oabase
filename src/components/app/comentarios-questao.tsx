@@ -62,7 +62,9 @@ export function ComentariosQuestao({
     [pendentes],
   );
 
-  const ALTERNATIVAS = ["a", "b", "c", "d", "e"] as const;
+  // As questões da 1ª fase têm quatro alternativas e o JSON do acervo usa
+  // chaves maiúsculas. Minúsculas faziam todas caírem no fallback `—`.
+  const ALTERNATIVAS = ["A", "B", "C", "D"] as const;
 
   return (
     <div className="painel-conteudo flex max-w-[1280px] flex-col gap-6">

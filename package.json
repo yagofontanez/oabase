@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "fronteira": "node --env-file=.env.local scripts/fronteira.mjs",
-    "mcp": "tsx src/mcp/server.ts"
+    "mcp": "tsx src/mcp/server.ts",
+    "test:mcp": "node --import tsx --test src/mcp/server.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "@xyflow/react": "^12.11.6",
