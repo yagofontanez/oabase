@@ -206,6 +206,16 @@ const ITENS = [
       </>
     ),
   },
+  {
+    href: "/app/mcp",
+    rotulo: "Assistentes de IA",
+    icone: (
+      <>
+        <path d="M12 3l1.9 4.4L18.3 9l-4.4 1.6L12 15l-1.9-4.4L5.7 9l4.4-1.6z" />
+        <path d="M18.2 14.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z" />
+      </>
+    ),
+  },
 ];
 
 type ItemDeNavegacao = (typeof ITENS)[number];
@@ -255,7 +265,11 @@ const GRUPOS = [
   },
   {
     rotulo: "Comunidade e ajuda",
-    itens: selecionarItens("/app/forum", "/app/suporte"),
+    itens: selecionarItens(
+      "/app/forum",
+      "/app/suporte",
+      "/app/mcp",
+    ),
   },
 ];
 

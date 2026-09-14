@@ -14,3 +14,9 @@ export const site = {
 export function abs(path: string): string {
   return new URL(path, site.url).toString();
 }
+
+/** Endereço do servidor MCP remoto — o que a pessoa cola no assistente. */
+export function urlMcp(): string {
+  const endereco = process.env.MCP_PUBLIC_URL ?? "/api/mcp";
+  return new URL(endereco, site.url).toString();
+}
