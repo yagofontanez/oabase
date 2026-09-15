@@ -20,6 +20,7 @@ from __future__ import annotations
 import codecs
 import json
 import re
+import subprocess
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -723,25 +724,38 @@ def sql_dos_artigos(lei: Lei, artigos: list[Artigo], lote: int = 400) -> str:
     return "\n".join(partes)
 
 
-def revalidar_legislacao(conexao: str, segredo: str | None, site: str) -> None:
+def segredo_de_revalidacao(conexao: str) -> str:
+    resultado = subprocess.run(
+        [
+            "psql", conexao, "-X", "-v", "ON_ERROR_STOP=1", "-Atc",
+            "select valor from interno.segredos where chave = 'revalidacao_legal';",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    segredo = resultado.stdout.strip()
+    if resultado.returncode != 0 or not re.fullmatch(r"[a-f0-9]{64}", segredo):
+        raise RuntimeError("segredo de revalidacao legal indisponivel no banco")
+    return segredo
+
+
+def revalidar_legislacao(conexao: str, site: str) -> None:
     """Invalida o ISR depois do commit remoto; falha não desfaz a carga."""
     host = urllib.parse.urlparse(conexao).hostname
     if host in {"localhost", "127.0.0.1", "::1"}:
         return
-    if not segredo:
-        print("ATENÇÃO: CRON_SECRET ausente; páginas públicas atualizam pelo ISR horário")
-        return
     destino = site.rstrip("/") + "/api/tarefas/revalidar-legislacao"
-    req = urllib.request.Request(
-        destino,
-        data=b"{}",
-        headers={
-            "Authorization": f"Bearer {segredo}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
     try:
+        segredo = segredo_de_revalidacao(conexao)
+        req = urllib.request.Request(
+            destino,
+            data=b"{}",
+            headers={
+                "Authorization": f"Bearer {segredo}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
         with urllib.request.urlopen(req, timeout=30) as resposta:
             if resposta.status != 200:
                 raise RuntimeError(f"HTTP {resposta.status}")
@@ -799,7 +813,6 @@ def main() -> None:
     print("carregado.")
     revalidar_legislacao(
         conexao,
-        os.environ.get("CRON_SECRET"),
         os.environ.get("NEXT_PUBLIC_SITE_URL", "https://oabase.com.br"),
     )
 

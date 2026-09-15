@@ -1,17 +1,31 @@
-import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
+
+const CABECALHOS = {
+  "Cache-Control": "no-store",
+  "X-Robots-Tag": "noindex, nofollow",
+};
 
 export async function POST(request: Request) {
-  const esperado = process.env.CRON_SECRET;
-  if (!esperado) {
-    return Response.json({ erro: "Revalidação não configurada" }, { status: 503 });
+  const recebido = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
+  if (!/^[a-f0-9]{64}$/.test(recebido)) {
+    return Response.json({ erro: "Não autorizado" }, { status: 401, headers: CABECALHOS });
   }
 
-  const recebido = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
-  const a = Buffer.from(recebido);
-  const b = Buffer.from(esperado);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    return Response.json({ erro: "Não autorizado" }, { status: 401 });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { data: autorizado, error } = await supabase.rpc(
+    "confere_segredo_revalidacao_legal",
+    { p_segredo: recebido },
+  );
+  if (error) {
+    return Response.json({ erro: "Validação indisponível" }, { status: 503, headers: CABECALHOS });
+  }
+  if (autorizado !== true) {
+    return Response.json({ erro: "Não autorizado" }, { status: 401, headers: CABECALHOS });
   }
 
   // Endpoint fixo: o chamador não escolhe caminhos arbitrários. A carga
@@ -22,5 +36,5 @@ export async function POST(request: Request) {
   revalidatePath("/glossario");
   revalidatePath("/sitemap/0.xml");
 
-  return Response.json({ revalidado: true });
+  return Response.json({ revalidado: true }, { headers: CABECALHOS });
 }

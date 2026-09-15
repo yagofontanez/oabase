@@ -331,6 +331,7 @@ recomendada para o produto:
 O radar depende de nova carga da legislação oficial para detectar alterações;
 ele não afirma que todo ato posterior já foi comparado. Após o commit remoto,
 a carga chama a revalidação autenticada das páginas públicas para que a
-próxima visita não receba a redação antiga do cache. Se `CRON_SECRET` não
-estiver no ambiente da ingestão ou a chamada falhar, a carga permanece válida
-e avisa que o ISR horário será o caminho de atualização.
+próxima visita não receba a redação antiga do cache. `CRON_SECRET` não é
+compartilhado entre ingestão e site: o segredo de revalidação é próprio e
+gerado em `interno.segredos`. Se a chamada falhar, a carga permanece válida e
+avisa que o ISR horário será o caminho de atualização.
