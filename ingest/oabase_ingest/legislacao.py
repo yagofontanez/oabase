@@ -18,8 +18,10 @@ diferencial do produto — o texto entra com `indexavel = false` e só vai ao
 from __future__ import annotations
 
 import codecs
+import json
 import re
 import unicodedata
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 
@@ -703,29 +705,50 @@ def sql_da_lei(lei: Lei) -> str:
 def sql_dos_artigos(lei: Lei, artigos: list[Artigo], lote: int = 400) -> str:
     partes: list[str] = []
     for i in range(0, len(artigos), lote):
-        linhas = ",\n  ".join(
-            f"((select id from public.leis where slug = {_lit(lei.slug)}),"
-            f"(select id from public.disciplinas where slug = {_lit(lei.disciplina)}),"
-            f"{_lit(a.numero)},{_lit(a.slug)},{_lit(a.caput)},{_array(a.paragrafos)},"
-            f"{ordem_do_numero(a.numero)})"
+        lote_atual = [
+            {
+                "numero": a.numero,
+                "slug": a.slug,
+                "caput": a.caput,
+                "paragrafos": a.paragrafos,
+                "ordem": ordem_do_numero(a.numero),
+            }
             for a in artigos[i : i + lote]
-        )
+        ]
+        dados = json.dumps(lote_atual, ensure_ascii=False, separators=(",", ":"))
         partes.append(
-            "insert into public.artigos\n"
-            "  (lei_id, disciplina_id, numero, slug, caput, paragrafos, ordem)\n"
-            f"values\n  {linhas}\n"
-            "on conflict (lei_id, slug) do update set\n"
-            "  caput = excluded.caput,\n"
-            "  paragrafos = excluded.paragrafos,\n"
-            "  ordem = excluded.ordem,\n"
-            "  atualizado_em = now()\n"
-            # O texto oficial se atualiza sozinho enquanto ninguém escreveu
-            # sobre ele. A partir do momento em que existe comentário, a linha
-            # passa a ser trabalho autoral — e uma recarga não pode passar por
-            # cima dele em silêncio. Mudança de lei comentada é revisão humana.
-            "where public.artigos.comentario = '{}';\n"
+            "select public.carregar_artigos_oficiais("
+            f"{_lit(lei.slug)},{_lit(lei.disciplina)},{_lit(dados)}::jsonb);\n"
         )
     return "\n".join(partes)
+
+
+def revalidar_legislacao(conexao: str, segredo: str | None, site: str) -> None:
+    """Invalida o ISR depois do commit remoto; falha não desfaz a carga."""
+    host = urllib.parse.urlparse(conexao).hostname
+    if host in {"localhost", "127.0.0.1", "::1"}:
+        return
+    if not segredo:
+        print("ATENÇÃO: CRON_SECRET ausente; páginas públicas atualizam pelo ISR horário")
+        return
+    destino = site.rstrip("/") + "/api/tarefas/revalidar-legislacao"
+    req = urllib.request.Request(
+        destino,
+        data=b"{}",
+        headers={
+            "Authorization": f"Bearer {segredo}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resposta:
+            if resposta.status != 200:
+                raise RuntimeError(f"HTTP {resposta.status}")
+    except (OSError, RuntimeError) as erro:
+        print(f"ATENÇÃO: cache público não revalidado: {erro}")
+        return
+    print("cache público de legislação revalidado.")
 
 
 def main() -> None:
@@ -774,6 +797,11 @@ def main() -> None:
         raise SystemExit("defina SUPABASE_CONNECTION_STRING")
     executar(conexao, sql)
     print("carregado.")
+    revalidar_legislacao(
+        conexao,
+        os.environ.get("CRON_SECRET"),
+        os.environ.get("NEXT_PUBLIC_SITE_URL", "https://oabase.com.br"),
+    )
 
 
 if __name__ == "__main__":

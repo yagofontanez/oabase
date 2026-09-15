@@ -44,11 +44,13 @@ const dinheiro = (v: number) =>
  */
 export function PainelAdmin({
   metricas,
+  funil,
   usuariosIniciais,
   atividade,
   disciplinas,
 }: {
   metricas: Metricas;
+  funil: Metricas;
   usuariosIniciais: UsuarioAdmin[];
   atividade: DiaDeAtividade[];
   disciplinas: LinhaDeDisciplina[];
@@ -68,7 +70,17 @@ export function PainelAdmin({
   }, [busca]);
 
   const n = (chave: string) => Number(metricas[chave] ?? 0);
+  const f = (chave: string) => Number(funil[chave] ?? 0);
   const picoDeAtividade = Math.max(1, ...atividade.map((d) => d.respostas));
+  const baseFunil = Math.max(1, f("contas"));
+  const etapasDoFunil = [
+    ["Conta criada", f("contas"), f("contas")],
+    ["E-mail confirmado", f("confirmadas"), f("contas")],
+    ["Plano criado", f("planos_criados"), f("contas")],
+    ["Primeiro estudo", f("primeiro_estudo"), f("contas")],
+    ["20 questões", f("vinte_questoes"), f("contas")],
+    ["Compra confirmada", f("compradores"), f("contas")],
+  ] as const;
 
   const blocos: { titulo: string; itens: [string, string, string][] }[] = [
     {
@@ -172,6 +184,44 @@ export function PainelAdmin({
           </dl>
         </section>
       ))}
+
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-[0.86rem] font-semibold text-muted">
+              Funil de ativação
+            </h2>
+            <p className="mt-1 text-[0.8rem] text-muted">
+              Marcos derivados de ações salvas — sem rastreamento de páginas.
+            </p>
+          </div>
+          <span className="text-[0.82rem] text-muted tabular-nums">
+            Retorno D7: {f("retorno_d7")}/{f("elegiveis_d7")} · {f("elegiveis_d7") ? Math.round((f("retorno_d7") / f("elegiveis_d7")) * 100) : 0}%
+          </span>
+        </div>
+        <ol className="superficie grid gap-px overflow-hidden bg-line sm:grid-cols-2 xl:grid-cols-6">
+          {etapasDoFunil.map(([rotulo, valor, base]) => {
+            const percentual = base ? Math.round((valor / base) * 100) : 0;
+            return (
+              <li key={rotulo} className="flex flex-col gap-3 bg-surface p-5">
+                <span className="text-[0.8rem] font-semibold text-muted">{rotulo}</span>
+                <span className="text-[1.6rem] leading-none font-bold text-ink tabular-nums">
+                  {valor.toLocaleString("pt-BR")}
+                </span>
+                <span className="h-1.5 overflow-hidden rounded-full bg-sunk">
+                  <span
+                    className="block h-full rounded-full bg-brand-500"
+                    style={{ width: `${Math.min(100, (valor / baseFunil) * 100)}%` }}
+                  />
+                </span>
+                <span className="text-[0.76rem] text-muted tabular-nums">
+                  {percentual}% das contas
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
       {/* Atividade por dia. Barra simples em vez de biblioteca de gráfico:
           são trinta valores e a pergunta é "está subindo ou caindo". */}

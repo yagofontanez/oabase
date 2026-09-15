@@ -311,13 +311,26 @@ pessoa e identifica essa origem.
 3. Histórico e versões do roadmap.
 4. Compartilhamento com professor ou grupo.
 
-## Próxima entrega recomendada
+## Ciclo de ativação e atualização do acervo
 
-Construir “O que estudar hoje” junto com a sessão guiada. As duas usam dados
-que o OABase já possui — roadmap, questões, legislação, revisão e foco — e
-fecham o ciclo mais importante do produto:
+**Implementado em setembro de 2026.** Esta etapa segue a ordem de impacto
+recomendada para o produto:
 
-1. decidir;
-2. executar;
-3. registrar;
-4. adaptar.
+1. Funil de ativação no painel admin, derivado de ações reais (conta, plano,
+   primeiro estudo, 20 questões, retorno no oitavo dia e compra confirmada).
+2. Primeiro uso: escolha de modo e tempo, criação de roadmap e abertura da
+   primeira sessão diária.
+3. Recuperação do simulado: até três matérias com erros e roteiro de sete dias,
+   com retorno à prática e novo bloco no último dia.
+4. Radar legislativo: carga oficial registra mudanças, tira comentários
+   desatualizados do índice, preserva o texto autoral para revisão editorial e
+   avisa quem tinha o artigo no caderno.
+5. Reta final da OAB: nos 30 dias anteriores à prova, a sessão diária aumenta
+   revisão e questões e reduz leitura nova; na última semana intensifica isso.
+
+O radar depende de nova carga da legislação oficial para detectar alterações;
+ele não afirma que todo ato posterior já foi comparado. Após o commit remoto,
+a carga chama a revalidação autenticada das páginas públicas para que a
+próxima visita não receba a redação antiga do cache. Se `CRON_SECRET` não
+estiver no ambiente da ingestão ou a chamada falhar, a carga permanece válida
+e avisa que o ISR horário será o caminho de atualização.

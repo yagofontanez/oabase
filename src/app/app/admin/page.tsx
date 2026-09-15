@@ -38,9 +38,12 @@ export default async function AdminPage() {
     supabase.rpc("disciplinas_admin"),
   ]);
 
+  const { data: funil } = await supabase.rpc("funil_ativacao_admin");
+
   return (
     <PainelAdmin
       metricas={(metricas.data ?? {}) as Metricas}
+      funil={(funil ?? {}) as Metricas}
       usuariosIniciais={(usuarios.data ?? []) as UsuarioAdmin[]}
       atividade={(atividade.data ?? []) as DiaDeAtividade[]}
       disciplinas={(disciplinas.data ?? []) as LinhaDeDisciplina[]}

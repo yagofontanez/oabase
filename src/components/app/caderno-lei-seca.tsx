@@ -5,6 +5,15 @@ import { useMemo, useState } from "react";
 import { formatarData } from "@/lib/format";
 import type { ItemDoCaderno } from "@/lib/caderno-lei-seca";
 
+type AlteracaoNoCaderno = {
+  artigoId: string;
+  leiSlug: string;
+  leiSigla: string;
+  artigoSlug: string;
+  numero: string;
+  detectadaEm: string;
+};
+
 type Filtro = "todos" | "revisar" | "favoritos" | "notas" | "lidos";
 
 const FILTROS: { id: Filtro; rotulo: string }[] = [
@@ -25,9 +34,11 @@ function semAcento(valor: string) {
 export function CadernoLeiSeca({
   itens,
   hoje,
+  alteracoes,
 }: {
   itens: ItemDoCaderno[];
   hoje: string;
+  alteracoes: AlteracaoNoCaderno[];
 }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
@@ -76,6 +87,22 @@ export function CadernoLeiSeca({
           Encontrar artigos
         </Link>
       </header>
+
+      {alteracoes.length > 0 && (
+        <section className="rounded-[18px] border border-ouro-200 bg-ouro-50 p-5">
+          <span className="text-[0.7rem] font-bold tracking-[0.12em] text-ouro-700 uppercase">Texto oficial atualizado</span>
+          <p className="mt-1 text-[0.88rem] text-body">
+            {alteracoes.length === 1 ? "Um artigo do seu caderno mudou" : `${alteracoes.length} artigos do seu caderno mudaram`} depois de você guardá-los. Destaques incompatíveis ficam ocultos; suas notas continuam preservadas.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {alteracoes.slice(0, 5).map((alteracao) => (
+              <Link key={alteracao.artigoId} href={`/legislacao/${alteracao.leiSlug}/${alteracao.artigoSlug}`} className="rounded-full border border-ouro-300 bg-surface px-3 py-1.5 text-[0.76rem] font-semibold text-ouro-800">
+                Art. {alteracao.numero} {alteracao.leiSigla} →
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid overflow-hidden rounded-[22px] border border-brand-100 bg-brand-900 text-white sm:grid-cols-2 xl:grid-cols-4">
         {[

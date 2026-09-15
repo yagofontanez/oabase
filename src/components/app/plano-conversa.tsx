@@ -159,6 +159,7 @@ export function PlanoConversa({
     contextoInicial.disciplinas,
   );
   const [prazoLivre, setPrazoLivre] = useState(contextoInicial.prazo ?? "");
+  const [minutosPorDia, setMinutosPorDia] = useState(40);
   const [criandoRoadmap, setCriandoRoadmap] = useState(false);
   const [itemAtualizando, setItemAtualizando] = useState<string | null>(null);
   const [filtroRoadmap, setFiltroRoadmap] = useState<
@@ -253,7 +254,7 @@ export function PlanoConversa({
     el.style.height = `${Math.min(el.scrollHeight, 190)}px`;
   }
 
-  async function enviar(mensagem: string) {
+  async function enviar(mensagem: string, abrirPrimeiraSessao = false) {
     const limpo = mensagem.trim();
     if (!limpo || enviando) return;
     if (modo === "livre" && selecionadas.length === 0) {
@@ -295,7 +296,11 @@ export function PlanoConversa({
       setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
       if (dados.aviso) setErro(String(dados.aviso));
       if (Array.isArray(dados.roadmap) && dados.roadmap.length > 0) {
-        router.push("/app/roadmap");
+        router.push(
+          abrirPrimeiraSessao
+            ? `/app/hoje?minutos=${minutosPorDia}`
+            : "/app/roadmap",
+        );
       }
     } catch {
       setErro("Sem conexão com o servidor. Tente de novo.");
@@ -467,6 +472,50 @@ export function PlanoConversa({
                   </button>
                 ))}
               </div>
+
+              <form
+                onSubmit={(evento) => {
+                  evento.preventDefault();
+                  const tempo = Math.min(180, Math.max(15, Math.round(minutosPorDia)));
+                  const pedido = modo === "oab"
+                    ? `Estou me preparando para o ${edicao}º Exame de Ordem. Tenho ${tempo} minutos por dia para estudar. Monte um plano prático e comece pelas matérias prioritárias.`
+                    : `Estudo Direito para uma avaliação da faculdade${prazoLivre ? ` em ${prazoLivre}` : ""}. Tenho ${tempo} minutos por dia. Monte um roteiro com as matérias escolhidas e um primeiro bloco prático.`;
+                  void enviar(pedido, true);
+                }}
+                className="superficie flex flex-col gap-4 rounded-[20px] border-brand-200 bg-brand-50 p-5 sm:p-6"
+              >
+                <div>
+                  <span className="text-[0.7rem] font-bold tracking-[0.12em] text-brand-700 uppercase">Comece em três decisões</span>
+                  <h2 className="mt-1 text-[1.12rem] font-bold text-ink">Seu primeiro bloco pode sair pronto agora</h2>
+                  <p className="mt-1 text-[0.84rem] text-muted">O roteiro é gratuito. Questões e simulados continuam protegidos pelo plano pago.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1 text-[0.8rem] font-semibold text-body">
+                    1. Para qual caminho?
+                    <select value={modo} onChange={(evento) => setModo(evento.target.value as ModoDoPlano)} disabled={enviando} className="rounded-[11px] border border-hairline bg-surface px-3 py-2.5 text-[0.88rem] font-normal text-ink">
+                      <option value="oab">1ª fase da OAB</option>
+                      <option value="livre">Prova da faculdade</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-[0.8rem] font-semibold text-body">
+                    2. Quanto tempo por dia?
+                    <span className="flex items-center gap-2 rounded-[11px] border border-hairline bg-surface px-3">
+                      <input type="number" min={15} max={180} required value={minutosPorDia} onChange={(evento) => setMinutosPorDia(Number(evento.target.value))} className="w-full py-2.5 text-[0.88rem] font-normal text-ink outline-none" />
+                      <span className="text-[0.78rem] text-muted">min</span>
+                    </span>
+                  </label>
+                </div>
+                {modo === "livre" && (
+                  <p className="text-[0.8rem] text-muted">
+                    3. Selecione ao menos uma matéria abaixo e, se souber, informe a data da avaliação.
+                  </p>
+                )}
+                {modo === "oab" && <p className="text-[0.8rem] text-muted">3. A data da próxima prova já vem do calendário publicado da OAB.</p>}
+                {erro && <p role="alert" className="rounded-[10px] bg-vinho-50 px-3 py-2 text-[0.82rem] text-vinho-700">{erro}</p>}
+                <button type="submit" disabled={enviando || (modo === "livre" && selecionadas.length === 0)} className="self-start rounded-full bg-brand-600 px-5 py-2.5 text-[0.88rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50">
+                  {enviando ? "Montando plano…" : "Montar plano e abrir primeira sessão"}
+                </button>
+              </form>
 
               {modo === "oab" ? (
                 <div className="grid gap-3 sm:grid-cols-2">

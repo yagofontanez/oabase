@@ -214,6 +214,12 @@ export default async function ConfiguracoesPage() {
             >
               Vincular dispositivo
             </Link>
+            <Link
+              href="/app/redacao/alteracoes"
+              className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.94rem] font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-700"
+            >
+              Alterações legislativas
+            </Link>
           </div>
         </Bloco>
       )}

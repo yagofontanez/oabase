@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Prova, type QuestaoDaProva } from "@/components/app/prova";
+import { getDisciplinas } from "@/lib/content/queries";
 import { formatarData } from "@/lib/format";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 
@@ -40,6 +41,7 @@ export default async function SimuladoEmCursoPage({
 }) {
   const { id } = await params;
   const supabase = await supabaseServidor();
+  const disciplinasDoAcervo = await getDisciplinas();
 
   const { data: simulado } = await supabase
     .from("simulados")
@@ -127,6 +129,20 @@ export default async function SimuladoEmCursoPage({
     .sort((a, b) => b.total - a.total || a.taxa - b.taxa);
 
   const erradas = linhas.filter((l) => !l.acertou);
+  const slugPorNome = new Map(
+    disciplinasDoAcervo.map((disciplina) => [disciplina.nome, disciplina.slug]),
+  );
+  const prioridades = disciplinas
+    .map((disciplina) => ({
+      ...disciplina,
+      erros: disciplina.total - disciplina.certas,
+      slug: slugPorNome.get(disciplina.nome) ?? null,
+    }))
+    .filter((disciplina) => disciplina.erros > 0 && disciplina.slug)
+    .sort((a, b) => b.erros - a.erros || a.taxa - b.taxa)
+    .slice(0, 3);
+  const faltaramParaOCorte =
+    total === 80 ? Math.max(0, 40 - acertos) : Math.max(0, Math.ceil(total / 2) - acertos);
 
   return (
     <div className="painel-conteudo flex max-w-[1000px] flex-col gap-6">
@@ -195,6 +211,63 @@ export default async function SimuladoEmCursoPage({
           ))}
         </ul>
       </section>
+
+      {prioridades.length > 0 && (
+        <section className="overflow-hidden rounded-[22px] bg-brand-900 text-white shadow-[0_18px_45px_rgba(8,58,49,0.14)]">
+          <div className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <span className="text-[0.72rem] font-bold tracking-[0.14em] text-ouro-200 uppercase">
+                Plano de recuperação
+              </span>
+              <h2 className="mt-2 text-[1.45rem] leading-tight font-extrabold tracking-[-0.025em] text-white">
+                {faltaramParaOCorte > 0
+                  ? `${faltaramParaOCorte} ${faltaramParaOCorte === 1 ? "ponto separou" : "pontos separaram"} você da linha de corte`
+                  : "Proteja a margem antes do próximo simulado"}
+              </h2>
+              <p className="mt-3 text-[0.9rem] leading-relaxed text-white/70">
+                A ordem abaixo começa onde este simulado concentrou mais erros.
+                É uma prioridade de revisão, não uma previsão de aprovação; a
+                classificação por disciplina ainda é aproximada.
+              </p>
+            </div>
+
+            <ol className="grid gap-2.5">
+              {prioridades.map((disciplina, indice) => (
+                <li key={disciplina.nome}>
+                  <Link
+                    href={`/app/questoes?modo=erros&disciplina=${disciplina.slug}`}
+                    className="group flex items-center gap-4 rounded-[15px] border border-white/10 bg-white/[0.07] p-4 transition-colors hover:bg-white/[0.12]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ouro-400 text-[0.78rem] font-extrabold text-noite">
+                      {indice + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-[0.92rem] text-white">
+                        Revisar {disciplina.nome}
+                      </strong>
+                      <span className="mt-0.5 block text-[0.78rem] text-brand-100">
+                        {disciplina.erros} {disciplina.erros === 1 ? "erro" : "erros"} em {disciplina.total} questões · comece pelo caderno de erros
+                      </span>
+                    </span>
+                    <span className="text-ouro-200 transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-white/[0.04] px-6 py-4 sm:px-7">
+            <p className="text-[0.8rem] text-brand-100">
+              Depois das três filas, faça um bloco rápido para medir novamente sem ver o gabarito durante a prova.
+            </p>
+            <Link
+              href="/app/simulado"
+              className="rounded-full border border-white/20 px-4 py-2 text-[0.82rem] font-semibold text-white transition-colors hover:bg-white hover:text-brand-900"
+            >
+              Programar novo bloco
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ---- Espelho ---- */}
       <section className="superficie flex flex-col gap-4 p-6">

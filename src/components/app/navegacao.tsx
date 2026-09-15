@@ -280,6 +280,9 @@ const ITENS_DA_LINHA = [
 ];
 
 function estaAtivo(caminho: string, href: string) {
+  if (href === "/app/redacao" && caminho === "/app/redacao/alteracoes") {
+    return false;
+  }
   return href === "/app"
     ? caminho === "/app"
     : caminho === href || caminho.startsWith(`${href}/`);
@@ -352,6 +355,16 @@ const ITENS_ADMIN = [
 
 const ITENS_EDITOR = [
   {
+    href: "/app/redacao/alteracoes",
+    rotulo: "Alterações legais",
+    icone: (
+      <>
+        <path d="M4 20h16M6 16V5h12v11" />
+        <path d="M9 9h6M9 12h4M16.5 3v4h4" />
+      </>
+    ),
+  },
+  {
     href: "/app/redacao",
     rotulo: "Redação",
     icone: (
@@ -396,6 +409,7 @@ const ITENS_EDITOR = [
 const FORA_DO_MENU: Record<string, string> = {
   "/app/assinar": "Assinar",
   "/app/redacao/comentarios": "Comentários",
+  "/app/redacao/alteracoes": "Alterações legislativas",
   "/app/roadmap/historico": "Histórico do roadmap",
   "/app/roadmap/compartilhar": "Compartilhar roadmap",
 };

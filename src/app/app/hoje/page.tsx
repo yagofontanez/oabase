@@ -2,8 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AcoesSessaoHoje } from "@/components/app/acoes-sessao-hoje";
 import { Resolvedor, type QuestaoDaFila } from "@/components/app/resolvedor";
-import { hojeEmBrasilia } from "@/lib/calendario";
-import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
+import { dataUtc, hojeEmBrasilia } from "@/lib/calendario";
+import {
+  diasAte,
+  getArtigosDaDisciplina,
+  getDisciplinas,
+  getLeis,
+  getProximoExame,
+} from "@/lib/content/queries";
 import type { ContextoSalvoDoPlano, Plano } from "@/lib/ia/plano";
 import type { ItemRoadmap } from "@/lib/roadmap";
 import { supabaseServidor } from "@/lib/supabase/servidor";
@@ -63,6 +69,7 @@ function distribuirTempo(
     questoes: boolean;
     execucao: boolean;
   },
+  fase: "normal" | "reta_final" | "ultima_semana" = "normal",
 ) {
   const quantidade =
     Number(opcoes.revisao) +
@@ -93,7 +100,16 @@ function distribuirTempo(
   }
 
   const revisao = opcoes.revisao
-    ? Math.min(10, Math.max(5, Math.round(disponivel * 0.125)))
+    ? Math.min(
+        fase === "normal" ? 10 : 20,
+        Math.max(
+          5,
+          Math.round(
+            disponivel *
+              (fase === "ultima_semana" ? 0.3 : fase === "reta_final" ? 0.2 : 0.125),
+          ),
+        ),
+      )
     : 0;
   const restante = disponivel - revisao;
   if (opcoes.execucao) {
@@ -102,7 +118,9 @@ function distribuirTempo(
   let leitura = 0;
   let questoes = 0;
   if (opcoes.leitura && opcoes.questoes) {
-    leitura = Math.max(5, Math.round(restante * (opcoes.revisao ? 0.43 : 0.4)));
+    const fatiaDeLeitura =
+      fase === "ultima_semana" ? 0.18 : fase === "reta_final" ? 0.3 : opcoes.revisao ? 0.43 : 0.4;
+    leitura = Math.max(5, Math.round(restante * fatiaDeLeitura));
     questoes = restante - leitura;
     if (questoes < 5) {
       questoes = 5;
@@ -138,6 +156,8 @@ export default async function HojePage({
     assinaturaRes,
     desempenhoRes,
     flashcardsRes,
+    proximo,
+    ultimoSimuladoRes,
   ] = await Promise.all([
     supabase.from("planos_estudo").select("plano, versao_roadmap, contexto").maybeSingle(),
     getDisciplinas(),
@@ -149,7 +169,56 @@ export default async function HojePage({
       .select("id", { count: "exact", head: true })
       .eq("suspenso", false)
       .lte("proxima_revisao", hoje),
+    getProximoExame(),
+    supabase
+      .from("simulados")
+      .select("id, finalizado_em")
+      .not("finalizado_em", "is", null)
+      .order("finalizado_em", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+  const ultimoSimulado = ultimoSimuladoRes.data;
+  const diasDesdeSimulado = ultimoSimulado?.finalizado_em
+    ? Math.round(
+        (dataUtc(hoje).getTime() -
+          dataUtc(hojeEmBrasilia(new Date(ultimoSimulado.finalizado_em))).getTime()) /
+          86_400_000,
+      )
+    : null;
+  const recuperacaoAtiva =
+    diasDesdeSimulado !== null && diasDesdeSimulado >= 0 && diasDesdeSimulado < 7;
+  const { data: relatorioRecuperacao } = recuperacaoAtiva
+    ? await supabase.rpc("relatorio_do_simulado", {
+        p_simulado_id: ultimoSimulado!.id,
+      })
+    : { data: null };
+  const errosPorDisciplina = new Map<string, number>();
+  for (const linha of (relatorioRecuperacao ?? []) as {
+    disciplina_nome: string | null;
+    acertou: boolean;
+  }[]) {
+    if (linha.acertou || !linha.disciplina_nome) continue;
+    errosPorDisciplina.set(
+      linha.disciplina_nome,
+      (errosPorDisciplina.get(linha.disciplina_nome) ?? 0) + 1,
+    );
+  }
+  const materiasDaRecuperacao = [...errosPorDisciplina.entries()]
+    .map(([nome, erros]) => ({
+      nome,
+      erros,
+      slug: disciplinas.find((item) => item.nome === nome)?.slug ?? null,
+    }))
+    .filter((item) => item.slug)
+    .sort((a, b) => b.erros - a.erros)
+    .slice(0, 3);
+  const focoDaRecuperacao =
+    recuperacaoAtiva && diasDesdeSimulado! < 6
+      ? materiasDaRecuperacao[
+          Math.min(Math.floor(diasDesdeSimulado! / 2), materiasDaRecuperacao.length - 1)
+        ]
+      : null;
   const registro = registroRes.data;
   const plano = (registro?.plano as Plano | null) ?? null;
   const contexto = (registro?.contexto as ContextoSalvoDoPlano | null) ?? null;
@@ -193,6 +262,15 @@ export default async function HojePage({
   const exigeMaterialExterno = Boolean(
     ativo && !disciplina && artigos.length === 0 && novasDisponiveis.length === 0,
   );
+  const diasRestantes = diasAte(proximo.data);
+  const planoOab = contexto?.modo !== "livre";
+  const fase = !planoOab
+    ? "normal"
+    : diasRestantes <= 7
+      ? "ultima_semana"
+      : diasRestantes <= 30
+        ? "reta_final"
+        : "normal";
   const flashcardsVencidos = flashcardsRes.count ?? 0;
   const distribuicao = distribuirTempo(minutos, {
     flashcards: flashcardsVencidos > 0,
@@ -200,7 +278,7 @@ export default async function HojePage({
     leitura: artigos.length > 0,
     questoes: novasDisponiveis.length > 0,
     execucao: exigeMaterialExterno,
-  });
+  }, fase);
   const quantidadeRevisoes = quantidadeDeQuestoes(
     distribuicao.revisao,
     revisoesDisponiveis.length,
@@ -298,6 +376,51 @@ export default async function HojePage({
           </button>
         </form>
       </header>
+
+      {fase !== "normal" && (
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-[17px] border border-ouro-200 bg-ouro-50 px-5 py-4">
+          <div>
+            <span className="text-[0.7rem] font-bold tracking-[0.13em] text-ouro-700 uppercase">
+              {fase === "ultima_semana" ? "Última semana" : "Reta final"} · {diasRestantes} {diasRestantes === 1 ? "dia" : "dias"}
+            </span>
+            <p className="mt-1 max-w-[70ch] text-[0.86rem] text-body">
+              {fase === "ultima_semana"
+                ? "A sessão reduz conteúdo novo e concentra o tempo em erros, revisões vencidas e prática sob decisão."
+                : "A sessão reserva mais tempo para revisão e questões, sem abandonar a leitura ligada ao bloco atual."}
+            </p>
+          </div>
+          <Link
+            href="/app/simulado"
+            className="shrink-0 rounded-full border border-ouro-300 bg-surface px-4 py-2 text-[0.82rem] font-semibold text-ouro-800 hover:border-ouro-500"
+          >
+            Abrir simulados
+          </Link>
+        </section>
+      )}
+
+      {recuperacaoAtiva && materiasDaRecuperacao.length > 0 && (
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-[17px] border border-brand-200 bg-brand-50 px-5 py-4">
+          <div>
+            <span className="text-[0.7rem] font-bold tracking-[0.13em] text-brand-700 uppercase">
+              Recuperação do simulado · dia {diasDesdeSimulado! + 1} de 7
+            </span>
+            <p className="mt-1 max-w-[70ch] text-[0.86rem] text-body">
+              {focoDaRecuperacao
+                ? `Hoje, volte aos erros de ${focoDaRecuperacao.nome} (${focoDaRecuperacao.erros} neste simulado). Cada prioridade ocupa dois dias; no sétimo, faça outro bloco para medir o avanço.`
+                : "Hoje é o dia de repetir um bloco rápido sem consultar o gabarito e comparar o resultado com o anterior."}
+              {" "}A classificação por disciplina ainda é aproximada.
+            </p>
+          </div>
+          <Link
+            href={focoDaRecuperacao
+              ? `/app/questoes?modo=erros&disciplina=${focoDaRecuperacao.slug}`
+              : "/app/simulado"}
+            className="shrink-0 rounded-full bg-brand-700 px-4 py-2 text-[0.82rem] font-semibold text-white hover:bg-brand-800"
+          >
+            {focoDaRecuperacao ? "Revisar erros" : "Novo simulado"}
+          </Link>
+        </section>
+      )}
 
       <section className="relative overflow-hidden rounded-[26px] bg-brand-900 p-6 text-white shadow-[0_18px_45px_rgba(8,58,49,0.16)] sm:p-8">
         <div aria-hidden="true" className="absolute -top-24 -right-16 h-64 w-64 rounded-full bg-ouro-400/15 blur-2xl" />

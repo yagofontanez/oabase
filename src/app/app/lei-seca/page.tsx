@@ -29,12 +29,18 @@ type LinhaDoCaderno = {
 
 export default async function CadernoLeiSecaPage() {
   const supabase = await supabaseServidor();
-  const { data, error } = await supabase.rpc("listar_meu_caderno_lei_seca");
-  if (error) {
-    throw new Error(`Não foi possível abrir o caderno de lei seca: ${error.message}`);
+  const [cadernoRes, alteracoesRes] = await Promise.all([
+    supabase.rpc("listar_meu_caderno_lei_seca"),
+    supabase.rpc("minhas_alteracoes_legislativas"),
+  ]);
+  if (cadernoRes.error) {
+    throw new Error(`Não foi possível abrir o caderno de lei seca: ${cadernoRes.error.message}`);
+  }
+  if (alteracoesRes.error) {
+    throw new Error(`Não foi possível consultar as alterações legislativas: ${alteracoesRes.error.message}`);
   }
 
-  const itens: ItemDoCaderno[] = ((data ?? []) as LinhaDoCaderno[]).map(
+  const itens: ItemDoCaderno[] = ((cadernoRes.data ?? []) as LinhaDoCaderno[]).map(
     (linha) => ({
       artigoId: linha.artigo_id,
       leiSlug: linha.lei_slug,
@@ -54,5 +60,21 @@ export default async function CadernoLeiSecaPage() {
     }),
   );
 
-  return <CadernoLeiSeca itens={itens} hoje={hojeEmBrasilia()} />;
+  const alteracoes = ((alteracoesRes.data ?? []) as {
+    artigo_id: string;
+    lei_slug: string;
+    lei_sigla: string;
+    artigo_slug: string;
+    numero: string;
+    detectada_em: string;
+  }[]).map((linha) => ({
+    artigoId: linha.artigo_id,
+    leiSlug: linha.lei_slug,
+    leiSigla: linha.lei_sigla,
+    artigoSlug: linha.artigo_slug,
+    numero: linha.numero,
+    detectadaEm: linha.detectada_em,
+  }));
+
+  return <CadernoLeiSeca itens={itens} hoje={hojeEmBrasilia()} alteracoes={alteracoes} />;
 }

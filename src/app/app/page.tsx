@@ -247,14 +247,21 @@ export default async function PainelPage() {
   /* O próximo passo é escolhido, não listado. Uma grade de atalhos de mesmo
      peso empurra a decisão de volta para quem abriu o painel justamente sem
      saber o que fazer — e a navegação já está no trilho, à esquerda. */
-  const passo = !temAssinatura
+  const passo = !planoDeEstudos
     ? {
-        titulo: "Libere o banco de questões",
-        texto: `${acervo.toLocaleString("pt-BR")} questões reais de ${ingeridos.length} exames, com gabarito oficial da FGV.`,
-        acao: "Ver planos",
-        href: "/app/assinar",
+        titulo: "Monte seu primeiro plano",
+        texto: `Diga para qual prova estuda e quanto tempo cabe no seu dia. O primeiro bloco sai pronto antes de você escolher uma assinatura.`,
+        acao: "Criar meu plano",
+        href: "/app/plano",
       }
-    : revisaoHoje > 0
+    : !temAssinatura
+      ? {
+          titulo: "Leve o plano para a prática",
+          texto: `${acervo.toLocaleString("pt-BR")} questões reais de ${ingeridos.length} exames, com gabarito oficial da FGV. Seu roadmap continua guardado mesmo antes da assinatura.`,
+          acao: "Experimentar por R$ 1",
+          href: "/app/assinar?plano=experimentar",
+        }
+      : revisaoHoje > 0
       ? {
           titulo: `${revisaoHoje} ${revisaoHoje === 1 ? "questão marcada" : "questões marcadas"} para revisar hoje`,
           texto:
@@ -262,14 +269,7 @@ export default async function PainelPage() {
           acao: "Abrir sessão de hoje",
           href: "/app/hoje",
         }
-      : !planoDeEstudos
-        ? {
-            titulo: "Monte seu cronograma",
-            texto: `Faltam ${dias} ${dias === 1 ? "dia" : "dias"}. Uma frase sobre o seu tempo basta para o plano sair distribuído pelas disciplinas que mais caem.`,
-            acao: "Montar plano",
-            href: "/app/plano",
-          }
-        : !comecou
+      : !comecou
           ? {
               titulo: "Responda a primeira questão",
               texto: `${acervo.toLocaleString("pt-BR")} questões reais estão liberadas. A taxa de acerto, o caderno de erros e a fila de revisão nascem da primeira resposta.`,
