@@ -20,20 +20,24 @@ const nav = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-line/70 bg-paper/80 backdrop-blur-xl">
-      <Container className="flex h-[70px] items-center justify-between gap-6">
+      {/* O conteúdo das páginas para em 6xl; o cabeçalho pode usar mais
+          largura no desktop grande porque precisa acomodar marca, busca,
+          sessão e as sete portas de entrada sem quebrar nenhum rótulo. */}
+      <Container className="flex h-[70px] items-center justify-between gap-6 2xl:max-w-[90rem]">
         <Link href="/" className="shrink-0" aria-label="OABase, página inicial">
           <Wordmark />
         </Link>
 
-        {/* Sete itens já não cabem com folga em 1024px ao lado da marca e da
-            sessão. Entre 768 e 1280, a faixa rolável abaixo preserva todos
-            visíveis sem reduzir toque, texto ou contraste. */}
-        <nav className="hidden items-center gap-1 xl:flex" aria-label="Seções">
+        {/* O limite é o espaço útil de 6xl, não só a largura da viewport:
+            com sete itens, em 1280px os textos quebrariam contra a sessão.
+            Até 1536px a faixa rolável preserva os rótulos inteiros; a partir
+            daí o cabeçalho ganha largura própria para a lista horizontal. */}
+        <nav className="hidden items-center gap-1 2xl:flex" aria-label="Seções">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full px-4 py-2 text-[0.94rem] font-medium text-body transition-colors hover:bg-brand-50 hover:text-brand-700"
+              className="rounded-full px-3 py-2 text-[0.9rem] font-medium whitespace-nowrap text-body transition-colors hover:bg-brand-50 hover:text-brand-700"
             >
               {item.label}
             </Link>
@@ -67,9 +71,9 @@ export function SiteHeader() {
         </div>
       </Container>
 
-      {/* Abaixo de xl o menu principal desaparece. Em vez de escondê-lo
+      {/* Abaixo de 2xl o menu principal desaparece. Em vez de escondê-lo
           atrás de um botão, as seções ficam à vista numa faixa rolável. */}
-      <div className="border-t border-line/70 xl:hidden">
+      <div className="border-t border-line/70 2xl:hidden">
         <Container>
           <nav
             aria-label="Seções"
