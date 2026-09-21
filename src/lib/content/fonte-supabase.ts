@@ -25,9 +25,9 @@ function semAcento(texto: string): string {
 }
 
 const CAMPOS_ARTIGO =
-  "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, leis!inner(slug), disciplinas(slug)";
+  "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, seo_titulo, seo_descricao, leis!inner(slug), disciplinas(slug)";
 const CAMPOS_ARTIGO_COM_DISCIPLINA =
-  "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, leis!inner(slug), disciplinas!inner(slug)";
+  "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, seo_titulo, seo_descricao, leis!inner(slug), disciplinas!inner(slug)";
 
 type LinhaArtigo = {
   numero: string;
@@ -38,6 +38,8 @@ type LinhaArtigo = {
   incidencia: number;
   indexavel: boolean;
   atualizado_em: string;
+  seo_titulo: string | null;
+  seo_descricao: string | null;
   leis: { slug: string } | { slug: string }[];
   disciplinas: { slug: string } | { slug: string }[] | null;
 };
@@ -64,6 +66,8 @@ function paraArtigo(linha: LinhaArtigo): Artigo {
     disciplinaSlug: um(linha.disciplinas)?.slug ?? "",
     // A coluna é timestamptz; as páginas trabalham com data pura.
     atualizadoEm: linha.atualizado_em.slice(0, 10),
+    seoTitulo: linha.seo_titulo ?? undefined,
+    seoDescricao: linha.seo_descricao ?? undefined,
     indexavel: linha.indexavel,
   };
 }
@@ -142,6 +146,7 @@ type LinhaPost = {
   resumo: string;
   corpo: string;
   publicado_em: string;
+  atualizado_em: string;
 };
 
 const paraPost = (p: LinhaPost): Post => ({
@@ -150,6 +155,7 @@ const paraPost = (p: LinhaPost): Post => ({
   resumo: p.resumo,
   corpo: p.corpo,
   publicadoEm: String(p.publicado_em).slice(0, 10),
+  atualizadoEm: String(p.atualizado_em).slice(0, 10),
 });
 
 export const fonteSupabase: FonteDeConteudo = {
@@ -520,7 +526,7 @@ export const fonteSupabase: FonteDeConteudo = {
   async getPosts() {
     const { data, error } = await supabaseAnon()
       .from("posts")
-      .select("slug, titulo, resumo, corpo, publicado_em")
+      .select("slug, titulo, resumo, corpo, publicado_em, atualizado_em")
       .order("publicado_em", { ascending: false });
     erro("posts", error);
     return ((data ?? []) as LinhaPost[]).map(paraPost);
@@ -529,7 +535,7 @@ export const fonteSupabase: FonteDeConteudo = {
   async getPost(slug) {
     const { data, error } = await supabaseAnon()
       .from("posts")
-      .select("slug, titulo, resumo, corpo, publicado_em")
+      .select("slug, titulo, resumo, corpo, publicado_em, atualizado_em")
       .eq("slug", slug)
       .maybeSingle();
     erro("post", error);

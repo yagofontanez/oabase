@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: post.resumo,
       url: `/blog/${post.slug}`,
       publishedTime: post.publicadoEm,
+      modifiedTime: post.atualizadoEm,
     },
   };
 }
@@ -83,6 +84,7 @@ export default async function PostPage({ params }: Props) {
           headline: post.titulo,
           description: post.resumo,
           datePublished: post.publicadoEm,
+          dateModified: post.atualizadoEm,
           inLanguage: "pt-BR",
           isAccessibleForFree: true,
           mainEntityOfPage: {

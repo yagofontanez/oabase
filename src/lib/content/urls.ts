@@ -101,7 +101,7 @@ export async function getUrlsIndexaveis(): Promise<
     // rascunho é a própria RLS de `posts`.
     ...posts.map((post) => ({
       path: `/blog/${post.slug}`,
-      lastModified: post.publicadoEm,
+      lastModified: post.atualizadoEm,
       priority: 0.7,
       changeFrequency: "yearly" as const,
     })),

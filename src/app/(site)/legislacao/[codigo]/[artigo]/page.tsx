@@ -9,6 +9,10 @@ import { JsonLd } from "@/lib/jsonld";
 import { daLei, formatarData, formatarNumeroDeArtigo } from "@/lib/format";
 import { abs, site } from "@/lib/site";
 import {
+  getLinksEditoriaisDoArtigo,
+  metadadosDoArtigo,
+} from "@/lib/content/metadados-artigo";
+import {
   getArtigo,
   getRotasDeArtigosMaisBuscados,
   getArtigosRelacionados,
@@ -46,26 +50,6 @@ export async function generateStaticParams() {
   }
 }
 
-/**
- * Texto usado em <title>, meta description e OG — escrito uma vez só.
- *
- * O corte é pelo total, não por um número fixo de caracteres do caput: o
- * prefixo varia de "do Código Penal" a "do Código de Processo Civil", e um
- * `slice(0, 120)` fixo estourava o limite justamente nas leis de nome longo.
- * O buscador trunca por volta de 160 caracteres, e descrição cortada no meio
- * de uma palavra é a primeira coisa que a pessoa lê do resultado.
- */
-const LIMITE_DA_DESCRICAO = 155;
-
-function resumoDoArtigo(nomeLei: string, numero: string, caput: string) {
-  const prefixo = `Art. ${formatarNumeroDeArtigo(numero)} ${daLei(nomeLei)} ${nomeLei} comentado para a OAB: `;
-  const sobra = LIMITE_DA_DESCRICAO - prefixo.length - 1; // 1 para a reticência
-  if (caput.length <= sobra) return prefixo + caput;
-  const cortado = caput.slice(0, Math.max(sobra, 0));
-  const espaco = cortado.lastIndexOf(" ");
-  const trecho = espaco > 40 ? cortado.slice(0, espaco) : cortado;
-  return `${prefixo}${trecho.trimEnd()}…`;
-}
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { codigo, artigo: artigoSlug } = await params;
   const [lei, artigo] = await Promise.all([
@@ -74,8 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ]);
   if (!lei || !artigo) return {};
   const url = `/legislacao/${lei.slug}/${artigo.slug}`;
-  const titulo = `Art. ${formatarNumeroDeArtigo(artigo.numero)} ${daLei(lei.nome)} ${lei.nome} — comentado`;
-  const descricao = resumoDoArtigo(lei.nome, artigo.numero, artigo.caput);
+  const { titulo, descricao } = metadadosDoArtigo(lei, artigo);
   return {
     title: titulo,
     description: descricao,
@@ -108,14 +91,16 @@ export default async function ArtigoPage({ params }: Props) {
   ]);
   const url = abs(`/legislacao/${lei.slug}/${artigo.slug}`);
   const titulo = `Art. ${formatarNumeroDeArtigo(artigo.numero)} ${daLei(lei.nome)} ${lei.nome}`;
+  const metadata = metadadosDoArtigo(lei, artigo);
+  const linksEditoriais = getLinksEditoriaisDoArtigo(lei.slug, artigo.slug);
   return (
     <>
       <JsonLd
         data={{
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: `${titulo} — comentado para a OAB`,
-          description: resumoDoArtigo(lei.nome, artigo.numero, artigo.caput),
+          headline: metadata.titulo,
+          description: metadata.descricao,
           inLanguage: "pt-BR",
           dateModified: artigo.atualizadoEm,
           mainEntityOfPage: { "@type": "WebPage", "@id": url },
@@ -209,6 +194,29 @@ export default async function ArtigoPage({ params }: Props) {
                   não foi publicado. O texto legal acima está completo e
                   atualizado.
                 </p>
+              )}
+
+              {linksEditoriais.length > 0 && (
+                <nav
+                  aria-label="Comparações relacionadas"
+                  className="mt-7 rounded-xl border border-brand-100 bg-brand-50 p-5"
+                >
+                  <p className="text-[0.78rem] font-semibold tracking-wide text-brand-700 uppercase">
+                    Compare os dispositivos
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {linksEditoriais.map((link) => (
+                      <li key={link.href}>
+                        <Link
+                          href={link.href}
+                          className="text-[0.94rem] font-semibold text-brand-800 underline decoration-brand-200 underline-offset-4"
+                        >
+                          {link.rotulo} →
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
               )}
             </section>
 

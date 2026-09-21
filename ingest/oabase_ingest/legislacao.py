@@ -99,6 +99,18 @@ INICIO_INCISO = re.compile(r"^([IVXLCDM]+)\s*[-–—](?:\s|$)")
 INICIO_ALINEA = re.compile(r"^([a-z])\)\s")
 ORDINAL_SOLTO = re.compile(r"[ºª°oa]")
 
+# Entidades numéricas do HTML 4 às vezes chegam como controles C1 depois do
+# `html.unescape`: 145–148 são aspas tipográficas e 150 é travessão no
+# Windows-1252. Mantê-los como controle produz "Pena  reclusão" tanto na
+# página quanto no snippet. A normalização repara a codificação, não a lei.
+PONTUACAO_WINDOWS_1252 = str.maketrans({
+    "\u0091": "‘",
+    "\u0092": "’",
+    "\u0093": "“",
+    "\u0094": "”",
+    "\u0096": "–",
+})
+
 # Cabeçalho de divisão da lei. Não é texto de artigo e não pertence a
 # parágrafo nenhum — mas, por não casar com marcador de artigo, inciso ou
 # alínea, caía no `else` que acumula, e ia parar na cauda do último parágrafo
@@ -508,6 +520,7 @@ def em_linhas(html_bruto: str) -> list[str]:
     # total, que ninguém compara com o número real da lei.
     t = re.sub(r"(?i)</p>|<br\s*/?>|</tr>|</div>", "\x00", t)
     t = escape.unescape(re.sub(r"<[^>]+>", "", t))
+    t = t.translate(PONTUACAO_WINDOWS_1252)
     # Espaço não separável aparece muito e atrapalha os marcadores.
     t = t.replace("\xa0", " ")
     cruas = [

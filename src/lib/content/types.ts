@@ -36,6 +36,10 @@ export type Artigo = {
   incidencia: number;
   disciplinaSlug: string;
   atualizadoEm: string;
+  /** Edição manual do resultado de busca; ausente usa o texto automático. */
+  seoTitulo?: string;
+  /** Edição manual do snippet; ausente usa um recorte limpo do caput. */
+  seoDescricao?: string;
   /**
    * Portão de qualidade: só entra no sitemap e recebe `index`
    * quando o comentário passa do limiar de revisão.
@@ -69,6 +73,7 @@ export type Post = {
   resumo: string;
   corpo: string;
   publicadoEm: string;
+  atualizadoEm: string;
 };
 
 /**
