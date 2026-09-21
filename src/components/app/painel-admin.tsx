@@ -31,6 +31,33 @@ export type LinhaDeDisciplina = {
   acertos: number;
 };
 
+type InteressePorCarreira = {
+  carreira: string;
+  inscricoes: number;
+};
+
+type InteresseRecente = {
+  email: string;
+  carreira: string;
+  criado_em: string;
+};
+
+export type PainelConcursos = {
+  total?: number;
+  ultimos_7d?: number;
+  por_carreira?: InteressePorCarreira[];
+  recentes?: InteresseRecente[];
+};
+
+const nomesDasCarreiras: Record<string, string> = {
+  tribunais: "Tribunais",
+  procuradorias: "Procuradorias",
+  "defensoria-publica": "Defensoria Pública",
+  "ministerio-publico": "Ministério Público",
+  "delegado-de-policia": "Delegado de Polícia",
+  "ainda-nao-sei": "Ainda decidindo",
+};
+
 const dinheiro = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -45,12 +72,14 @@ const dinheiro = (v: number) =>
 export function PainelAdmin({
   metricas,
   funil,
+  concursos,
   usuariosIniciais,
   atividade,
   disciplinas,
 }: {
   metricas: Metricas;
   funil: Metricas;
+  concursos: PainelConcursos;
   usuariosIniciais: UsuarioAdmin[];
   atividade: DiaDeAtividade[];
   disciplinas: LinhaDeDisciplina[];
@@ -73,6 +102,12 @@ export function PainelAdmin({
   const f = (chave: string) => Number(funil[chave] ?? 0);
   const picoDeAtividade = Math.max(1, ...atividade.map((d) => d.respostas));
   const baseFunil = Math.max(1, f("contas"));
+  const interessesPorCarreira = Array.isArray(concursos.por_carreira)
+    ? concursos.por_carreira
+    : [];
+  const interessesRecentes = Array.isArray(concursos.recentes)
+    ? concursos.recentes
+    : [];
   const etapasDoFunil = [
     ["Conta criada", f("contas"), f("contas")],
     ["E-mail confirmado", f("confirmadas"), f("contas")],
@@ -184,6 +219,88 @@ export function PainelAdmin({
           </dl>
         </section>
       ))}
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-[0.86rem] font-semibold text-muted">
+            Concursos jurídicos
+          </h2>
+          <p className="mt-1 text-[0.8rem] text-muted">
+            Interesse registrado na landing pública — ainda não é conta nem intenção de compra.
+          </p>
+        </div>
+
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-5">
+            <dt className="text-[0.84rem] font-semibold text-muted">Na lista</dt>
+            <dd className="text-[1.7rem] leading-none font-bold tracking-[-0.02em] text-ink tabular-nums">
+              {Number(concursos.total ?? 0).toLocaleString("pt-BR")}
+            </dd>
+            <dd className="text-[0.8rem] text-muted">inscrições únicas</dd>
+          </div>
+          <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-5">
+            <dt className="text-[0.84rem] font-semibold text-muted">Últimos 7 dias</dt>
+            <dd className="text-[1.7rem] leading-none font-bold tracking-[-0.02em] text-ink tabular-nums">
+              {Number(concursos.ultimos_7d ?? 0).toLocaleString("pt-BR")}
+            </dd>
+            <dd className="text-[0.8rem] text-muted">novas inscrições</dd>
+          </div>
+        </dl>
+
+        {interessesPorCarreira.length > 0 ? (
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+            {interessesPorCarreira.map((item) => (
+              <li
+                key={item.carreira}
+                className="flex items-center justify-between gap-4 px-5 py-3 text-[0.9rem]"
+              >
+                <span className="text-ink">
+                  {nomesDasCarreiras[item.carreira] ?? item.carreira}
+                </span>
+                <span className="text-muted tabular-nums">
+                  {item.inscricoes.toLocaleString("pt-BR")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-hairline px-5 py-6 text-[0.9rem] text-muted">
+            A lista ainda não recebeu inscrições.
+          </p>
+        )}
+
+        {interessesRecentes.length > 0 && (
+          <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+            <table className="w-full min-w-[520px] border-collapse text-[0.9rem]">
+              <thead>
+                <tr className="bg-sunk text-left">
+                  {['E-mail', 'Carreira', 'Entrou'].map((coluna) => (
+                    <th
+                      key={coluna}
+                      className="px-5 py-3 text-[0.8rem] font-semibold text-muted"
+                    >
+                      {coluna}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {interessesRecentes.map((interesse) => (
+                  <tr key={interesse.email} className="border-t border-line">
+                    <td className="px-5 py-3 break-all text-ink">{interesse.email}</td>
+                    <td className="px-5 py-3 text-body">
+                      {nomesDasCarreiras[interesse.carreira] ?? interesse.carreira}
+                    </td>
+                    <td className="px-5 py-3 text-muted tabular-nums">
+                      {formatarData(interesse.criado_em.slice(0, 10))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end justify-between gap-3">

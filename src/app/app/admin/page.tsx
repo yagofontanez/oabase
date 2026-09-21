@@ -4,6 +4,7 @@ import {
   type DiaDeAtividade,
   type LinhaDeDisciplina,
   type Metricas,
+  type PainelConcursos,
   type UsuarioAdmin,
 } from "@/components/app/painel-admin";
 import { SomenteAdmin } from "@/components/app/somente-editor";
@@ -31,19 +32,20 @@ export default async function AdminPage() {
   const { data: admin } = await supabase.rpc("sou_admin");
   if (!admin) return <SomenteAdmin />;
 
-  const [metricas, usuarios, atividade, disciplinas] = await Promise.all([
+  const [metricas, usuarios, atividade, disciplinas, funil, concursos] = await Promise.all([
     supabase.rpc("metricas_admin"),
     supabase.rpc("usuarios_admin", { p_busca: null, p_limite: 50 }),
     supabase.rpc("atividade_admin"),
     supabase.rpc("disciplinas_admin"),
+    supabase.rpc("funil_ativacao_admin"),
+    supabase.rpc("concursos_admin"),
   ]);
-
-  const { data: funil } = await supabase.rpc("funil_ativacao_admin");
 
   return (
     <PainelAdmin
       metricas={(metricas.data ?? {}) as Metricas}
-      funil={(funil ?? {}) as Metricas}
+      funil={(funil.data ?? {}) as Metricas}
+      concursos={(concursos.data ?? {}) as PainelConcursos}
       usuariosIniciais={(usuarios.data ?? []) as UsuarioAdmin[]}
       atividade={(atividade.data ?? []) as DiaDeAtividade[]}
       disciplinas={(disciplinas.data ?? []) as LinhaDeDisciplina[]}
