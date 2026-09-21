@@ -15,6 +15,7 @@ const nav = [
   { href: "/glossario", label: "Glossário" },
   { href: "/exames", label: "Exames" },
   { href: "/estatisticas", label: "O que mais cai" },
+  { href: "/concursos", label: "Concursos" },
 ];
 export function SiteHeader() {
   return (
@@ -24,10 +25,10 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
 
-        {/* O corte subiu de `md` para `lg` quando o menu passou a seis itens:
-            em 768px eles espremiam a marca e o botão de sessão. Entre 768 e
-            1024 quem atende é a faixa rolável abaixo, que já existia. */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Seções">
+        {/* Sete itens já não cabem com folga em 1024px ao lado da marca e da
+            sessão. Entre 768 e 1280, a faixa rolável abaixo preserva todos
+            visíveis sem reduzir toque, texto ou contraste. */}
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Seções">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -66,9 +67,9 @@ export function SiteHeader() {
         </div>
       </Container>
 
-      {/* Abaixo de lg o menu principal desaparece. Em vez de escondê-lo
+      {/* Abaixo de xl o menu principal desaparece. Em vez de escondê-lo
           atrás de um botão, as seções ficam à vista numa faixa rolável. */}
-      <div className="border-t border-line/70 lg:hidden">
+      <div className="border-t border-line/70 xl:hidden">
         <Container>
           <nav
             aria-label="Seções"

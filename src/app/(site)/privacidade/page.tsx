@@ -67,6 +67,12 @@ const secoes: Secao[] = [
           que você quiser exibir.
         </P>
         <P>
+          <strong>Ao pedir atualizações sobre concursos jurídicos:</strong>
+          e-mail, carreira de interesse e o registro do seu consentimento.
+          Essa lista é opcional, não cria conta e serve apenas para avisar
+          sobre a chegada dessa frente.
+        </P>
+        <P>
           <strong>Ao contratar um plano:</strong> nome completo, CPF e
           telefone. São exigidos pelo processador de pagamento para emitir a
           cobrança, e ficam vinculados à sua conta para não serem pedidos de
@@ -141,6 +147,11 @@ const secoes: Secao[] = [
           consentimento (art. 7º, I). O lembrete de revisão é controlado em
           Configurações; o aviso dos blocos agendados, no Calendário. Você pode
           desligar cada um sem afetar o restante do serviço.
+        </P>
+        <P>
+          <strong>Enviar atualizações sobre concursos jurídicos</strong> —
+          apenas a quem pediu para recebê-las na lista de interesse. Base
+          legal: consentimento (art. 7º, I), revogável a qualquer momento.
         </P>
         <P>
           <strong>Medir a dificuldade das questões e comparar desempenho</strong>{" "}
@@ -226,6 +237,11 @@ const secoes: Secao[] = [
         <P>
           <strong>Dados da conta e histórico de estudo:</strong> enquanto a
           conta existir. Ao encerrar, são apagados em até 30 dias.
+        </P>
+        <P>
+          <strong>Lista de interesse em concursos:</strong> até você revogar o
+          consentimento, até o lançamento da frente ou por no máximo 2 anos,
+          o que acontecer primeiro.
         </P>
         <P>
           <strong>Dados de cobrança:</strong> 5 anos após a transação, prazo de

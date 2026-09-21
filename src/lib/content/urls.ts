@@ -34,6 +34,9 @@ const ESTATICAS: {
   // única frequência honesta aqui, e é também a página cuja demanda de busca
   // é mais sazonal de todo o site.
   { path: "/proximo-exame", priority: 0.9, changeFrequency: "daily" },
+  // Landing própria, com proposta e coleta explícita de interesse — não é
+  // uma cópia de legislação nem uma página de palavra-chave vazia.
+  { path: "/concursos", priority: 0.7, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },

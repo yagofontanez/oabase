@@ -15,6 +15,7 @@ const colunas = [
       { href: "/glossario", label: "Glossário jurídico" },
       { href: "/exames", label: "Exames e gabaritos" },
       { href: "/estatisticas", label: "O que mais cai" },
+      { href: "/concursos", label: "Concursos jurídicos" },
       { href: "/blog", label: "Blog" },
     ],
   },
