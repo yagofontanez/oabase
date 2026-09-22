@@ -1,7 +1,17 @@
 {
   "name": "oabase",
   "version": "0.1.0",
+  "description": "Sistema de estudos em Direito com fontes jurídicas oficiais e prática para a OAB.",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yagofontanez/oabase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yagofontanez/oabase/issues"
+  },
+  "homepage": "https://oabase.com.br",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
