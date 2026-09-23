@@ -85,7 +85,10 @@ export default async function ArtigoPage({ params }: Props) {
   if (!lei || !artigo) notFound();
   const [disciplina, relacionados, vizinhos, incidencia] = await Promise.all([
     getDisciplina(artigo.disciplinaSlug),
-    getArtigosRelacionados(artigo),
+    // "Leia também" é enriquecimento editorial. Um timeout nessa consulta
+    // não pode derrubar o texto legal nem transformar crawler em novas
+    // tentativas de renderização da página inteira.
+    getArtigosRelacionados(artigo).catch(() => []),
     getVizinhos(lei.slug, artigo.slug),
     getIncidenciaDoArtigo(lei.slug, artigo.slug),
   ]);

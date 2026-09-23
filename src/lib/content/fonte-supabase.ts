@@ -28,6 +28,11 @@ const CAMPOS_ARTIGO =
   "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, seo_titulo, seo_descricao, leis!inner(slug), disciplinas(slug)";
 const CAMPOS_ARTIGO_COM_DISCIPLINA =
   "numero, slug, caput, paragrafos, comentario, incidencia, indexavel, atualizado_em, seo_titulo, seo_descricao, leis!inner(slug), disciplinas!inner(slug)";
+// A lateral "Leia também" só precisa destes campos. Não carregar comentário,
+// parágrafos e metadata de SEO reduz o custo de cada página de artigo — e a
+// consulta fica apoiada pelo índice de disciplina + incidência.
+const CAMPOS_ARTIGO_RELACIONADO =
+  "numero, slug, caput, incidencia, leis!inner(slug)";
 
 type LinhaArtigo = {
   numero: string;
@@ -46,6 +51,14 @@ type LinhaArtigo = {
 
 type LinhaRotaArtigo = {
   slug: string;
+  leis: { slug: string } | { slug: string }[];
+};
+
+type LinhaArtigoRelacionado = {
+  numero: string;
+  slug: string;
+  caput: string;
+  incidencia: number;
   leis: { slug: string } | { slug: string }[];
 };
 
@@ -69,6 +82,24 @@ function paraArtigo(linha: LinhaArtigo): Artigo {
     seoTitulo: linha.seo_titulo ?? undefined,
     seoDescricao: linha.seo_descricao ?? undefined,
     indexavel: linha.indexavel,
+  };
+}
+
+function paraArtigoRelacionado(
+  linha: LinhaArtigoRelacionado,
+  disciplinaSlug: string,
+): Artigo {
+  return {
+    leiSlug: um(linha.leis)?.slug ?? "",
+    slug: linha.slug,
+    numero: linha.numero,
+    caput: linha.caput,
+    paragrafos: [],
+    comentario: [],
+    incidencia: linha.incidencia,
+    disciplinaSlug,
+    atualizadoEm: "",
+    indexavel: false,
   };
 }
 
@@ -265,13 +296,15 @@ export const fonteSupabase: FonteDeConteudo = {
     // em pgvector sem mudar a assinatura.
     const { data, error } = await supabaseAnon()
       .from("artigos")
-      .select(CAMPOS_ARTIGO)
+      .select(CAMPOS_ARTIGO_RELACIONADO)
       .eq("disciplinas.slug", artigo.disciplinaSlug)
       .neq("slug", artigo.slug)
       .order("incidencia", { ascending: false })
       .limit(limite);
     erro("artigos relacionados", error);
-    return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+    return ((data ?? []) as unknown as LinhaArtigoRelacionado[]).map((linha) =>
+      paraArtigoRelacionado(linha, artigo.disciplinaSlug),
+    );
   },
 
   async getVizinhos(leiSlug, artigoSlug) {
