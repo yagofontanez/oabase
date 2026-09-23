@@ -16,6 +16,7 @@ const colunas = [
       { href: "/exames", label: "Exames e gabaritos" },
       { href: "/estatisticas", label: "O que mais cai" },
       { href: "/concursos", label: "Concursos jurídicos" },
+      { href: "/como-estudar-para-oab", label: "Como estudar para a OAB" },
       { href: "/blog", label: "Blog" },
     ],
   },

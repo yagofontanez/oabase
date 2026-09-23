@@ -180,6 +180,12 @@ export default async function Home() {
               </Link>
             </div>
             <p className="mt-5 text-[0.82rem] text-brand-200">Conta gratuita · faculdade ou OAB · sem cartão para começar</p>
+            <Link
+              href="/como-estudar-para-oab"
+              className="mt-4 text-[0.9rem] font-semibold text-ouro-200 underline decoration-ouro-400/60 underline-offset-4 transition-colors hover:text-white"
+            >
+              Leia o guia: como estudar para a OAB →
+            </Link>
           </div>
           <PreviaDoPlano />
         </Container>

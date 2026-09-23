@@ -37,6 +37,7 @@ const ESTATICAS: {
   // Landing própria, com proposta e coleta explícita de interesse — não é
   // uma cópia de legislação nem uma página de palavra-chave vazia.
   { path: "/concursos", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/como-estudar-para-oab", priority: 0.8, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
   { path: "/estatisticas", priority: 0.8, changeFrequency: "monthly" },
   { path: "/precos", priority: 0.7, changeFrequency: "monthly" },
