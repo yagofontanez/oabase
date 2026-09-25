@@ -911,6 +911,20 @@ sempre, escrita à mão.
 consulta por ambiguidade — dentro do `try/catch` do webhook, isso virava
 compra confirmada sem e-mail e só log. Qualifique a coluna.
 
+**Aviso de cadastro novo sai do banco, não do navegador.** O `signUp` roda no
+cliente, e uma rota que o navegador chamasse para "avisar que se cadastrou"
+seria um jeito de qualquer pessoa mandar e-mail à equipe. O gatilho
+`avisar_novo_cadastro` em `auth.users` chama `/api/tarefas/novo-cadastro` por
+`pg_net`, autenticado pelo segredo `cron_email`, e o aviso vai para
+`EMAIL_SUPORTE`. `pg_net` só enfileira e o gatilho engole erro: **o aviso
+nunca derruba o cadastro**.
+
+**A URL de destino é configuração** (`url_aviso_cadastro` em
+`interno.segredos`) e não existe fora da produção. Todo banco nasce com um
+`cron_email` aleatório, o local inclusive — com a URL no código, cada cadastro
+de teste bateria na produção. Sem a linha, o gatilho não faz nada; apagá-la é
+o jeito de desligar o aviso.
+
 
 ## Páginas legais e procedência
 

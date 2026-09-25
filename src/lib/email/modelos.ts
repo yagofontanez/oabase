@@ -179,6 +179,50 @@ export function ticketAberto(dados: {
   };
 }
 
+/**
+ * Aviso interno de conta nova, disparado pelo gatilho em `auth.users`.
+ *
+ * O assunto leva o nome para dar para ver na caixa de entrada quem chegou,
+ * sem abrir. "Conta nº" é a contagem de `auth.users` no instante do cadastro
+ * — contas de teste incluídas, que é o que o banco sabe.
+ */
+export function novoCadastro(dados: {
+  nome: string | null;
+  email: string;
+  quando: string;
+  total: number;
+  href: string;
+}): Modelo {
+  const linha = (rotulo: string, valor: string) =>
+    `<tr><td style="padding:6px 16px 6px 0;color:${SUAVE};font-size:13px;white-space:nowrap;vertical-align:top;">${rotulo}</td>` +
+    `<td style="padding:6px 0;color:${TINTA};">${valor}</td></tr>`;
+  return {
+    assunto: `Novo cadastro: ${dados.nome ?? dados.email}`,
+    html: moldura(
+      titulo("Nova conta no OABase") +
+        `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 8px 0;font-family:${FONTE};font-size:15px;">` +
+        linha("Nome", dados.nome ? escapar(dados.nome) : `<span style="color:${SUAVE};">não informado</span>`) +
+        linha("E-mail", escapar(dados.email)) +
+        linha("Quando", escapar(dados.quando)) +
+        linha("Conta nº", String(dados.total)) +
+        `</table>` +
+        `<p style="margin:12px 0 0 0;color:${SUAVE};font-size:13px;">O e-mail ainda pode estar sem confirmação: o aviso sai no cadastro, não no clique do link.</p>` +
+        botao(dados.href, "Abrir o painel"),
+      "Você recebeu este e-mail porque administra o OABase.",
+    ),
+    texto: [
+      "Nova conta no OABase",
+      "",
+      `Nome: ${dados.nome ?? "não informado"}`,
+      `E-mail: ${dados.email}`,
+      `Quando: ${dados.quando}`,
+      `Conta nº: ${dados.total}`,
+      "",
+      `Painel: ${dados.href}`,
+    ].join("\n"),
+  };
+}
+
 /** Resposta da equipe, para quem abriu o ticket. */
 export function ticketRespondido(dados: {
   nome: string;
