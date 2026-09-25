@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirme seu e-mail</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f7f5f2;color:#20201e;font-family:Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f5f2;">
+      <tr>
+        <td align="center" style="padding:36px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#ffffff;border:1px solid #e7e0d8;border-radius:18px;overflow:hidden;">
+            <tr>
+              <td style="padding:30px 32px 20px;">
+                <p style="margin:0;color:#6a2239;font-size:24px;font-weight:700;letter-spacing:-0.5px;">OABase</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:4px 32px 32px;">
+                <h1 style="margin:0 0 16px;color:#20201e;font-size:27px;line-height:1.2;letter-spacing:-0.6px;">Confirme seu e-mail para começar</h1>
+                <p style="margin:0 0 16px;color:#4d4a46;font-size:16px;line-height:1.6;">Falta só um passo para ativar sua conta na OABase.</p>
+                <p style="margin:0 0 26px;color:#4d4a46;font-size:16px;line-height:1.6;">Depois da confirmação, você monta seu primeiro plano de estudos em três decisões e já recebe um bloco gratuito para começar.</p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="border-radius:999px;background:#6a2239;">
+                      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" style="display:inline-block;padding:14px 22px;color:#ffffff;font-size:16px;font-weight:700;line-height:1;text-decoration:none;">Confirmar e montar meu plano</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:28px 0 0;color:#77716a;font-size:13px;line-height:1.5;">Se você não criou uma conta na OABase, pode ignorar este e-mail.</p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:18px 0 0;color:#8b857e;font-size:12px;line-height:1.5;">OABase · preparação para a OAB com foco no que importa</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
