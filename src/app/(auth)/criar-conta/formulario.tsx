@@ -72,8 +72,9 @@ export function FormularioCriarConta() {
         </p>
         <p className="text-[0.93rem] text-body">
           Enviamos um link para <strong className="text-ink">{email}</strong>.
-          Clique nele para ativar a conta — se não aparecer em alguns minutos,
-          procure na caixa de spam.
+          Clique nele para ativar a conta. Ao entrar, o primeiro passo será
+          montar seu plano em três decisões — se não aparecer em alguns
+          minutos, procure na caixa de spam.
         </p>
       </div>
     );

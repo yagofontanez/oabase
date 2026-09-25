@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BotaoFoco } from "@/components/app/botao-foco";
 import { Contagem } from "@/components/contagem";
 import { formatarData } from "@/lib/format";
@@ -142,6 +143,13 @@ export default async function PainelPage() {
   const revisaoHoje = desempenho?.revisao_hoje ?? 0;
   const comecou = respondidas > 0;
   const planoDeEstudos = (planoRes.data?.plano as Plano | null) ?? null;
+
+  // A primeira sessão não começa em um painel cheio de caminhos. Quem ainda
+  // não tem plano entra direto nas três decisões que geram o primeiro bloco;
+  // é gratuito e acontece antes de qualquer oferta de assinatura.
+  if (!planoDeEstudos) {
+    redirect("/app/plano");
+  }
   const semana = planoDeEstudos?.semanas?.[0] ?? null;
 
   type Sessao = {

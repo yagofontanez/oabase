@@ -88,18 +88,18 @@ export type Modelo = { assunto: string; html: string; texto: string };
 export function boasVindas(dados: { nome: string; site: string }): Modelo {
   const conteudo = `
 ${titulo(`Boas-vindas ao OABase${dados.nome ? `, ${escapar(dados.nome)}` : ""}`)}
-<p style="margin:0 0 12px 0;">Sua conta está pronta. O melhor jeito de começar é resolver algumas questões da prova que você vai fazer — o sistema guarda seus acertos, erros e revisões em um só lugar.</p>
-<p style="margin:0;">Não precisa montar uma rotina inteira agora. Comece por uma questão e ajuste o caminho depois.</p>
-${botao(`${dados.site}/app/questoes`, "Resolver a primeira questão")}
-<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Se preferir se organizar antes, você também pode criar um plano de estudos no painel.</p>`;
+<p style="margin:0 0 12px 0;">Sua conta está pronta. Em três decisões, você escolhe o objetivo, quanto tempo tem e recebe o primeiro bloco de estudo organizado.</p>
+<p style="margin:0;">O roteiro é gratuito. Questões e simulados só entram quando você decidir contratar um plano.</p>
+${botao(`${dados.site}/app/plano`, "Montar meu primeiro plano")}
+<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Não precisa acertar tudo de primeira: o plano pode ser ajustado depois conforme sua rotina muda.</p>`;
 
   const texto = `Olá${dados.nome ? `, ${dados.nome}` : ""}.
 
-Sua conta no OABase está pronta. Comece resolvendo algumas questões da prova que você vai fazer; seus acertos, erros e revisões ficam guardados em um só lugar.
+Sua conta no OABase está pronta. Em três decisões, você escolhe o objetivo, quanto tempo tem e recebe o primeiro bloco de estudo organizado.
 
-Resolver a primeira questão: ${dados.site}/app/questoes
+Montar meu primeiro plano: ${dados.site}/app/plano
 
-Você também pode criar um plano de estudos no painel.
+O roteiro é gratuito. Questões e simulados só entram quando você decidir contratar um plano.
 
 — OABase`;
 
@@ -117,16 +117,16 @@ Você também pode criar um plano de estudos no painel.
 export function ajudaParaComecar(dados: { nome: string; site: string }): Modelo {
   const conteudo = `
 ${titulo(dados.nome ? `${escapar(dados.nome)}, quer uma mão para começar?` : "Quer uma mão para começar?")}
-<p style="margin:0 0 12px 0;">A conta continua pronta para você. Se a dúvida for por onde entrar, comece pela prova: escolha um exame e responda no seu ritmo. O resultado já mostra o que vale revisar.</p>
-<p style="margin:0;">Se preferir, monte primeiro um plano simples; ele divide o estudo em blocos que você pode rearranjar depois.</p>
-${botao(`${dados.site}/app/questoes`, "Escolher questões para resolver")}
+<p style="margin:0 0 12px 0;">A conta continua pronta para você. Para sair do zero, basta escolher se estuda para a OAB ou para a faculdade e dizer quanto tempo tem por dia.</p>
+<p style="margin:0;">O OABase transforma isso no primeiro bloco do roteiro. Depois você rearranja quando a sua rotina mudar.</p>
+${botao(`${dados.site}/app/plano`, "Montar meu plano")}
 <p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Este é o último lembrete de começo. Ao iniciar seus estudos, a sequência para automaticamente.</p>`;
 
   const texto = `Olá${dados.nome ? `, ${dados.nome}` : ""}.
 
-Sua conta continua pronta. Para começar, escolha um exame e responda algumas questões no seu ritmo; o resultado já mostra o que vale revisar.
+Sua conta continua pronta. Para começar, escolha se estuda para a OAB ou para a faculdade e diga quanto tempo tem por dia. O OABase transforma isso no primeiro bloco do roteiro.
 
-Resolver questões: ${dados.site}/app/questoes
+Montar meu plano: ${dados.site}/app/plano
 
 Este é o último lembrete de começo. Ao iniciar seus estudos, a sequência para automaticamente.
 
