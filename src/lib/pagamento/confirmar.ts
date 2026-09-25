@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { compraConfirmada } from "@/lib/email/modelos";
 import { enviar } from "@/lib/email/resend";
-import { consultarCobranca, ErroAsaas } from "@/lib/pagamento/asaas";
+import { consultarCobranca, ErroAsaas, type Cobranca } from "@/lib/pagamento/asaas";
 import { site } from "@/lib/site";
 import { planos } from "@/lib/planos";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
@@ -24,6 +24,12 @@ import { diasAte, getProximoExame } from "@/lib/content/queries";
 
 /** Status que a Asaas considera dinheiro em caixa. */
 const PAGOS = new Set(["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"]);
+
+type CobrancaLocal = {
+  plano: string;
+  renovacao: boolean;
+  assinatura_id: string | null;
+};
 
 export type Confirmacao =
   /** Assinatura criada agora, ou já criada antes (a Asaas reenvia eventos). */
@@ -70,6 +76,53 @@ export async function diasDoPlano(chave: string): Promise<number | null> {
   }
 }
 
+/**
+ * Folga da primeira cobrança de uma assinatura, em dias.
+ *
+ * Sem ela, o acesso acabaria no mesmo dia em que vence a fatura seguinte — e
+ * o débito do cartão acontece ao longo daquele dia, o Pix quando a pessoa
+ * lembra. A folga entra uma vez só: as renovações somam exatamente o
+ * intervalo entre uma cobrança e a próxima, então ela se mantém sem crescer.
+ */
+const FOLGA_DA_ASSINATURA = 3;
+
+/** Mesmo dia do mês seguinte; 31/01 vira 28/02 (ou 29), como a Asaas faz. */
+function mesSeguinte(iso: string): Date {
+  const [ano, mes, dia] = iso.split("-").map(Number);
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  return new Date(ano, mes, Math.min(dia, ultimoDia));
+}
+
+const diasEntre = (de: Date, ate: Date) =>
+  Math.round(
+    (Date.UTC(ate.getFullYear(), ate.getMonth(), ate.getDate()) -
+      Date.UTC(de.getFullYear(), de.getMonth(), de.getDate())) /
+      864e5,
+  );
+
+/**
+ * Dias de acesso que uma cobrança de assinatura compra.
+ *
+ * O Mensal avulso comprava 30 dias. Na assinatura isso deriva: a Asaas cobra
+ * no mesmo dia de cada mês, e meses têm de 28 a 31 dias — somando 30 a cada
+ * renovação, o acesso acabaria um dia antes da cobrança em todo mês de 31, e
+ * cada vez mais cedo. Aqui cada pagamento compra o intervalo até a próxima
+ * cobrança: a primeira conta de hoje (+ folga), as renovações contam do
+ * vencimento, e `confirmar_pagamento` soma ao que ainda resta.
+ */
+export function diasDaCobrancaRecorrente(
+  vencimento: string,
+  renovacao: boolean,
+  hoje = new Date(),
+): number {
+  const proxima = mesSeguinte(vencimento);
+  if (renovacao) {
+    const [ano, mes, dia] = vencimento.split("-").map(Number);
+    return diasEntre(new Date(ano, mes - 1, dia), proxima);
+  }
+  return Math.max(1, diasEntre(hoje, proxima)) + FOLGA_DA_ASSINATURA;
+}
+
 export async function confirmarCobranca(
   pagamentoId: string,
 ): Promise<Confirmacao> {
@@ -79,9 +132,9 @@ export async function confirmarCobranca(
   }
 
   // O status que vale é o da Asaas, nunca o do corpo de um POST público.
-  let statusReal: string;
+  let pagamento: Cobranca;
   try {
-    statusReal = (await consultarCobranca(pagamentoId)).status;
+    pagamento = await consultarCobranca(pagamentoId);
   } catch (erro) {
     // Pagamento que a Asaas não conhece é definitivo: reenviar não vai fazer
     // ele passar a existir. Qualquer outra falha é nossa, e merece repetição.
@@ -92,27 +145,54 @@ export async function confirmarCobranca(
     return { tipo: "falha", motivo: "não consegui consultar a Asaas" };
   }
 
-  if (!PAGOS.has(statusReal)) {
-    return { tipo: "ignorada", motivo: `status ${statusReal}` };
+  if (!PAGOS.has(pagamento.status)) {
+    return { tipo: "ignorada", motivo: `status ${pagamento.status}` };
   }
 
   const supabase = clienteSemSessao();
 
   // O plano vem da nossa tabela, não do evento — mesmo princípio do preço em
   // `/api/assinar`: o que chega de fora nunca decide o que a pessoa recebe.
-  const { data: planoLocal, error: erroBusca } = await supabase.rpc(
-    "plano_da_cobranca",
+  const { data: locais, error: erroBusca } = await supabase.rpc(
+    "cobranca_local",
     { p_segredo: segredo, p_pagamento_id: pagamentoId },
   );
   if (erroBusca) {
     console.error("Falha ao ler a cobrança:", erroBusca);
     return { tipo: "falha", motivo: "não consegui ler a cobrança" };
   }
-  if (!planoLocal) {
+  let local = (locais as CobrancaLocal[] | null)?.[0] ?? null;
+
+  // Renovação: a Asaas criou a cobrança do mês sozinha, e a nossa linha nasce
+  // agora. A função só aceita assinatura que o nosso checkout registrou — a
+  // assinatura vem da Asaas (reconsultada acima), não do corpo do evento.
+  if (!local && pagamento.subscription) {
+    const { data: plano, error } = await supabase.rpc(
+      "registrar_cobranca_da_assinatura",
+      {
+        p_segredo: segredo,
+        p_pagamento_id: pagamentoId,
+        p_assinatura_id: pagamento.subscription,
+        p_valor: pagamento.value,
+        p_url: pagamento.invoiceUrl,
+      },
+    );
+    if (error) {
+      console.error("Falha ao registrar renovação:", error);
+      return { tipo: "falha", motivo: "não consegui registrar a renovação" };
+    }
+    if (plano) {
+      local = { plano: String(plano), renovacao: true, assinatura_id: pagamento.subscription };
+    }
+  }
+
+  if (!local) {
     return { tipo: "ignorada", motivo: "cobrança desconhecida" };
   }
 
-  const dias = await diasDoPlano(String(planoLocal));
+  const dias = local.assinatura_id
+    ? diasDaCobrancaRecorrente(pagamento.dueDate, local.renovacao)
+    : await diasDoPlano(local.plano);
   if (dias === null) {
     console.error(`Plano desconhecido na cobrança ${pagamentoId}.`);
     return { tipo: "falha", motivo: "plano desconhecido" };
@@ -137,7 +217,10 @@ export async function confirmarCobranca(
   }
 
   if (linha?.situacao === "confirmada") {
-    await avisarCompra(supabase, segredo, pagamentoId);
+    await avisarCompra(supabase, segredo, pagamentoId, {
+      recorrente: Boolean(local.assinatura_id),
+      renovacao: local.renovacao,
+    });
     return { tipo: "confirmada", fim: linha.assinatura_fim };
   }
 
@@ -155,6 +238,7 @@ async function avisarCompra(
   supabase: ReturnType<typeof clienteSemSessao>,
   segredo: string,
   pagamentoId: string,
+  assinatura: { recorrente: boolean; renovacao: boolean },
 ) {
   try {
     const { data: compra } = await supabase.rpc("dados_da_compra", {
@@ -179,6 +263,7 @@ async function avisarCompra(
       plano: planos.find((p) => p.chave === dados.plano)?.nome ?? dados.plano,
       validoAte: dados.fim,
       site: site.url,
+      ...assinatura,
     });
     const envio = await enviar({
       para: dados.email,

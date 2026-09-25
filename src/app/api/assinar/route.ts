@@ -6,9 +6,12 @@ import { cpfValido, digitos, telefoneValido } from "@/lib/validacao";
 import {
   ErroAsaas,
   ambienteAsaas,
+  cancelarAssinatura,
   cobrancaLiberada,
+  criarAssinatura,
   criarCobranca,
   criarOuAtualizarCliente,
+  type Cobranca,
 } from "@/lib/pagamento/asaas";
 
 /**
@@ -81,6 +84,38 @@ export async function POST(request: Request) {
     );
   }
 
+  // Duas assinaturas mensais é cobrança em dobro no cartão. O índice único
+  // em `recorrencias` garante no banco; recusar aqui evita criar a segunda
+  // na Asaas antes de o banco dizer não.
+  if (plano.recorrente) {
+    const { data: ativa } = await supabase
+      .from("recorrencias")
+      .select("asaas_assinatura_id")
+      .eq("status", "ativa")
+      .maybeSingle();
+    if (ativa) {
+      // Assinatura aberta e nunca paga: a pessoa saiu da fatura e voltou. O
+      // caminho é a mesma fatura, não uma segunda assinatura. (A abandonada
+      // de vez é cancelada pela reconciliação.)
+      const { data: cobrancasDela } = await supabase
+        .from("cobrancas")
+        .select("status, url_fatura")
+        .eq("asaas_assinatura_id", ativa.asaas_assinatura_id)
+        .order("criado_em", { ascending: false });
+      const paga = cobrancasDela?.some((c) => c.status === "CONFIRMED");
+      const aberta = cobrancasDela?.find((c) => c.status === "PENDING");
+      if (!paga && aberta) {
+        return NextResponse.json({ url: aberta.url_fatura, ambiente: ambienteAsaas });
+      }
+      return NextResponse.json(
+        {
+          erro: "Você já tem a assinatura mensal ativa. Ela renova sozinha — veja em Configurações.",
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const { data: perfil } = await supabase
     .from("perfis")
     .select("asaas_cliente_id")
@@ -88,7 +123,8 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   let clienteId: string;
-  let cobranca;
+  let cobranca: Cobranca;
+  let assinaturaId: string | null = null;
   try {
     const cliente = await criarOuAtualizarCliente({
       clienteExistente: perfil?.asaas_cliente_id ?? null,
@@ -99,15 +135,23 @@ export async function POST(request: Request) {
     });
     clienteId = cliente.id;
 
-    cobranca = await criarCobranca({
+    const pedido = {
       clienteId,
       valor: plano.precoNumerico,
       descricao: `OABase — plano ${plano.nome}`,
       referencia: `${user.id}:${plano.chave}`,
       // Prazo curto de propósito: cobrança de estudo perde sentido se vencer
-      // depois da prova, e boleto longo trava a liberação do acesso.
+      // depois da prova, e boleto longo trava a liberação do acesso. Na
+      // assinatura, este dia vira o dia de cobrança de todos os meses.
       diasParaVencer: 3,
-    });
+    };
+    if (plano.recorrente) {
+      const { assinatura, primeira } = await criarAssinatura(pedido);
+      assinaturaId = assinatura.id;
+      cobranca = primeira;
+    } else {
+      cobranca = await criarCobranca(pedido);
+    }
   } catch (erro) {
     console.error("Falha na Asaas:", erro);
     if (erro instanceof ErroAsaas) {
@@ -135,10 +179,24 @@ export async function POST(request: Request) {
     p_ambiente: ambienteAsaas,
     p_pagamento_id: cobranca.id,
     p_url: cobranca.invoiceUrl,
+    p_assinatura_id: assinaturaId,
   });
+  if (error && assinaturaId) {
+    // Assinatura sem registro é o pior caso: a Asaas cobraria todo mês e
+    // nenhuma renovação viraria acesso, porque o banco só aceita renovação
+    // de assinatura que conhece. Desfaz na Asaas e recusa.
+    console.error("Falha ao registrar assinatura; cancelando na Asaas:", error);
+    await cancelarAssinatura(assinaturaId).catch((erro) =>
+      console.error(`Assinatura ${assinaturaId} ficou órfã na Asaas:`, erro),
+    );
+    return NextResponse.json(
+      { erro: "Não consegui abrir a assinatura agora. Tente de novo." },
+      { status: 502 },
+    );
+  }
   if (error) {
-    // A cobrança existe na Asaas: mandar a pessoa para o pagamento é mais
-    // importante do que o nosso registro, que dá para reconciliar depois.
+    // A cobrança avulsa existe na Asaas: mandar a pessoa para o pagamento é
+    // mais importante do que o nosso registro, que dá para reconciliar depois.
     console.error("Falha ao registrar cobrança:", error);
   }
 

@@ -108,6 +108,8 @@ for (const tabela of [
   "comentarios",
   "perfis",
   "assinaturas",
+  // Quem assina o Mensal, e o id da assinatura na Asaas.
+  "recorrencias",
   "tickets",
   "ticket_mensagens",
   // O fórum é aberto a qualquer conta, e fechado a quem não tem nenhuma:
@@ -178,6 +180,40 @@ caso("confirmar_pagamento exige o segredo do banco", async () => {
   if (!/segredo inválido/.test(corpo)) {
     throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
   }
+});
+
+// Recorrência do Mensal: uma recorrência forjada faria renovação alheia virar
+// acesso de quem forjou; uma cancelada à força liberaria assinatura em dobro.
+caso("anônimo não cria recorrência", async () => {
+  const { status } = await inserir("recorrencias", {
+    user_id: "00000000-0000-0000-0000-000000000000",
+    plano: "mensal",
+    ambiente: "sandbox",
+    asaas_assinatura_id: "sub_fronteira_teste",
+  });
+  if (status < 400) throw new Error(`insert aceito (HTTP ${status})`);
+});
+
+for (const [funcao, args] of [
+  ["registrar_cobranca_da_assinatura", { p_pagamento_id: "pay_fronteira_teste", p_assinatura_id: "sub_fronteira_teste", p_valor: 15, p_url: "https://exemplo.invalido" }],
+  ["encerrar_recorrencia", { p_assinatura_id: "sub_fronteira_teste" }],
+  ["cobranca_local", { p_pagamento_id: "pay_fronteira_teste" }],
+  ["recorrencias_a_reconciliar", { p_ambiente: "producao" }],
+  ["destinatarios_fatura", { p_ambiente: "producao" }],
+]) {
+  caso(`${funcao} exige o segredo do banco`, async () => {
+    const { corpo } = await chamar(funcao, { p_segredo: "segredo-errado", ...args });
+    if (!/segredo inválido/.test(corpo)) {
+      throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
+    }
+  });
+}
+
+caso("anônimo não cancela recorrência de ninguém", async () => {
+  const { corpo } = await chamar("cancelar_minha_recorrencia", {
+    p_assinatura_id: "sub_fronteira_teste",
+  });
+  if (corpo.trim() === "true") throw new Error("cancelou");
 });
 
 caso("anônimo não abre tópico no fórum", async () => {

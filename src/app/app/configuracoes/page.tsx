@@ -4,7 +4,11 @@ import { PreferenciaAvisos } from "@/components/app/preferencia-avisos";
 import { formatarData } from "@/lib/format";
 import { planos } from "@/lib/planos";
 import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
-import { FormularioNome, FormularioSenha } from "./formularios";
+import {
+  CancelarRenovacao,
+  FormularioNome,
+  FormularioSenha,
+} from "./formularios";
 
 export const metadata: Metadata = {
   title: "Configurações",
@@ -54,6 +58,12 @@ export default async function ConfiguracoesPage() {
     .order("fim", { ascending: false })
     .limit(1);
   const assinatura = assinaturas?.[0] ?? null;
+
+  const { data: recorrencia } = await supabase
+    .from("recorrencias")
+    .select("criado_em")
+    .eq("status", "ativa")
+    .maybeSingle();
 
   const nome = (usuario?.user_metadata?.nome as string | undefined) ?? "";
   const criadoEm = usuario?.created_at
@@ -124,33 +134,52 @@ export default async function ConfiguracoesPage() {
         descricao={
           cortesia
             ? "Acesso concedido pela equipe do OABase. Não há cobrança nem renovação."
-            : "O plano dura até o dia da prova que você escolher, sem renovação automática."
+            : recorrencia
+              ? "O Mensal renova sozinho todo mês. Cancelar interrompe as próximas cobranças; o que já foi pago continua valendo."
+              : "O plano vale pelo período contratado, sem renovação automática."
         }
       >
         {assinatura ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-paper p-5">
-            <div className="flex flex-col gap-1">
-              <p className="text-[1.2rem] font-bold text-ink">{nomeDoPlano}</p>
-              <p className="text-[0.93rem] text-muted">
-                {cortesia
-                  ? "Acesso liberado, sem prazo e sem cobrança"
-                  : `Válido até ${formatarData(String(assinatura.fim).slice(0, 10))}`}
-              </p>
-            </div>
-            <span
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.84rem] font-semibold ${
-                assinatura.status === "ativa"
-                  ? "bg-brand-50 text-brand-700"
-                  : "bg-ouro-50 text-ouro-700"
-              }`}
-            >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-paper p-5">
+              <div className="flex flex-col gap-1">
+                <p className="text-[1.2rem] font-bold text-ink">
+                  {nomeDoPlano}
+                </p>
+                <p className="text-[0.93rem] text-muted">
+                  {cortesia
+                    ? "Acesso liberado, sem prazo e sem cobrança"
+                    : recorrencia
+                      ? `Pago até ${formatarData(String(assinatura.fim).slice(0, 10))} · renova sozinho`
+                      : `Válido até ${formatarData(String(assinatura.fim).slice(0, 10))}`}
+                </p>
+              </div>
               <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  assinatura.status === "ativa" ? "bg-brand-500" : "bg-ouro-500"
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.84rem] font-semibold ${
+                  assinatura.status === "ativa"
+                    ? "bg-brand-50 text-brand-700"
+                    : "bg-ouro-50 text-ouro-700"
                 }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    assinatura.status === "ativa"
+                      ? "bg-brand-500"
+                      : "bg-ouro-500"
+                  }`}
+                />
+                {assinatura.status === "ativa" ? "Ativo" : assinatura.status}
+              </span>
+            </div>
+            {recorrencia && (
+              <CancelarRenovacao
+                acessoAte={
+                  assinatura.status === "ativa"
+                    ? formatarData(String(assinatura.fim).slice(0, 10))
+                    : null
+                }
               />
-              {assinatura.status === "ativa" ? "Ativo" : assinatura.status}
-            </span>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-start gap-3">

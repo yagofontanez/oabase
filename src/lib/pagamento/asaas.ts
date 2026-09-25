@@ -136,6 +136,14 @@ export type Cobranca = {
   status: string;
   value: number;
   invoiceUrl: string;
+  /** "YYYY-MM-DD". */
+  dueDate: string;
+  billingType: string;
+  /** Presente quando a cobrança foi gerada por uma assinatura. */
+  subscription?: string | null;
+  /** A Asaas não apaga: marca. Cobrança pendente de assinatura cancelada
+      continua respondendo, com `deleted: true`. */
+  deleted?: boolean;
 };
 
 export async function criarCobranca(dados: {
@@ -174,4 +182,87 @@ export async function criarCobranca(dados: {
  */
 export async function consultarCobranca(id: string): Promise<Cobranca> {
   return chamar<Cobranca>(`/payments/${encodeURIComponent(id)}`);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Assinaturas (recorrência do plano Mensal)                              */
+/* ---------------------------------------------------------------------- */
+
+export type Assinatura = {
+  id: string;
+  status: string;
+  billingType: string;
+  deleted?: boolean;
+};
+
+/** Reconsulta, pelo mesmo motivo de `consultarCobranca`. */
+export async function consultarAssinatura(id: string): Promise<Assinatura> {
+  return chamar<Assinatura>(`/subscriptions/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Cria a assinatura mensal e devolve a primeira cobrança dela.
+ *
+ * `UNDEFINED`, como na cobrança avulsa: a pessoa escolhe Pix, cartão ou
+ * boleto na fatura. Se pagar no cartão, a Asaas guarda o token e troca a
+ * assinatura para `CREDIT_CARD` sozinha — os meses seguintes são debitados
+ * sem ninguém agir. Se pagar por Pix, cada mês gera uma fatura nova. Conferido
+ * no sandbox; a documentação da Asaas não descreve esse caso.
+ *
+ * A Asaas cria a primeira cobrança no ato, com vencimento em `nextDueDate`, e
+ * as seguintes no mesmo dia dos meses seguintes.
+ */
+export async function criarAssinatura(dados: {
+  clienteId: string;
+  valor: number;
+  descricao: string;
+  referencia: string;
+  diasParaVencer: number;
+}): Promise<{ assinatura: Assinatura; primeira: Cobranca }> {
+  const vencimento = new Date();
+  vencimento.setDate(vencimento.getDate() + dados.diasParaVencer);
+
+  const assinatura = await chamar<Assinatura>("/subscriptions", {
+    method: "POST",
+    corpo: {
+      customer: dados.clienteId,
+      billingType: "UNDEFINED",
+      value: dados.valor,
+      nextDueDate: vencimento.toISOString().slice(0, 10),
+      cycle: "MONTHLY",
+      description: dados.descricao,
+      externalReference: dados.referencia,
+    },
+  });
+
+  const [primeira] = await cobrancasDaAssinatura(assinatura.id);
+  if (!primeira) {
+    // Sem a primeira cobrança não há fatura para mandar a pessoa, e uma
+    // assinatura órfã cobraria no mês que vem sem nunca ter sido paga.
+    await cancelarAssinatura(assinatura.id).catch(() => {});
+    throw new ErroAsaas("A Asaas não gerou a primeira cobrança da assinatura.");
+  }
+  return { assinatura, primeira };
+}
+
+/** Cobranças de uma assinatura, da mais antiga para a mais nova. */
+export async function cobrancasDaAssinatura(
+  id: string,
+  status?: string,
+): Promise<Cobranca[]> {
+  const filtro = status ? `&status=${encodeURIComponent(status)}` : "";
+  const resposta = await chamar<{ data: Cobranca[] }>(
+    `/subscriptions/${encodeURIComponent(id)}/payments?limit=100${filtro}`,
+  );
+  return [...resposta.data].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+}
+
+/**
+ * Cancela a assinatura. A Asaas remove as cobranças ainda em aberto e mantém
+ * as pagas — cancelar interrompe o futuro, não devolve o passado.
+ */
+export async function cancelarAssinatura(id: string): Promise<void> {
+  await chamar<{ deleted: boolean }>(`/subscriptions/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
 }

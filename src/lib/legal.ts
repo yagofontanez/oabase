@@ -52,8 +52,11 @@ export const dadosPendentes: string[] = (
 export const vigencia = {
   // Revisão de 02/09/2026: identificação do operador (razão social, CNPJ,
   // endereço e comarca), que até então saía nas duas páginas como pendente.
-  termos: "2026-09-02",
-  privacidade: "2026-09-02",
+  // Revisão de 25/09/2026: renovação automática do Mensal, cancelamento em
+  // Configurações e encerramento por fatura não paga (Termos); identificador
+  // da assinatura e cartão guardado pelo processador (Privacidade).
+  termos: "2026-09-25",
+  privacidade: "2026-09-25",
 } as const;
 
 /**

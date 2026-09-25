@@ -77,8 +77,12 @@ const secoes: Secao[] = [
           telefone. São exigidos pelo processador de pagamento para emitir a
           cobrança, e ficam vinculados à sua conta para não serem pedidos de
           novo na compra seguinte. Também guardamos o registro da cobrança:
-          plano, valor, situação e o identificador dela no gateway.{" "}
-          <strong>Não recebemos nem armazenamos dados do seu cartão.</strong>
+          plano, valor, situação e o identificador dela no gateway — e, no
+          plano Mensal, o identificador da assinatura e se ela está ativa ou
+          cancelada.{" "}
+          <strong>Não recebemos nem armazenamos dados do seu cartão.</strong>{" "}
+          Na assinatura paga no cartão, quem o guarda para as cobranças
+          seguintes é o processador de pagamento.
         </P>
         <P>
           <strong>Ao usar as ferramentas de estudo:</strong> as questões que

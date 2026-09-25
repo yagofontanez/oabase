@@ -155,3 +155,83 @@ export function FormularioSenha() {
     </form>
   );
 }
+
+/**
+ * Cancelar a renovação do Mensal, em dois toques.
+ *
+ * O primeiro explica o que acontece — para as cobranças, o acesso já pago
+ * segue — e o segundo confirma. Sem `window.confirm`: o diálogo do navegador
+ * não diz nada disso, e em alguns celulares nem aparece.
+ */
+export function CancelarRenovacao({ acessoAte }: { acessoAte: string | null }) {
+  const router = useRouter();
+  const [confirmando, setConfirmando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function cancelar() {
+    setEnviando(true);
+    setErro(null);
+    try {
+      const resposta = await fetch("/api/assinatura/cancelar", { method: "POST" });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) {
+        setErro(dados.erro ?? "Não consegui cancelar agora. Tente de novo.");
+        setEnviando(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setErro("Sem conexão com o servidor. Tente de novo.");
+      setEnviando(false);
+    }
+  }
+
+  if (!confirmando) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirmando(true)}
+        className="self-start text-[0.9rem] font-semibold text-vinho-600 underline decoration-vinho-200 underline-offset-4 hover:text-vinho-700"
+      >
+        Cancelar renovação
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-[14px] border border-vinho-100 bg-vinho-50 p-4">
+      <p className="text-[0.92rem] text-ink">
+        As próximas cobranças param.
+        {acessoAte ? (
+          <>
+            {" "}
+            Seu acesso continua até <strong>{acessoAte}</strong> — o que já foi
+            pago não se perde.
+          </>
+        ) : (
+          " O que já foi pago continua valendo até o fim do período."
+        )}
+      </p>
+      {erro && <Aviso tipo="erro" texto={erro} />}
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={cancelar}
+          disabled={enviando}
+          className="rounded-full bg-vinho-600 px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-vinho-700 disabled:opacity-60"
+        >
+          {enviando ? "Cancelando…" : "Confirmar cancelamento"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmando(false)}
+          disabled={enviando}
+          className="rounded-full border border-line bg-surface px-5 py-2.5 text-[0.9rem] font-semibold text-ink"
+        >
+          Manter assinatura
+        </button>
+      </div>
+    </div>
+  );
+}

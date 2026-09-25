@@ -161,14 +161,26 @@ const secoes: Secao[] = [
           ofertas disponíveis são: {ofertasVigentes}.
         </P>
         <P>
-          <strong>Não há renovação automática.</strong> O acesso vale pelo
-          período contratado e termina no fim dele, sem nova cobrança. Para
-          continuar, é preciso contratar de novo.
+          <strong>Pagamento único.</strong> Nos planos Experimentar e Até a
+          prova, o acesso vale pelo período contratado e termina no fim dele,
+          sem nova cobrança. Para continuar, é preciso contratar de novo.
+        </P>
+        <P>
+          <strong>Renovação automática do plano Mensal.</strong> O Mensal é
+          uma assinatura que se renova a cada mês, pelo mesmo valor da
+          contratação, até ser cancelada. Pago no cartão de crédito, o valor é
+          debitado automaticamente no mesmo dia de cada mês. Pago por Pix ou
+          boleto, a fatura de cada mês é enviada por e-mail, e o acesso segue
+          enquanto ela for paga. Se a fatura de um mês ficar sem pagamento por
+          30 dias após o vencimento, a assinatura é encerrada, sem multa nem
+          cobrança adicional.
         </P>
         <P>
           O pagamento é processado pela Asaas. O OABase não recebe nem armazena
-          dados de cartão. Preços podem mudar a qualquer tempo; a alteração não
-          atinge plano já contratado e em vigência.
+          dados de cartão — na assinatura paga no cartão, quem o guarda para as
+          cobranças seguintes é a Asaas. Preços podem mudar a qualquer tempo;
+          a alteração não atinge plano já contratado e em vigência, nem o
+          valor de renovação de uma assinatura ativa.
         </P>
       </>
     ),
@@ -189,6 +201,12 @@ const secoes: Secao[] = [
           Para exercer, basta escrever para <strong>{operador.email}</strong> a
           partir do e-mail da sua conta. O estorno é feito pelo mesmo meio de
           pagamento, no prazo do processador.
+        </P>
+        <P>
+          <strong>Cancelar a renovação do Mensal</strong> é feito em
+          Configurações, dentro da sua conta, a qualquer momento e sem
+          intermediário. As cobranças seguintes deixam de ser geradas na hora;
+          o período já pago continua disponível até o fim.
         </P>
         <P>
           Depois dos 7 dias, o valor pago não é devolvido proporcionalmente,

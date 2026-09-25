@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { confirmarCobranca } from "@/lib/pagamento/confirmar";
+import { consultarAssinatura, ErroAsaas } from "@/lib/pagamento/asaas";
 
 /**
  * Webhook da Asaas.
@@ -35,7 +36,19 @@ import { confirmarCobranca } from "@/lib/pagamento/confirmar";
 type EventoAsaas = {
   event?: string;
   payment?: { id?: string; status?: string };
+  subscription?: { id?: string };
 };
+
+/**
+ * Assinatura que deixou de existir do lado da Asaas — removida no painel, ou
+ * inativada por ela. O cancelamento feito pela pessoa já marca o banco na
+ * própria rota; este é o caminho de quem cancela por fora do OABase.
+ *
+ * Reconsulta antes de marcar, como no pagamento. Um "cancelada" forjado não
+ * libera acesso, mas faria a tela dizer "cancelada" com a Asaas ainda
+ * cobrando — e liberaria uma segunda assinatura, que é cobrança em dobro.
+ */
+const ENCERRAM = new Set(["SUBSCRIPTION_DELETED", "SUBSCRIPTION_INACTIVATED"]);
 
 const CONFIRMAM = new Set([
   "PAYMENT_CONFIRMED",
@@ -80,6 +93,31 @@ export async function POST(request: Request) {
 
   const tipo = evento.event ?? "";
   const pagamentoId = evento.payment?.id;
+
+  if (ENCERRAM.has(tipo) && evento.subscription?.id) {
+    try {
+      const real = await consultarAssinatura(evento.subscription.id);
+      if (!real.deleted && real.status === "ACTIVE") {
+        return NextResponse.json({ ok: true, ignorado: "assinatura ativa na Asaas" });
+      }
+    } catch (erro) {
+      const status = erro instanceof ErroAsaas ? (erro.status ?? 0) : 0;
+      // 404 é "não existe mais", que é o que o evento diz. O resto é falha
+      // de conversa com a Asaas: 500 para ela reenviar.
+      if (status !== 404) {
+        return NextResponse.json({ erro: "não consegui consultar a Asaas" }, { status: 500 });
+      }
+    }
+    const { error } = await clienteSemSessao().rpc("encerrar_recorrencia", {
+      p_segredo: segredo,
+      p_assinatura_id: evento.subscription.id,
+    });
+    if (error) {
+      console.error("Falha ao encerrar recorrência:", error);
+      return NextResponse.json({ erro: "falha" }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, encerrada: evento.subscription.id });
+  }
 
   // Evento que não muda acesso — cobrança criada, vencida, e-mail enviado.
   // Precisa de 2xx: a Asaas reenvia enquanto não receber, para sempre.

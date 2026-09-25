@@ -278,19 +278,37 @@ export function compraConfirmada(dados: {
   plano: string;
   validoAte: string;
   site: string;
+  /** Plano que renova sozinho (assinatura). */
+  recorrente?: boolean;
+  /** Cobrança de um mês seguinte, não a compra. Vale como recibo. */
+  renovacao?: boolean;
 }): Modelo {
   const ate = formatarData(dados.validoAte.slice(0, 10));
+  // Quem assinou o Mensal aceitou a renovação; dizer "sem renovação" a essa
+  // pessoa seria a frase falsa do e-mail. Cada débito do mês ganha um aviso
+  // próprio: cobrança recorrente sem recibo é a que vira contestação.
+  const cabeca = dados.renovacao ? "Sua assinatura foi renovada" : "Seu plano está ativo";
+  const abertura = dados.renovacao
+    ? `Olá, ${dados.nome}. Recebemos o pagamento do mês do plano <strong style="color:${TINTA};">${dados.plano}</strong>.`
+    : `Olá, ${dados.nome}. O pagamento foi confirmado e o plano <strong style="color:${TINTA};">${dados.plano}</strong> já está liberado na sua conta.`;
+  const renovacaoHtml = dados.recorrente
+    ? `Renova sozinho todo mês. Para parar, cancele em <a href="${dados.site}/app/configuracoes" style="color:${ESMERALDA};">Configurações</a> — o que já foi pago continua valendo.`
+    : "Sem renovação automática — nada é cobrado de novo sem você pedir.";
+  const renovacaoTexto = dados.recorrente
+    ? `Renova sozinho todo mês. Para parar: ${dados.site}/app/configuracoes`
+    : "Sem renovação automática.";
+
   const conteudo = `
-${titulo("Seu plano está ativo")}
-<p style="margin:0 0 12px 0;">Olá, ${dados.nome}. O pagamento foi confirmado e o plano <strong style="color:${TINTA};">${dados.plano}</strong> já está liberado na sua conta.</p>
-<p style="margin:0 0 4px 0;">Acesso válido até <strong style="color:${TINTA};">${ate}</strong>. Sem renovação automática — nada é cobrado de novo sem você pedir.</p>
+${titulo(cabeca)}
+<p style="margin:0 0 12px 0;">${abertura}</p>
+<p style="margin:0 0 4px 0;">Acesso válido até <strong style="color:${TINTA};">${ate}</strong>. ${renovacaoHtml}</p>
 ${botao(`${dados.site}/app/questoes`, "Começar a resolver questões")}
 <p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Liberou: o banco de questões com gabarito oficial da FGV, o simulado cronometrado, o caderno de erros e a revisão espaçada.</p>`;
 
   const texto = `Olá, ${dados.nome}.
 
-O pagamento foi confirmado e o plano ${dados.plano} já está liberado na sua conta.
-Acesso válido até ${ate}. Sem renovação automática.
+${dados.renovacao ? `Recebemos o pagamento do mês do plano ${dados.plano}.` : `O pagamento foi confirmado e o plano ${dados.plano} já está liberado na sua conta.`}
+Acesso válido até ${ate}. ${renovacaoTexto}
 
 Começar a resolver: ${dados.site}/app/questoes
 
@@ -300,9 +318,62 @@ caderno de erros e revisão espaçada.
 — OABase`;
 
   return {
-    assunto: `Plano ${dados.plano} ativo até ${ate}`,
+    assunto: dados.renovacao
+      ? `Assinatura ${dados.plano} renovada até ${ate}`
+      : `Plano ${dados.plano} ativo até ${ate}`,
     html: moldura(conteudo, RODAPE_PADRAO),
     texto,
+  };
+}
+
+/**
+ * Fatura do mês de uma assinatura, para quem não paga no cartão — ou para
+ * quem paga e o débito falhou.
+ *
+ * A Asaas gera a fatura mas não avisa ninguém (`notificationDisabled`: o
+ * aviso é nosso). Sem esta mensagem, quem paga por Pix só descobriria a
+ * renovação quando o acesso acabasse.
+ */
+export function faturaDaAssinatura(dados: {
+  nome: string;
+  plano: string;
+  valor: number;
+  vencimento: string;
+  url: string;
+  atrasada: boolean;
+  site: string;
+}): Modelo {
+  const quando = formatarData(dados.vencimento);
+  const valor = dados.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const cabeca = dados.atrasada
+    ? "A fatura do mês ficou em aberto"
+    : "A fatura do mês chegou";
+  const explicacao = dados.atrasada
+    ? `A fatura de <strong style="color:${TINTA};">${valor}</strong> do plano ${escapar(dados.plano)} venceu em ${quando} e ainda não foi paga. Se foi no cartão, o débito não passou.`
+    : `A fatura de <strong style="color:${TINTA};">${valor}</strong> do plano ${escapar(dados.plano)} vence em <strong style="color:${TINTA};">${quando}</strong>. Dá para pagar por Pix, cartão ou boleto.`;
+  const conteudo = `
+${titulo(cabeca)}
+<p style="margin:0 0 12px 0;">Olá, ${escapar(dados.nome)}. ${explicacao}</p>
+${botao(dados.url, "Pagar a fatura")}
+<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Não quer continuar? Cancele a renovação em <a href="${dados.site}/app/configuracoes" style="color:${ESMERALDA};">Configurações</a> — o acesso já pago segue até o fim do período.</p>`;
+  return {
+    assunto: dados.atrasada
+      ? `Fatura do OABase em aberto (${valor})`
+      : `Sua fatura do OABase vence em ${quando}`,
+    html: moldura(conteudo, RODAPE_PADRAO),
+    texto: [
+      `Olá, ${dados.nome}.`,
+      "",
+      dados.atrasada
+        ? `A fatura de ${valor} do plano ${dados.plano} venceu em ${quando} e ainda não foi paga.`
+        : `A fatura de ${valor} do plano ${dados.plano} vence em ${quando}.`,
+      "",
+      `Pagar: ${dados.url}`,
+      "",
+      `Para cancelar a renovação: ${dados.site}/app/configuracoes`,
+      "",
+      "— OABase",
+    ].join("\n"),
   };
 }
 

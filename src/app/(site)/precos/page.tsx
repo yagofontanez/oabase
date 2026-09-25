@@ -31,7 +31,11 @@ const perguntas = [
   },
   {
     q: "Como eu pago?",
-    a: "Pix, cartão ou boleto, pela Asaas. Não há recorrência — você paga uma vez pelo período contratado, e o OABase não recebe os dados do seu cartão.",
+    a: "Pix, cartão ou boleto, pela Asaas — o OABase não recebe os dados do seu cartão. Experimentar e Até a prova são pagamento único. O Mensal renova sozinho: no cartão o débito é automático, e por Pix ou boleto a fatura de cada mês chega por e-mail.",
+  },
+  {
+    q: "Como cancelo o Mensal?",
+    a: "Em Configurações, dentro da sua conta, com um clique — sem falar com ninguém. As próximas cobranças param na hora e o acesso já pago continua até o fim do período.",
   },
 ];
 export default async function PrecosPage() {
@@ -168,8 +172,9 @@ export default async function PrecosPage() {
         </section>
 
         <p className="mt-14 max-w-[68ch] text-[0.85rem] text-muted">
-          Pagamento por Pix, cartão ou boleto, processado pela Asaas. Sem
-          renovação automática. Ao assinar você aceita os{" "}
+          Pagamento por Pix, cartão ou boleto, processado pela Asaas. Só o
+          Mensal renova sozinho, e cancela em Configurações a qualquer
+          momento. Ao assinar você aceita os{" "}
           <Link
             href="/termos"
             className="font-medium text-brand-600 underline decoration-brand-200 underline-offset-4"

@@ -793,6 +793,52 @@ certo — acrescente a próxima assim que o cronograma sair.
 parse e o status HTTP se perde; `chamar()` lê `text()` primeiro. Importa
 porque 404 é definitivo (ignorar) e falha de rede não é (repetir).
 
+### Recorrência do Mensal
+
+**Só o Mensal renova.** Experimentar termina sozinho por promessa, Até a
+prova termina no exame por natureza, e quem comprou antes continua avulso —
+não se passa a cobrar automaticamente quem aceitou "sem renovação".
+`planos.ts` marca com `recorrente`, e as telas e os Termos leem de lá.
+
+**Uma assinatura `UNDEFINED` cobre cartão e Pix.** Conferido no sandbox, não
+na documentação, que não descreve o caso: paga a primeira fatura no cartão, a
+Asaas guarda o token e troca a assinatura para `CREDIT_CARD` sozinha — os
+meses seguintes debitam sem ninguém agir. Paga por Pix, a assinatura continua
+`UNDEFINED` e cada mês gera uma fatura, que **o OABase avisa** (bloco
+`fatura` em `/api/tarefas/emails`): o cliente é criado com
+`notificationDisabled`, então a Asaas não avisa ninguém.
+
+**A renovação entra no livro pelo mesmo caminho da compra.** A primeira
+cobrança nasce no checkout; as dos meses seguintes a Asaas cria sozinha, e a
+linha em `cobrancas` nasce quando o pagamento chega, por
+`registrar_cobranca_da_assinatura` — que só aceita assinatura presente em
+`recorrencias`, ou seja, criada pelo nosso checkout. Por isso o checkout
+**cancela a assinatura na Asaas se não conseguir registrá-la**: assinatura sem
+registro cobraria todo mês e nenhuma renovação viraria acesso.
+
+**Cada cobrança compra o intervalo até a próxima, não 30 dias.** A Asaas
+cobra no mesmo dia de cada mês; somando 30, o acesso acabaria antes da
+cobrança em todo mês de 31 dias, e cada vez mais cedo. A primeira ganha 3
+dias de folga (o débito acontece ao longo do dia; o Pix, quando a pessoa
+lembra), e as renovações somam o intervalo exato — a folga se mantém sem
+crescer. Ver `diasDaCobrancaRecorrente`.
+
+**A reconciliação pergunta à Asaas pelas renovações.** Renovação cujo webhook
+se perdeu não está em `cobrancas` — a varredura das `PENDING` nunca a veria.
+A reconciliação horária lista as pagas de cada assinatura ativa e passa por
+`confirmarCobranca`, que é idempotente. Ela também encerra a assinatura com
+fatura esquecida: 5 dias quando nunca houve pagamento (desistiu no
+checkout), 30 quando já houve (parou de pagar) — sem isso a Asaas geraria
+fatura para sempre, com o nosso aviso junto.
+
+**Cancelar é um botão em Configurações, e a Asaas vem primeiro.** Marcar o
+banco antes e falhar na Asaas deixaria a tela dizendo "cancelada" com o
+cartão sendo cobrado. O período pago continua; só as cobranças futuras param.
+O webhook trata `SUBSCRIPTION_DELETED`/`SUBSCRIPTION_INACTIVATED` (cancelada
+no painel da Asaas) **reconsultando a assinatura**: um "cancelada" forjado
+liberaria uma segunda assinatura, que é cobrança em dobro. Esses dois eventos
+precisam estar marcados na configuração do webhook na Asaas.
+
 ## Simulado
 
 `/app/simulado` é a prova cronometrada. A diferença para `/app/questoes` não é

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   ajudaParaComecar,
   boasVindas,
+  faturaDaAssinatura,
   lembreteDoCalendario,
   planoAcabando,
   revisaoDoDia,
@@ -11,6 +12,7 @@ import { enviar } from "@/lib/email/resend";
 import { site } from "@/lib/site";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
 import { planos } from "@/lib/planos";
+import { ambienteAsaas, cobrancasDaAssinatura } from "@/lib/pagamento/asaas";
 
 /**
  * Tarefa diária de e-mail: ativação de conta, lembrete de revisão e aviso de
@@ -55,6 +57,12 @@ type Destinatario = {
 };
 
 type ParaRevisar = Destinatario & { questoes: number };
+
+type ParaFatura = Destinatario & {
+  assinatura_id: string;
+  /** Ids de fatura que já ganharam e-mail. */
+  avisadas: string[];
+};
 
 type ParaAvisar = Destinatario & {
   plano: string;
@@ -109,6 +117,7 @@ export async function GET(request: Request) {
     revisao: { enviados: 0, falhas: 0, pendentes: 0 },
     calendario: { enviados: 0, falhas: 0, pendentes: 0 },
     planoAcabando: { enviados: 0, falhas: 0, pendentes: 0 },
+    fatura: { enviados: 0, falhas: 0, pendentes: 0 },
   };
 
   async function marcar(userId: string, tipo: string, referencia: string) {
@@ -293,6 +302,70 @@ export async function GET(request: Request) {
     0,
     ((avisar ?? []) as ParaAvisar[]).length - filaAviso.length,
   );
+
+  /* ---- Fatura do mês de quem assina o Mensal ---- */
+  // A Asaas gera a fatura e não avisa (o aviso é nosso). Cartão que debita
+  // sozinho não recebe nada; cartão que falhou vira fatura vencida e recebe.
+  // O pedido à Asaas é por assinatura — daí o mesmo teto dos outros blocos.
+  const { data: assinantes, error: erroAssinantes } = await supabase.rpc(
+    "destinatarios_fatura",
+    { p_segredo: segredo, p_ambiente: ambienteAsaas },
+  );
+  if (erroAssinantes) {
+    console.error("Falha ao listar assinantes:", erroAssinantes);
+  }
+  const listaAssinantes = (assinantes ?? []) as ParaFatura[];
+  const filaFatura = listaAssinantes.slice(0, TETO_POR_EXECUCAO);
+  const hojeIso = new Date().toISOString().slice(0, 10);
+  const emCinco = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+  const nomeMensal = planos.find((p) => p.recorrente)?.nome ?? "Mensal";
+
+  for (const pessoa of filaFatura) {
+    let abertas;
+    try {
+      abertas = (await cobrancasDaAssinatura(pessoa.assinatura_id)).filter(
+        (c) =>
+          !c.deleted &&
+          !pessoa.avisadas.includes(c.id) &&
+          (c.status === "OVERDUE" ||
+            // Cartão pendente é débito agendado, não fatura para pagar.
+            (c.status === "PENDING" &&
+              c.billingType !== "CREDIT_CARD" &&
+              c.dueDate <= emCinco)),
+      );
+    } catch (erro) {
+      relatorio.fatura.falhas += 1;
+      console.error(`Falha ao ler faturas de ${pessoa.assinatura_id}:`, erro);
+      continue;
+    }
+
+    // Uma por pessoa por dia: a mais antiga. As outras ficam para amanhã.
+    const fatura = abertas[0];
+    if (!fatura) continue;
+    const modelo = faturaDaAssinatura({
+      nome: pessoa.nome,
+      plano: nomeMensal,
+      valor: fatura.value,
+      vencimento: fatura.dueDate,
+      url: fatura.invoiceUrl,
+      atrasada: fatura.status === "OVERDUE" || fatura.dueDate < hojeIso,
+      site: site.url,
+    });
+    const envio = await enviar({
+      para: pessoa.email,
+      ...modelo,
+      chave: `fatura:${fatura.id}`,
+      etiquetas: [{ name: "tipo", value: "fatura" }],
+    });
+    if (envio.ok) {
+      relatorio.fatura.enviados += 1;
+      await marcar(pessoa.user_id, "fatura", fatura.id);
+    } else {
+      relatorio.fatura.falhas += 1;
+      console.error("Aviso de fatura falhou:", envio.erro);
+    }
+  }
+  relatorio.fatura.pendentes = Math.max(0, listaAssinantes.length - filaFatura.length);
 
   console.info("Tarefa de e-mail:", JSON.stringify(relatorio));
   return NextResponse.json({ ok: true, ...relatorio });

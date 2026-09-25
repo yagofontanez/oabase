@@ -18,6 +18,12 @@ export type Plano = {
   itens: string[];
   destaque: boolean;
   cta: string;
+  /**
+   * Renova sozinho todo mês (assinatura da Asaas) até a pessoa cancelar em
+   * /app/configuracoes. Só o Mensal: Experimentar termina sozinho por
+   * promessa, e Até a prova termina no dia do exame por natureza.
+   */
+  recorrente: boolean;
 };
 
 export const planos: Plano[] = [
@@ -36,6 +42,7 @@ export const planos: Plano[] = [
     ],
     destaque: false,
     cta: "Começar por R$ 1",
+    recorrente: false,
   },
   {
     chave: "mensal",
@@ -43,7 +50,7 @@ export const planos: Plano[] = [
     disponivel: true,
     preco: "R$ 15",
     precoNumerico: 15,
-    periodo: "por mês",
+    periodo: "por mês, renova sozinho",
     resumo:
       "Para acompanhar as provas do semestre ou estudar para a OAB no seu ritmo.",
     itens: [
@@ -51,10 +58,11 @@ export const planos: Plano[] = [
       "Banco completo de questões da OAB",
       "Caderno de erros automático",
       "Calendário e sessões de foco",
-      "Cancela quando quiser",
+      "Renova todo mês; cancele em Configurações quando quiser",
     ],
     destaque: false,
     cta: "Assinar mensal",
+    recorrente: true,
   },
   {
     chave: "ate-a-prova",
@@ -74,6 +82,7 @@ export const planos: Plano[] = [
     ],
     destaque: true,
     cta: "Assinar até a prova",
+    recorrente: false,
   },
   {
     chave: "anual",
@@ -93,6 +102,7 @@ export const planos: Plano[] = [
     ],
     destaque: false,
     cta: "Assinar anual",
+    recorrente: false,
   },
 ];
 

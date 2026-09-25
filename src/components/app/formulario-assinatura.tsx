@@ -226,8 +226,22 @@ export function FormularioAssinatura({
             arrependimento e as condições estejam claros na oferta, não
             escondidos num link que ninguém abre depois de pagar. */}
         <p className="text-[0.86rem] text-muted">
-          Sem renovação automática — o acesso vale pelo período contratado e
-          acaba nele. Você tem <strong className="font-semibold text-ink">7
+          {plano.recorrente ? (
+            <>
+              <strong className="font-semibold text-ink">
+                Renova sozinho todo mês, por {plano.preco}.
+              </strong>{" "}
+              Pagando no cartão, o débito é automático; por Pix ou boleto, a
+              fatura chega por e-mail. Cancele quando quiser em Configurações
+              — as cobranças param e o que já foi pago continua valendo.
+            </>
+          ) : (
+            <>
+              Sem renovação automática — o acesso vale pelo período contratado
+              e acaba nele.
+            </>
+          )}{" "}
+          Você tem <strong className="font-semibold text-ink">7
           dias</strong> para desistir e receber o valor de volta, sem precisar
           justificar (art. 49 do CDC). Ao continuar, você aceita os{" "}
           <Link
