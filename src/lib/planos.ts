@@ -8,6 +8,8 @@
 export type Plano = {
   chave: string;
   nome: string;
+  /** Plano exposto para novas contratações. Histórico segue reconhecido. */
+  disponivel: boolean;
   preco: string;
   /** Mesmo valor em número — o JSON-LD precisa dele sem formatação. */
   precoNumerico: number;
@@ -22,6 +24,7 @@ export const planos: Plano[] = [
   {
     chave: "experimentar",
     nome: "Experimentar",
+    disponivel: true,
     preco: "R$ 1",
     precoNumerico: 1,
     periodo: "por 7 dias",
@@ -37,6 +40,7 @@ export const planos: Plano[] = [
   {
     chave: "mensal",
     nome: "Mensal",
+    disponivel: true,
     preco: "R$ 15",
     precoNumerico: 15,
     periodo: "por mês",
@@ -55,8 +59,9 @@ export const planos: Plano[] = [
   {
     chave: "ate-a-prova",
     nome: "Até a prova",
-    preco: "R$ 109",
-    precoNumerico: 109,
+    disponivel: true,
+    preco: "R$ 49",
+    precoNumerico: 49,
     periodo: "acesso até o dia do exame",
     resumo:
       "Feito para o ciclo real: você entra hoje e sai no dia em que fizer a prova.",
@@ -73,6 +78,9 @@ export const planos: Plano[] = [
   {
     chave: "anual",
     nome: "Anual",
+    // Preservado para reconhecer assinaturas e cobranças anteriores, mas não
+    // é vendido enquanto a demanda real por um ciclo de 12 meses não existir.
+    disponivel: false,
     preco: "R$ 199",
     precoNumerico: 199,
     periodo: "por 12 meses",
@@ -87,3 +95,6 @@ export const planos: Plano[] = [
     cta: "Assinar anual",
   },
 ];
+
+/** A única lista que pode aparecer na oferta ou aceitar uma compra nova. */
+export const planosDisponiveis = planos.filter((plano) => plano.disponivel);

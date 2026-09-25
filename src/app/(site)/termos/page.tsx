@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DocumentoLegal, type Secao } from "@/components/documento-legal";
 import { operador, vigencia } from "@/lib/legal";
-import { planos } from "@/lib/planos";
+import { planosDisponiveis } from "@/lib/planos";
 import { abs } from "@/lib/site";
 
 /**
@@ -32,8 +32,9 @@ export const metadata: Metadata = {
 
 const P = ({ children }: { children: React.ReactNode }) => <p>{children}</p>;
 
-const precoDe = (chave: string) =>
-  planos.find((p) => p.chave === chave)?.preco ?? "—";
+const ofertasVigentes = planosDisponiveis
+  .map((plano) => `${plano.nome} por ${plano.preco}`)
+  .join(", ");
 
 const secoes: Secao[] = [
   {
@@ -156,10 +157,8 @@ const secoes: Secao[] = [
         </P>
         <P>
           Os planos e preços vigentes estão em{" "}
-          <Link href="/precos">/precos</Link>. Na data desta versão:
-          Experimentar por {precoDe("experimentar")}, Mensal por{" "}
-          {precoDe("mensal")}, Até a prova por {precoDe("ate-a-prova")} e Anual
-          por {precoDe("anual")}.
+          <Link href="/precos">/precos</Link>. Na data desta versão, as
+          ofertas disponíveis são: {ofertasVigentes}.
         </P>
         <P>
           <strong>Não há renovação automática.</strong> O acesso vale pelo

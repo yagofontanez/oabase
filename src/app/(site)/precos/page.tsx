@@ -4,7 +4,7 @@ import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { JsonLd } from "@/lib/jsonld";
 import { abs, site } from "@/lib/site";
-import { planos } from "@/lib/planos";
+import { planosDisponiveis } from "@/lib/planos";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
 export const revalidate = 3600;
 export const metadata: Metadata = {
@@ -59,7 +59,7 @@ export default async function PrecosPage() {
           name: site.name,
           description: site.description,
           brand: { "@id": abs("/#organization") },
-          offers: planos.map((plano) => ({
+          offers: planosDisponiveis.map((plano) => ({
             "@type": "Offer",
             name: plano.nome,
             description: plano.resumo,
@@ -87,8 +87,8 @@ export default async function PrecosPage() {
       />
 
       <Container className="py-16">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {planos.map((plano) => (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {planosDisponiveis.map((plano) => (
             <div
               key={plano.chave}
               // O destaque vem de um `ring` somado à borda, não de uma borda

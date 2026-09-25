@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FormularioAssinatura } from "@/components/app/formulario-assinatura";
 import { ambienteAsaas } from "@/lib/pagamento/asaas";
-import { planos } from "@/lib/planos";
+import { planosDisponiveis } from "@/lib/planos";
 import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 import { formatarData } from "@/lib/format";
 
@@ -40,9 +40,9 @@ export default async function AssinarPage({
   const pendente = cobrancasRes.data?.[0] ?? null;
 
   const planoInicial =
-    planos.find((p) => p.chave === pedido)?.chave ??
-    planos.find((p) => p.destaque)?.chave ??
-    planos[0].chave;
+    planosDisponiveis.find((p) => p.chave === pedido)?.chave ??
+    planosDisponiveis.find((p) => p.destaque)?.chave ??
+    planosDisponiveis[0].chave;
 
   return (
     <div className="painel-conteudo flex flex-col gap-8">
@@ -79,7 +79,7 @@ export default async function AssinarPage({
       )}
 
       <FormularioAssinatura
-        planos={planos}
+        planos={planosDisponiveis}
         planoInicial={planoInicial}
         perfil={{
           nome:

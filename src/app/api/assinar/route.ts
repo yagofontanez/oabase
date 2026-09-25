@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import { dadosPendentes } from "@/lib/legal";
-import { planos } from "@/lib/planos";
+import { planosDisponiveis } from "@/lib/planos";
 import { cpfValido, digitos, telefoneValido } from "@/lib/validacao";
 import {
   ErroAsaas,
@@ -51,7 +51,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
   }
 
-  const plano = planos.find((p) => p.chave === String(corpo.plano ?? ""));
+  const plano = planosDisponiveis.find(
+    (p) => p.chave === String(corpo.plano ?? ""),
+  );
   if (!plano) {
     return NextResponse.json({ erro: "Plano não encontrado." }, { status: 400 });
   }

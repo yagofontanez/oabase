@@ -3,7 +3,7 @@ import { Container } from "@/components/container";
 import { Reveal } from "@/components/reveal";
 import { getAcervo, getLeis } from "@/lib/content/queries";
 import { JsonLd } from "@/lib/jsonld";
-import { planos } from "@/lib/planos";
+import { planosDisponiveis } from "@/lib/planos";
 import { abs, site } from "@/lib/site";
 
 export const revalidate = 3600;
@@ -321,8 +321,8 @@ export default async function Home() {
               <h2 className="mt-5 text-[clamp(2.2rem,4.2vw,3.4rem)] leading-[1] font-extrabold tracking-[-0.05em] text-white">Comece por uma prova. Fique pelo seu progresso.</h2>
               <p className="mt-5 text-brand-100">Crie a conta sem pagar e escolha o período quando quiser liberar todas as ferramentas. O plano mensal funciona tanto para a faculdade quanto para a preparação da OAB.</p>
             </div>
-            <div className="relative mt-11 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {planos.map((plano) => (
+            <div className="relative mt-11 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {planosDisponiveis.map((plano) => (
                 <article key={plano.chave} className={`flex flex-col rounded-[18px] border p-6 ${plano.destaque ? "border-ouro-400 bg-surface" : "border-white/15 bg-white/[0.06]"}`}>
                   <span className={`text-[0.82rem] font-semibold ${plano.destaque ? "text-vinho-600" : "text-brand-100"}`}>{plano.nome}</span>
                   <strong className={`mt-2 text-[2.25rem] leading-none font-extrabold tracking-[-0.04em] ${plano.destaque ? "text-ink" : "text-white"}`}>{plano.preco}</strong>
