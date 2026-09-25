@@ -79,6 +79,70 @@ Você recebeu este e-mail porque tem uma conta no OABase.`;
 export type Modelo = { assunto: string; html: string; texto: string };
 
 /**
+ * Primeira mensagem da sequência de ativação.
+ *
+ * Não promete resultado nem usa a urgência da prova como pressão. A pessoa
+ * acabou de abrir uma conta; o trabalho do e-mail é só tornar o primeiro
+ * passo óbvio.
+ */
+export function boasVindas(dados: { nome: string; site: string }): Modelo {
+  const conteudo = `
+${titulo(`Boas-vindas ao OABase${dados.nome ? `, ${escapar(dados.nome)}` : ""}`)}
+<p style="margin:0 0 12px 0;">Sua conta está pronta. O melhor jeito de começar é resolver algumas questões da prova que você vai fazer — o sistema guarda seus acertos, erros e revisões em um só lugar.</p>
+<p style="margin:0;">Não precisa montar uma rotina inteira agora. Comece por uma questão e ajuste o caminho depois.</p>
+${botao(`${dados.site}/app/questoes`, "Resolver a primeira questão")}
+<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Se preferir se organizar antes, você também pode criar um plano de estudos no painel.</p>`;
+
+  const texto = `Olá${dados.nome ? `, ${dados.nome}` : ""}.
+
+Sua conta no OABase está pronta. Comece resolvendo algumas questões da prova que você vai fazer; seus acertos, erros e revisões ficam guardados em um só lugar.
+
+Resolver a primeira questão: ${dados.site}/app/questoes
+
+Você também pode criar um plano de estudos no painel.
+
+— OABase`;
+
+  return {
+    assunto: "Sua conta no OABase está pronta",
+    html: moldura(
+      conteudo,
+      `${RODAPE_PADRAO}<br><a href="${dados.site}/app/configuracoes" style="color:${SUAVE};">Desativar lembretes e orientações</a>`,
+    ),
+    texto: `${texto}\n\nDesativar lembretes e orientações: ${dados.site}/app/configuracoes`,
+  };
+}
+
+/** Segunda e última mensagem para quem ainda não iniciou uma atividade real. */
+export function ajudaParaComecar(dados: { nome: string; site: string }): Modelo {
+  const conteudo = `
+${titulo(dados.nome ? `${escapar(dados.nome)}, quer uma mão para começar?` : "Quer uma mão para começar?")}
+<p style="margin:0 0 12px 0;">A conta continua pronta para você. Se a dúvida for por onde entrar, comece pela prova: escolha um exame e responda no seu ritmo. O resultado já mostra o que vale revisar.</p>
+<p style="margin:0;">Se preferir, monte primeiro um plano simples; ele divide o estudo em blocos que você pode rearranjar depois.</p>
+${botao(`${dados.site}/app/questoes`, "Escolher questões para resolver")}
+<p style="margin:16px 0 0 0;font-size:14px;color:${SUAVE};">Este é o último lembrete de começo. Ao iniciar seus estudos, a sequência para automaticamente.</p>`;
+
+  const texto = `Olá${dados.nome ? `, ${dados.nome}` : ""}.
+
+Sua conta continua pronta. Para começar, escolha um exame e responda algumas questões no seu ritmo; o resultado já mostra o que vale revisar.
+
+Resolver questões: ${dados.site}/app/questoes
+
+Este é o último lembrete de começo. Ao iniciar seus estudos, a sequência para automaticamente.
+
+— OABase`;
+
+  return {
+    assunto: "Quer uma mão para começar?",
+    html: moldura(
+      conteudo,
+      `${RODAPE_PADRAO}<br><a href="${dados.site}/app/configuracoes" style="color:${SUAVE};">Desativar lembretes e orientações</a>`,
+    ),
+    texto: `${texto}\n\nDesativar lembretes e orientações: ${dados.site}/app/configuracoes`,
+  };
+}
+
+/**
  * Ticket novo, para a equipe.
  *
  * O assunto carrega o assunto do cliente porque quem lê está na caixa de

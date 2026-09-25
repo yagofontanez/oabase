@@ -411,7 +411,7 @@ export function PainelAdmin({
           <table className="w-full min-w-[720px] border-collapse text-[0.9rem]">
             <thead>
               <tr className="bg-sunk text-left">
-                {["Pessoa", "Entrou", "Plano", "Estudo", "Último acesso"].map(
+                {["Pessoa", "Entrou", "Plano", "Estudo", "Último estudo"].map(
                   (c) => (
                     <th
                       key={c}

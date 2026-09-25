@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 
 /**
- * Liga e desliga o lembrete diário de revisão.
+ * Liga e desliga lembretes e orientações opcionais.
  *
  * Só este é opcional. Confirmação de compra e aviso de fim de plano são
  * transacionais: quem pagou tem direito de saber o que comprou e até quando
@@ -76,8 +76,8 @@ export function PreferenciaAvisos({ inicial }: { inicial: boolean }) {
 
       <p className="text-[0.86rem] text-muted">
         {ligado
-          ? "Você recebe um e-mail nos dias em que houver cinco ou mais questões na fila de revisão."
-          : "Você não recebe lembrete de revisão. Confirmação de compra e aviso de fim de plano continuam chegando."}
+          ? "Você recebe lembrete de revisão e, no começo, até dois e-mails de orientação para iniciar os estudos."
+          : "Você não recebe lembretes nem orientações de começo. Confirmação de compra e aviso de fim de plano continuam chegando."}
       </p>
 
       {erro && (

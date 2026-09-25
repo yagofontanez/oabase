@@ -1,8 +1,8 @@
 import type { Config } from "@netlify/functions";
 
 /**
- * Disparo diário dos e-mails agendados: lembretes de revisão e calendário,
- * além do aviso de fim de plano.
+ * Disparo diário dos e-mails agendados: ativação de conta, lembretes de
+ * revisão e calendário, além do aviso de fim de plano.
  *
  * Por que uma função só chamando uma rota, em vez de fazer o trabalho aqui:
  * a lógica vive em `/api/tarefas/emails`, que roda dentro do Next e tem

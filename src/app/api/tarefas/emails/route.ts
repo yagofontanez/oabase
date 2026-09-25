@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
+  ajudaParaComecar,
+  boasVindas,
   lembreteDoCalendario,
   planoAcabando,
   revisaoDoDia,
@@ -11,7 +13,8 @@ import { diasAte, getProximoExame } from "@/lib/content/queries";
 import { planos } from "@/lib/planos";
 
 /**
- * Tarefa diária de e-mail: lembrete de revisão e aviso de fim de plano.
+ * Tarefa diária de e-mail: ativação de conta, lembrete de revisão e aviso de
+ * fim de plano.
  *
  * Chamada pela função agendada da Netlify
  * (netlify/functions/emails-diarios.mts), que envia
@@ -67,6 +70,10 @@ type ParaLembrarCalendario = Destinatario & {
   horario: string;
 };
 
+type ParaAtivar = Destinatario & {
+  etapa: "boas_vindas" | "como_comecar";
+};
+
 function clienteSemSessao() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,6 +105,7 @@ export async function GET(request: Request) {
   const dias = diasAte(proximo.data);
 
   const relatorio = {
+    ativacao: { enviados: 0, falhas: 0, pendentes: 0 },
     revisao: { enviados: 0, falhas: 0, pendentes: 0 },
     calendario: { enviados: 0, falhas: 0, pendentes: 0 },
     planoAcabando: { enviados: 0, falhas: 0, pendentes: 0 },
@@ -112,6 +120,46 @@ export async function GET(request: Request) {
     });
     if (error) console.error("Falha ao registrar envio:", error);
   }
+
+  /* ---- Primeiros passos de uma conta nova ---- */
+  const { data: ativar, error: erroAtivar } = await supabase.rpc(
+    "destinatarios_ativacao",
+    { p_segredo: segredo },
+  );
+  if (erroAtivar) {
+    console.error("Falha ao listar ativações:", erroAtivar);
+    return NextResponse.json({ erro: "falha" }, { status: 500 });
+  }
+
+  // A sequência é deliberadamente menor que os outros lotes: é uma mensagem
+  // opcional para contas novas, não um aviso operacional que precise alcançar
+  // toda a base no mesmo minuto.
+  const filaAtivacao = ((ativar ?? []) as ParaAtivar[]).slice(0, 20);
+  for (const pessoa of filaAtivacao) {
+    const modelo =
+      pessoa.etapa === "boas_vindas"
+        ? boasVindas({ nome: pessoa.nome, site: site.url })
+        : ajudaParaComecar({ nome: pessoa.nome, site: site.url });
+    const envio = await enviar({
+      para: pessoa.email,
+      assunto: modelo.assunto,
+      html: modelo.html,
+      texto: modelo.texto,
+      chave: `ativacao:${pessoa.etapa}:${pessoa.user_id}`,
+      etiquetas: [{ name: "tipo", value: `ativacao_${pessoa.etapa}` }],
+    });
+    if (envio.ok) {
+      relatorio.ativacao.enviados += 1;
+      await marcar(pessoa.user_id, `ativacao_${pessoa.etapa}`, pessoa.etapa);
+    } else {
+      relatorio.ativacao.falhas += 1;
+      console.error("E-mail de ativação falhou:", envio.erro);
+    }
+  }
+  relatorio.ativacao.pendentes = Math.max(
+    0,
+    ((ativar ?? []) as ParaAtivar[]).length - filaAtivacao.length,
+  );
 
   /* ---- Lembrete de revisão ---- */
   const { data: revisar, error: erroRevisar } = await supabase.rpc(

@@ -114,7 +114,7 @@ export default async function ConfiguracoesPage() {
 
       <Bloco
         titulo="Lembretes por e-mail"
-        descricao="Um aviso nos dias em que a fila de revisão tiver cinco ou mais questões. Confirmação de compra e fim de plano não entram aqui — são transacionais."
+        descricao="Lembretes de revisão e orientações de começo são opcionais. Confirmação de compra e fim de plano não entram aqui — são transacionais."
       >
         <PreferenciaAvisos inicial={perfil?.avisos_email ?? true} />
       </Bloco>
