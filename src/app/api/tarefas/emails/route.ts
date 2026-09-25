@@ -109,6 +109,17 @@ export async function GET(request: Request) {
   }
 
   const supabase = clienteSemSessao();
+
+  // Retenção fiscal de conta excluída: 5 anos e fora. Aqui porque esta é a
+  // tarefa diária que já tem o segredo do cron — falha vira log, e o e-mail
+  // do dia não depende disto.
+  const { data: expurgadas, error: erroExpurgo } = await supabase.rpc(
+    "expurgar_cobrancas_retidas",
+    { p_segredo: segredo },
+  );
+  if (erroExpurgo) console.error("Falha ao expurgar cobranças retidas:", erroExpurgo);
+  else if (expurgadas) console.info(`Cobranças retidas expurgadas: ${expurgadas}`);
+
   const proximo = await getProximoExame();
   const dias = diasAte(proximo.data);
 

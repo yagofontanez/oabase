@@ -240,7 +240,10 @@ const secoes: Secao[] = [
       <>
         <P>
           <strong>Dados da conta e histórico de estudo:</strong> enquanto a
-          conta existir. Ao encerrar, são apagados em até 30 dias.
+          conta existir. Excluída a conta — o que você faz sozinho em
+          Configurações —, são apagados na hora. Tópicos e respostas que você
+          publicou no fórum permanecem, assinados como “Conta excluída”, para
+          não apagar a conversa de quem respondeu.
         </P>
         <P>
           <strong>Lista de interesse em concursos:</strong> até você revogar o
@@ -283,8 +286,8 @@ const secoes: Secao[] = [
         </P>
         <P>
           Parte disso você faz sozinho: nome e senha em Configurações, o
-          lembrete de revisão na mesma tela e o lembrete de estudo no
-          Calendário.
+          lembrete de revisão na mesma tela, o lembrete de estudo no
+          Calendário e a exclusão da conta, no fim de Configurações.
         </P>
         <P>
           Você também pode peticionar à Autoridade Nacional de Proteção de

@@ -6,6 +6,7 @@ import { planos } from "@/lib/planos";
 import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 import {
   CancelarRenovacao,
+  ExcluirConta,
   FormularioNome,
   FormularioSenha,
 } from "./formularios";
@@ -252,6 +253,16 @@ export default async function ConfiguracoesPage() {
           </div>
         </Bloco>
       )}
+
+      <Bloco
+        titulo="Excluir conta"
+        descricao="Apaga a conta e o histórico de estudo. É o direito de eliminação da LGPD, e não depende de falar com ninguém."
+      >
+        <ExcluirConta
+          planoAtivo={assinatura?.status === "ativa" && !cortesia}
+          renovacaoAtiva={Boolean(recorrencia)}
+        />
+      </Bloco>
     </div>
   );
 }

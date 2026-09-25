@@ -972,6 +972,24 @@ de teste bateria na produção. Sem a linha, o gatilho não faz nada; apagá-la 
 o jeito de desligar o aviso.
 
 
+## Exclusão de conta
+
+Em Configurações, com a senha de novo — excluir não tem volta, e sessão
+esquecida num computador compartilhado não pode bastar. A rota é
+`/api/conta/excluir`; o trabalho é de `excluir_minha_conta()`.
+
+**Quase tudo cai por CASCADE, e duas coisas não podem cair.** A cobrança: a
+Política promete guardar dado de cobrança por 5 anos (fiscal e art. 27 do
+CDC), e `cobrancas` tem CASCADE para `auth.users` — a função copia antes para
+`interno.cobrancas_retidas`, sem permissão para papel nenhum, com
+`excluir_apos`; a tarefa diária de e-mail expurga o que venceu. E o fórum: o
+CASCADE levaria os tópicos da pessoa e as respostas dos outros dentro deles;
+o autor vira "Conta excluída" (FK com `SET NULL`) e a conversa fica.
+
+**Mensal ativo é cancelado na Asaas antes.** A função recusa com recorrência
+ativa, e a rota cancela primeiro, na mesma ordem de `/api/assinatura/cancelar`.
+Conta apagada com o cartão ainda sendo cobrado é o pior resultado possível.
+
 ## Páginas legais e procedência
 
 `/termos`, `/privacidade` e `/sobre` existem, e as três são pré-requisito de

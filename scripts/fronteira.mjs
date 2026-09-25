@@ -216,6 +216,20 @@ caso("anônimo não cancela recorrência de ninguém", async () => {
   if (corpo.trim() === "true") throw new Error("cancelou");
 });
 
+caso("anônimo não exclui conta", async () => {
+  const { status, corpo } = await chamar("excluir_minha_conta", {});
+  // Sem permissão de execução (401/403/404) ou recusa da própria função:
+  // o que não pode é uma resposta de sucesso.
+  if (status < 300) throw new Error(`aceito (HTTP ${status}): ${corpo.slice(0, 80)}`);
+});
+
+caso("expurgar_cobrancas_retidas exige o segredo do banco", async () => {
+  const { corpo } = await chamar("expurgar_cobrancas_retidas", { p_segredo: "segredo-errado" });
+  if (!/segredo inválido/.test(corpo)) {
+    throw new Error(`resposta inesperada: ${corpo.slice(0, 120)}`);
+  }
+});
+
 caso("anônimo não abre tópico no fórum", async () => {
   const { corpo } = await chamar("criar_topico", {
     p_titulo: "Tópico de teste da fronteira",
