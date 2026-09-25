@@ -32,7 +32,7 @@ const CAMPOS_ARTIGO_COM_DISCIPLINA =
 // parágrafos e metadata de SEO reduz o custo de cada página de artigo — e a
 // consulta fica apoiada pelo índice de disciplina + incidência.
 const CAMPOS_ARTIGO_RELACIONADO =
-  "numero, slug, caput, incidencia, leis!inner(slug)";
+  "numero, slug, caput, incidencia, leis!inner(slug), disciplinas!inner(slug)";
 
 type LinhaArtigo = {
   numero: string;

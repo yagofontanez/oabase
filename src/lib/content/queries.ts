@@ -107,7 +107,7 @@ export const getDisciplinasComId = cache(
     const { data } = await supabaseAnon()
       .from("disciplinas")
       .select("id, slug, nome")
-      .order("media_por_prova", { ascending: false });
+      .order("nome");
     return (data ?? []) as { id: string; slug: string; nome: string }[];
   },
 );

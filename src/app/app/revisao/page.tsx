@@ -34,7 +34,7 @@ export default async function RevisaoPage() {
     supabase
       .from("disciplinas")
       .select("slug, nome")
-      .order("media_por_prova", { ascending: false }),
+      .order("nome"),
     // A primeira página vem do servidor: abrir a tela e esperar a rede antes
     // de ver a primeira questão é onde o ritmo se perde.
     supabase.rpc("fila_de_revisao", { p_limite: 25 }),

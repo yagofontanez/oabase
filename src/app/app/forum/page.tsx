@@ -32,7 +32,7 @@ export default async function ForumPage() {
     supabase
       .from("disciplinas")
       .select("slug, nome")
-      .order("media_por_prova", { ascending: false }),
+      .order("nome"),
   ]);
 
   type Linha = Omit<TopicoNaLista, "disciplina"> & {
