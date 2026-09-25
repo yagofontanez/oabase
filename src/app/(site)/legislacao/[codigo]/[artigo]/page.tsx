@@ -6,7 +6,7 @@ import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
 import { JsonLd } from "@/lib/jsonld";
-import { daLei, formatarData, formatarNumeroDeArtigo } from "@/lib/format";
+import { formatarData, formatarNumeroDeArtigo } from "@/lib/format";
 import { abs, site } from "@/lib/site";
 import {
   getLinksEditoriaisDoArtigo,
@@ -93,8 +93,12 @@ export default async function ArtigoPage({ params }: Props) {
     getIncidenciaDoArtigo(lei.slug, artigo.slug),
   ]);
   const url = abs(`/legislacao/${lei.slug}/${artigo.slug}`);
-  const titulo = `Art. ${formatarNumeroDeArtigo(artigo.numero)} ${daLei(lei.nome)} ${lei.nome}`;
   const metadata = metadadosDoArtigo(lei, artigo);
+  // Nas páginas que receberam revisão editorial para busca, o H1 acompanha o
+  // título: quem chegou por "furto", por exemplo, encontra a palavra que
+  // procurou antes de entrar no texto legal. Nos demais artigos a metadata
+  // continua usando o título automático, então não muda a escala da base.
+  const titulo = metadata.titulo;
   const linksEditoriais = getLinksEditoriaisDoArtigo(lei.slug, artigo.slug);
   return (
     <>
@@ -260,6 +264,17 @@ export default async function ArtigoPage({ params }: Props) {
               </section>
             )}
 
+            {/* Depois de mostrar a prova de valor (onde o dispositivo já
+                caiu), o próximo passo de estudo fica perto da decisão. Antes
+                ele vinha só depois da navegação entre artigos, que atende a
+                quem consulta o código, não a quem chegou buscando a OAB. */}
+            {incidencia.length > 0 && (
+              <PaywallCta
+                titulo={`Treine ${disciplina?.nome} no banco de questões`}
+                texto={`Este artigo já foi cobrado ${artigo.incidencia} ${artigo.incidencia === 1 ? "vez" : "vezes"} no exame. As questões oficiais, os simulados e o caderno de erros ficam juntos no plano.`}
+              />
+            )}
+
             {/* Ler um código é ler em sequência. Estes dois links também são
                 o que dá ao buscador um caminho contínuo por todos os artigos
                 da lei, sem depender só do índice. */}
@@ -298,14 +313,12 @@ export default async function ArtigoPage({ params }: Props) {
               </nav>
             )}
 
-            <PaywallCta
-              titulo={`Treine ${disciplina?.nome} no banco de questões`}
-              texto={
-                artigo.incidencia > 0
-                  ? `Este artigo já foi cobrado ${artigo.incidencia} vezes no exame. Todas essas questões, comentadas uma a uma, estão no plano — junto com simulados e caderno de erros.`
-                  : `As questões de ${disciplina?.nome} de todas as edições do exame estão no plano, comentadas uma a uma, junto com simulados e caderno de erros.`
-              }
-            />
+            {incidencia.length === 0 && (
+              <PaywallCta
+                titulo={`Treine ${disciplina?.nome} no banco de questões`}
+                texto={`As questões de ${disciplina?.nome} de todas as edições do exame estão no plano, comentadas uma a uma, junto com simulados e caderno de erros.`}
+              />
+            )}
           </article>
 
           {/* Links internos: o que faz o crawler achar as páginas novas e o que segura o aluno no site. */}
