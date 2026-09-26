@@ -1061,6 +1061,64 @@ comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
 glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
 lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
 
+## Hospedagem (VPS em São Paulo)
+
+A produção está migrando da Netlify para uma VPS da Hostinger em **São Paulo**
+(`179.199.147.201`), com Docker. O motivo é a distância: o Supabase está em
+`sa-east-1`, e a Netlify rodava as funções em Ohio — ~130 ms por consulta
+contra 4 ms da VPS. Até a virada do DNS, a Netlify continua atendendo
+`oabase.com.br`, e a VPS responde em `novo.oabase.com.br` (com `noindex`).
+
+**O que roda lá** (`deploy/docker-compose.yml`): `app` (o Next em modo
+`standalone`, sem porta publicada), `caddy` (proxy e HTTPS automático) e
+`tarefas` (cron com as duas rotas que eram funções agendadas da Netlify, mais
+o backup). Segredos em `/opt/oabase/.env` (execução) e `/opt/oabase/.env.build`
+(build), os dois `chmod 600` e fora do git. Deploy: `deploy/deploy.sh`.
+
+**O Supabase continua sendo o banco.** Levar o Postgres para a VPS obrigaria a
+hospedar Auth, PostgREST e RLS junto, com migração de contas e sessões — e
+não daria ganho de velocidade, porque a VPS já está a 4 ms dele.
+
+**`TAREFAS_DO_APP=1` só depois da virada.** Com Netlify e VPS rodando a
+tarefa de e-mail no mesmo dia, o e-mail sai em dobro. A reconciliação é
+idempotente, mas liga junto.
+
+**Três armadilhas do build, todas vistas na primeira tentativa:**
+
+1. O segredo do BuildKit tem de ter o mesmo id no `Dockerfile` e no compose,
+   e é `required=true`: com o id errado o Docker **pula em silêncio**, o
+   `next build` roda sem as `NEXT_PUBLIC_*`, o JS do navegador sai sem a URL
+   do Supabase e as páginas estáticas caem nos dados de exemplo.
+2. O `standalone` **copia os `.env*` do projeto para dentro da imagem** — com
+   o segredo montado em `/app/.env.production`, todos os segredos iam para a
+   camada. O `rm` fica no mesmo `RUN` do build.
+3. A chave da Asaas começa com `$`: no `.env` de execução o valor vai entre
+   aspas simples (o compose lê literal); no `.env.build` vai com `\$` (o
+   dotenv do Next expande `$`). Um arquivo só não serve aos dois.
+
+**O modo `standalone` só liga no Docker** (`OABASE_STANDALONE=1`): enquanto
+a Netlify atender o domínio, o build dela segue igual.
+
+**Backup** (`deploy/tarefas/backup.sh`, 03h30 de Brasília): `pg_dump` de
+`public`, `interno` e `auth` — sem `auth`, restaurar traria os dados sem as
+contas que são donas deles. Fica 7 dias diários + 4 semanais na VPS e vai
+para o Backblaze B2 (`oabase-backup`, 30 dias) **criptografado com `age`**
+para uma chave pública; a privada está com o dono do projeto, fora do
+servidor. A chave do B2 é **só de escrita** — quem invadir a VPS não lê nem
+apaga backup antigo — e por isso o `rclone` usa `--no-check-dest` (sem a
+flag ele faz um HEAD, que é leitura, e leva 401).
+
+**Backup só conta se restaura.** `deploy/restaurar-teste.sh` restaura o dump
+mais recente num Postgres descartável e confere as contagens. A primeira
+tentativa falhou: as tabelas principais dependem do schema `extensions` do
+Supabase (vector, unaccent, pgcrypto, uuid-ossp), que não vai no dump. O
+script cria o schema antes — e é também o roteiro de recuperação.
+
+**O servidor:** SSH só com chave (a configuração fica em
+`/etc/ssh/sshd_config.d/00-oabase.conf`, lido antes do `50-cloud-init.conf`,
+que liga a senha — no sshd vale a primeira ocorrência), ufw com 22/80/443,
+fail2ban, 2 GB de swap, usuário `deploy` no grupo `docker`.
+
 ## Desempenho do painel
 
 **O servidor está longe do banco, e isso manda em tudo.** As funções da

@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
+   * Servidor enxuto para o container (ver `Dockerfile`). O build copia só os
+   * arquivos que o app de fato carrega, e o `server.js` gerado substitui o
+   * `next start` — a imagem final não precisa de `node_modules` inteiro.
+   *
+   * Só no build do Docker: enquanto a Netlify atender o domínio, o build
+   * dela segue exatamente como antes.
+   */
+  ...(process.env.OABASE_STANDALONE === "1" ? { output: "standalone" as const } : {}),
+
+  /**
    * Uma URL por página.
    *
    * `trailingSlash` é o padrão do Next, mas declarar é barato e o custo de
@@ -50,6 +60,21 @@ const nextConfig: NextConfig = {
         // alguém publicar um link direto para uma página do painel.
         source: "/app/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        // API e links de compartilhamento não são página: estavam no
+        // `netlify.toml`, e vieram para cá para valer em qualquer hospedagem.
+        source: "/api/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/compartilhar/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          // Link de compartilhamento carrega um token na URL: não pode vazar
+          // no Referer para o site que a pessoa abrir em seguida.
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
       },
       {
         // O navegador consulta o service worker a cada carregamento; se um

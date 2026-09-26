@@ -1,0 +1,70 @@
+# Produção do OABase na VPS (Hostinger, São Paulo).
+#
+# No servidor:
+#   /opt/oabase/app       clone deste repositório
+#   /opt/oabase/.env      ambiente de produção (chmod 600; nunca no git)
+#   /opt/oabase/backups   dumps do banco
+#
+# Deploy: deploy/deploy.sh. Ver a seção "Hospedagem" do AGENTS.md.
+
+name: oabase
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      secrets: [ambiente]
+    image: oabase-app:latest
+    env_file: /opt/oabase/.env
+    restart: unless-stopped
+    # Sem `ports`: o app não fica exposto na internet. Só o Caddy o alcança,
+    # pela rede interna. (Porta publicada pelo Docker passa por fora do ufw.)
+    expose: ["3000"]
+    volumes:
+      # Cache de ISR sobrevive a reinício do container.
+      - cache-next:/app/.next/cache
+    networks: [interna]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # Domínios atendidos. Homologação: `novo.oabase.com.br`; na virada,
+      # passa a ser o domínio principal (ver Caddyfile).
+      DOMINIO: ${DOMINIO:?defina DOMINIO no deploy/.env}
+      EMAIL_ACME: ${EMAIL_ACME:-dev.yagofontanez@gmail.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados. Perder este volume obriga a emitir de novo — e a
+      # autoridade limita quantas vezes por semana.
+      - caddy-dados:/data
+      - caddy-config:/config
+    networks: [interna]
+
+  tarefas:
+    build: ./tarefas
+    image: oabase-tarefas:latest
+    env_file: /opt/oabase/.env
+    restart: unless-stopped
+    depends_on: [app]
+    volumes:
+      - /opt/oabase/backups:/backups
+    networks: [interna]
+
+secrets:
+  ambiente:
+    file: /opt/oabase/.env.build
+
+volumes:
+  cache-next:
+  caddy-dados:
+  caddy-config:
+
+networks:
+  interna:

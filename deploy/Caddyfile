@@ -1,0 +1,33 @@
+# Proxy reverso e HTTPS. O Caddy emite e renova o certificado sozinho
+# (Let's Encrypt), desde que o DNS de cada nome já aponte para esta VPS.
+#
+# `DOMINIO` vem do deploy/.env e lista os nomes atendidos:
+#   homologação:  DOMINIO=novo.oabase.com.br
+#   produção:     DOMINIO=oabase.com.br, www.oabase.com.br
+#
+# Só entra em `DOMINIO` nome cujo DNS já aponta para cá: para cada um o Caddy
+# tenta um certificado, e tentativa que falha repetida esbarra no limite de
+# emissões da Let's Encrypt.
+
+{
+	email {$EMAIL_ACME}
+}
+
+{$DOMINIO} {
+	encode zstd gzip
+
+	# HSTS sem includeSubDomains: mail., ftp. e send. são da HostGator e da
+	# Resend, e não são obrigação desta VPS.
+	header Strict-Transport-Security "max-age=31536000"
+
+	# www → domínio principal, mantendo o caminho.
+	@www host www.oabase.com.br
+	redir @www https://oabase.com.br{uri} permanent
+
+	# A homologação não pode ser indexada: seria uma cópia inteira do site
+	# num segundo endereço — conteúdo duplicado contra o próprio domínio.
+	@homologacao host novo.oabase.com.br
+	header @homologacao X-Robots-Tag "noindex, nofollow"
+
+	reverse_proxy app:3000
+}

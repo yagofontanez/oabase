@@ -1,0 +1,11 @@
+# Horários em UTC, os mesmos das funções agendadas da Netlify.
+# Saída vai para o log do container (docker compose logs tarefas).
+
+# E-mails do dia (ativação, revisão, fatura, fim de plano): 08h de Brasília.
+0 11 * * * /usr/local/bin/tarefa.sh emails > /proc/1/fd/1 2>&1
+
+# Reconciliação de cobranças: a rede do webhook da Asaas. De hora em hora.
+17 * * * * /usr/local/bin/tarefa.sh reconciliar > /proc/1/fd/1 2>&1
+
+# Backup do banco: 03h30 de Brasília, fora do horário de estudo.
+30 6 * * * /usr/local/bin/backup.sh > /proc/1/fd/1 2>&1
