@@ -17,6 +17,7 @@ type LinhaDoCaderno = {
   artigo_slug: string;
   numero: string;
   caput: string;
+  paragrafos: string[] | null;
   nota: string;
   lido_em: string | null;
   revisar_em: string | null;
@@ -49,6 +50,7 @@ export default async function CadernoLeiSecaPage() {
       artigoSlug: linha.artigo_slug,
       numero: linha.numero,
       caput: linha.caput,
+      paragrafos: linha.paragrafos ?? [],
       nota: linha.nota,
       lidoEm: linha.lido_em,
       revisarEm: linha.revisar_em,

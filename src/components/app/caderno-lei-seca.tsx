@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { ControlesDeLeitura, useLeitor } from "@/components/ouvir-lei";
+import { daLei } from "@/lib/format";
 import { formatarData } from "@/lib/format";
 import type { ItemDoCaderno } from "@/lib/caderno-lei-seca";
 
@@ -67,6 +69,27 @@ export function CadernoLeiSeca({
     });
   }, [busca, filtro, hoje, itens]);
 
+  // Ouvir o caderno em sequência — o uso do ônibus. Toca o que o filtro
+  // está mostrando: "Revisar" vira a lista de revisão de hoje em áudio.
+  const blocos = useMemo(
+    () =>
+      visiveis.map((item) => ({
+        id: item.artigoId,
+        titulo: `Art. ${item.numero} ${daLei(item.leiNome)} ${item.leiNome}.`,
+        partes: [item.caput, ...item.paragrafos],
+      })),
+    [visiveis],
+  );
+  const leitor = useLeitor(blocos, (id) => {
+    document
+      .querySelectorAll("[data-item][data-lendo]")
+      .forEach((el) => el.removeAttribute("data-lendo"));
+    if (!id) return;
+    const cartao = document.querySelector(`[data-item="${id}"]`);
+    cartao?.setAttribute("data-lendo", "");
+    cartao?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+
   return (
     <div className="painel-conteudo flex max-w-[1280px] flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
@@ -80,12 +103,24 @@ export function CadernoLeiSeca({
             ligados ao texto oficial do acervo.
           </p>
         </div>
-        <Link
-          href="/legislacao"
-          className="rounded-full bg-brand-700 px-4 py-2.5 text-[0.8rem] font-semibold text-white"
-        >
-          Encontrar artigos
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {visiveis.length > 0 && (
+            <ControlesDeLeitura
+              leitor={leitor}
+              rotulo={
+                visiveis.length === 1
+                  ? "Ouvir artigo"
+                  : `Ouvir ${visiveis.length} artigos`
+              }
+            />
+          )}
+          <Link
+            href="/legislacao"
+            className="rounded-full bg-brand-700 px-4 py-2.5 text-[0.8rem] font-semibold text-white"
+          >
+            Encontrar artigos
+          </Link>
+        </div>
       </header>
 
       {alteracoes.length > 0 && (
@@ -199,6 +234,7 @@ export function CadernoLeiSeca({
                 return (
                   <article
                     key={item.artigoId}
+                    data-item={item.artigoId}
                     className={`superficie flex flex-col overflow-hidden ${revisarAgora ? "ring-1 ring-ouro-300" : ""}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-paper px-5 py-4">

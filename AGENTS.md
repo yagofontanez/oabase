@@ -1061,6 +1061,34 @@ comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
 glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
 lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
 
+## Ouvir a lei
+
+Botão "Ouvir artigo" na página de cada artigo e "Ouvir N artigos" no caderno
+de lei seca (toca o filtro atual — "Revisar" vira a revisão do dia em áudio).
+Usa a voz do próprio navegador (`speechSynthesis`): sem fornecedor, sem custo,
+nada sai do aparelho e nada muda na Política de Privacidade.
+
+**Lei não se lê como se escreve.** `src/lib/leitura-da-lei.ts` converte a
+notação antes de falar: "§ 1º" → "parágrafo primeiro", "IV -" → "inciso 4",
+"217-A" → "217 A", "1 (um)" → "um". Tira as notas de redação do Planalto,
+**menos a revogação**: "(Revogado pela Lei...)" vira a palavra "revogado" —
+sem isso, 276 dispositivos eram lidos como "Inciso 3." e silêncio, e quem
+ouve concluiria que estão em vigor. Os testes (`node --import tsx --test
+src/lib/leitura-da-lei.test.ts`) são trechos reais; ao mexer nas regras,
+rode também uma varredura do acervo inteiro procurando "§", "º" e número
+grudado em palavra — foi ela que achou os dois bugs que os testes não
+pegavam (o "o" de ordinal comendo o "o" de "ou").
+
+**O `speechSynthesis` tem três armadilhas**, tratadas em `ouvir-lei.tsx`: o
+Chrome corta fala longa sozinho (o texto vai em pedaços de ~220
+caracteres); `pause()` não funciona no Chrome do Android (pausar é cancelar e
+guardar o pedaço); e `cancel()` dispara o `onend` do pedaço interrompido
+(cada rodada de fala tem número, e evento velho é ignorado).
+
+O destaque do trecho lido é o atributo `data-lendo`, marcado direto no DOM:
+é atributo que o React não controla, então o re-render do caderno do artigo
+não o apaga.
+
 ## Hospedagem (VPS em São Paulo)
 
 **Desde 26/09/2026 a produção roda numa VPS da Hostinger em São Paulo**

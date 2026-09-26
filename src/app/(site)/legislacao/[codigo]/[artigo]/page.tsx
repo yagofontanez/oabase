@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CadernoDoArtigo } from "@/components/caderno-artigo";
+import { OuvirArtigo } from "@/components/ouvir-lei";
 import { Container } from "@/components/container";
 import { PageHeader } from "@/components/page-header";
 import { PaywallCta } from "@/components/paywall-cta";
 import { JsonLd } from "@/lib/jsonld";
-import { formatarData, formatarNumeroDeArtigo } from "@/lib/format";
+import { daLei, formatarData, formatarNumeroDeArtigo } from "@/lib/format";
 import { abs, site } from "@/lib/site";
 import {
   getLinksEditoriaisDoArtigo,
@@ -165,10 +166,22 @@ export default async function ArtigoPage({ params }: Props) {
         <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_260px]">
           <article>
             {/* Texto legal — o que o usuário colou no Google precisa estar aqui em HTML puro, nunca em imagem nem atrás de JS. */}
-            <section className="rounded-2xl border border-line bg-surface p-7 sm:p-9">
-              <h2 className="text-[0.86rem] font-semibold text-muted">
-                Texto legal
-              </h2>
+            <section
+              id="texto-legal"
+              className="rounded-2xl border border-line bg-surface p-7 sm:p-9"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-[0.86rem] font-semibold text-muted">
+                  Texto legal
+                </h2>
+                {/* O botão é de cliente; o texto continua no HTML do servidor,
+                    que é o que o buscador lê. */}
+                <OuvirArtigo
+                  alvo="texto-legal"
+                  titulo={`Art. ${formatarNumeroDeArtigo(artigo.numero)} ${daLei(lei.nome)} ${lei.nome}.`}
+                  partes={[artigo.caput, ...artigo.paragrafos]}
+                />
+              </div>
               <CadernoDoArtigo
                 leiSlug={lei.slug}
                 artigoSlug={artigo.slug}

@@ -28,6 +28,8 @@ export type ItemDoCaderno = {
   artigoSlug: string;
   numero: string;
   caput: string;
+  /** Parágrafos, incisos e alíneas — para ouvir o artigo inteiro. */
+  paragrafos: string[];
   nota: string;
   lidoEm: string | null;
   revisarEm: string | null;

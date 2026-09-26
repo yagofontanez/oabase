@@ -194,6 +194,16 @@
     animation: oab-varredura 1.4s ease-in-out infinite;
   }
 
+  /* ---- Trecho de lei sendo lido em voz alta (`OuvirArtigo`, caderno).
+       Fundo, não sublinhado: o sublinhado já é do destaque que a pessoa faz
+       no caderno, e os dois precisam ser distinguíveis juntos. ---- */
+  [data-lendo] {
+    background: var(--color-brand-50);
+    box-shadow: 0 0 0 6px var(--color-brand-50);
+    border-radius: 6px;
+    transition: background-color 200ms ease, box-shadow 200ms ease;
+  }
+
   /* ---- Ponto de navegação pendente: aparece no item clicado enquanto a
        rota nova não chega. Só existe quando a fronteira de carregamento
        ainda não tomou a tela — em navegação instantânea ninguém o vê. ---- */
