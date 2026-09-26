@@ -1061,6 +1061,40 @@ comentário, e `artigos.incidencia`, agora medida, diz por onde começar. O
 glossário exibe essa mesma incidência ao lado de cada verbete, o que dá à
 lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
 
+## Desempenho do painel
+
+**O servidor está longe do banco, e isso manda em tudo.** As funções da
+Netlify rodam em `us-east-2` (Ohio) e o Supabase em `sa-east-1` (São Paulo):
+cada consulta que o servidor espera é ~130 ms de viagem. O que decide a
+velocidade de uma tela não é quantas consultas ela faz, e sim quantas
+**rodadas em série** — cinco em paralelo custam uma viagem, cinco em fila
+custam cinco. Mudar a região das funções para `gru` resolve na raiz, mas é
+recurso do plano Pro da Netlify; a conta hoje é Free.
+
+**Uma rodada por tela.** Ao escrever uma página de `/app`, tudo que não
+depende de resultado anterior vai no mesmo `Promise.all` — acervo aberto e
+dado da pessoa juntos, e a checagem de plano junto com o resto (sem plano, a
+RLS devolve vazio e o resultado é descartado). Configurações chegou a ter seis
+rodadas em fila; `anotacoes`, cinco.
+
+**Quem é a pessoa sai do JWT, não da rede.** `usuarioAtual()` usa
+`getClaims()` — confere a assinatura ES256 localmente, com a chave pública em
+cache no processo — e `cache()` do React divide a leitura entre layout e
+página. O proxy faz o mesmo. `getUser()` fica onde vale a viagem: pagamento e
+exclusão de conta, que também querem saber se a sessão foi revogada. Como o
+nome vem do token, quem troca o nome renova a sessão (`FormularioNome`).
+
+**Todo clique tem resposta visível.** O esqueleto de `loading.tsx` aparece
+na hora nas rotas pré-carregadas (os links do trilho). `router.push` depois
+de um botão vai para rota que ninguém pré-carregou — chame `navegar()` antes
+dele, e a barra do topo (`BarraDeNavegacao`) cobre a espera. O botão que
+dispara a ação mostra o próprio estado ("Publicando…") enquanto ela roda.
+
+**Para medir, não supor.** A medição que orientou isto: build de produção
+local contra o Supabase local, com um proxy que atrasa cada requisição em
+130 ms e registra início e fim — dá para contar as rodadas de cada tela e o
+tempo do clique até a tela pronta no navegador.
+
 ## PWA
 
 Instalável em PC e celular (manifest em `src/app/manifest.ts`, service worker

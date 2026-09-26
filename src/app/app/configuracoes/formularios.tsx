@@ -57,10 +57,17 @@ export function FormularioNome({ inicial }: { inicial: string }) {
     }
 
     if (data.user) {
-      await supabase
-        .from("perfis")
-        .update({ nome: limpo || null })
-        .eq("id", data.user.id);
+      // O perfil e o token novo em paralelo. O painel lê o nome do JWT (sem
+      // ida à rede — ver `usuarioAtual`), e `updateUser` não emite token
+      // novo: sem renovar, a saudação mostraria o nome antigo até a sessão
+      // se renovar sozinha, em até uma hora.
+      await Promise.all([
+        supabase
+          .from("perfis")
+          .update({ nome: limpo || null })
+          .eq("id", data.user.id),
+        supabase.auth.refreshSession(),
+      ]);
     }
 
     setEstado({ tipo: "ok", texto: "Nome atualizado." });

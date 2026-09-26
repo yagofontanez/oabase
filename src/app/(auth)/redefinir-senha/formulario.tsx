@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 const SENHA_MINIMA = 8;
 export function FormularioRedefinir() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export function FormularioRedefinir() {
       return;
     }
     router.refresh();
+    navegar();
     router.push("/app");
   }
   return (

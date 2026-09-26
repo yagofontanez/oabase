@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import { tempoRelativo } from "@/lib/format";
 import { Iniciais } from "./iniciais";
+import { navegar } from "@/components/barra-de-navegacao";
 
 export type TopicoNaLista = {
   id: string;
@@ -91,6 +92,7 @@ export function Forum({
     setTitulo("");
     setCorpo("");
     setNovo(false);
+    navegar();
     router.push(`/app/forum/${data}`);
   }
 

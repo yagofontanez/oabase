@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 
 const Alerta = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px] shrink-0" aria-hidden="true">
@@ -59,6 +60,7 @@ export function FormularioCriarConta() {
     }
 
     router.refresh();
+    navegar();
     router.push("/app");
   }
   if (confirmar) {

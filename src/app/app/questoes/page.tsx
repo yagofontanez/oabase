@@ -71,16 +71,34 @@ export default async function QuestoesPage({
 
   const supabase = await supabaseServidor();
 
-  const [assinaturaRes, exames, disciplinas, desempenhoRes] = await Promise.all([
-    supabase
-      .from("assinaturas")
-      .select("plano")
-      .eq("status", "ativa")
-      .limit(1),
-    getExames(),
-    getDisciplinas(),
-    supabase.rpc("meu_desempenho"),
-  ]);
+  // Uma rodada. A contagem e a fila não dependem da checagem de plano — sem
+  // plano, a RLS as devolve vazias e elas são descartadas abaixo. Esperar a
+  // checagem para só então perguntar o resto custava duas viagens a mais,
+  // justamente na tela que mais se abre.
+  const [assinaturaRes, exames, disciplinas, desempenhoRes, semDisciplinaRes, filaRes] =
+    await Promise.all([
+      supabase
+        .from("assinaturas")
+        .select("plano")
+        .eq("status", "ativa")
+        .limit(1),
+      getExames(),
+      getDisciplinas(),
+      supabase.rpc("meu_desempenho"),
+      // Quantas questões ainda não têm disciplina. Contado, não estimado: o
+      // número aparece na tela como ressalva, e ressalva com número
+      // inventado é pior do que ressalva nenhuma.
+      supabase
+        .from("questoes")
+        .select("*", { count: "exact", head: true })
+        .is("disciplina_id", null),
+      supabase.rpc("fila_de_questoes", {
+        p_modo: modo,
+        p_exame: exame,
+        p_disciplina: disciplina,
+        p_limite: 30,
+      }),
+    ]);
 
   const temPlano = Boolean(assinaturaRes.data?.[0]);
   const numeros = (Array.isArray(desempenhoRes.data)
@@ -116,21 +134,8 @@ export default async function QuestoesPage({
     );
   }
 
-  // Quantas questões ainda não têm disciplina. Contado, não estimado: o
-  // número aparece na tela como ressalva, e ressalva com número inventado é
-  // pior do que ressalva nenhuma.
-  const semDisciplinaRes = await supabase
-    .from("questoes")
-    .select("*", { count: "exact", head: true })
-    .is("disciplina_id", null);
   const semDisciplina = semDisciplinaRes.count ?? 0;
-
-  const { data: filaBruta } = await supabase.rpc("fila_de_questoes", {
-    p_modo: modo,
-    p_exame: exame,
-    p_disciplina: disciplina,
-    p_limite: 30,
-  });
+  const filaBruta = filaRes.data;
 
   const fila: QuestaoDaFila[] = ((filaBruta ?? []) as LinhaDaFila[]).map(
     (q) => ({

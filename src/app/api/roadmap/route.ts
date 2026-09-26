@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 import type { Plano } from "@/lib/ia/plano";
 import { blocosDoPlano } from "@/lib/roadmap";
 
 /** Cria o roadmap para planos montados antes desta funcionalidade existir. */
 export async function POST() {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

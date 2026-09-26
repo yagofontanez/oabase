@@ -31,7 +31,10 @@ type LinhaDoNo = {
 export default async function AnotacoesPage() {
   const supabase = await supabaseServidor();
 
-  const [nosRes, ligacoesRes, assinaturaRes, leis] = await Promise.all([
+  // Duas rodadas, não cinco. Quadro, ligações, plano e respostas não
+  // dependem um do outro; questões, artigos e súmulas dependem só da primeira
+  // rodada — e iam um depois do outro, cada um uma viagem até o banco.
+  const [nosRes, ligacoesRes, assinaturaRes, leis, respostasRes] = await Promise.all([
     supabase
       .from("quadro_nos")
       .select(
@@ -44,9 +47,15 @@ export default async function AnotacoesPage() {
       .eq("status", "ativa")
       .limit(1),
     getLeis(),
+    supabase
+      .from("respostas")
+      .select("questao_id, acertou, respondido_em")
+      .order("respondido_em", { ascending: false })
+      .limit(400),
   ]);
 
   const nos = (nosRes.data ?? []) as LinhaDoNo[];
+  const respostas = respostasRes.data;
   const temPlano = Boolean(assinaturaRes.data?.[0]);
 
   /* As questões respondidas alimentam o seletor. Sem assinatura a RLS de
@@ -56,12 +65,6 @@ export default async function AnotacoesPage() {
   const idsNoQuadro = nos
     .map((n) => n.questao_id)
     .filter((id): id is string => Boolean(id));
-
-  const { data: respostas } = await supabase
-    .from("respostas")
-    .select("questao_id, acertou, respondido_em")
-    .order("respondido_em", { ascending: false })
-    .limit(400);
 
   // A última tentativa de cada questão é a que vale: é ela que diz se a
   // questão está resolvida ou ainda dói.
@@ -73,12 +76,38 @@ export default async function AnotacoesPage() {
   }
   const idsRespondidas = [...ultimaPorQuestao.keys()];
 
+  const idsArtigos = nos
+    .map((n) => n.artigo_id)
+    .filter((id): id is string => Boolean(id));
+  const idsSumulas = nos
+    .map((n) => n.sumula_id)
+    .filter((id): id is string => Boolean(id));
+
+  const vazio = Promise.resolve({ data: [] as unknown[] });
+  const [questoesRes, artigosRes, sumulasRes] = await Promise.all([
+    idsRespondidas.length > 0
+      ? supabase
+          .from("questoes")
+          .select("id, numero, enunciado, exames(edicao, slug), disciplinas(nome)")
+          .in("id", idsRespondidas)
+      : vazio,
+    idsArtigos.length > 0
+      ? supabase
+          .from("artigos")
+          .select("id, numero, slug, caput, comentario, leis(slug, sigla)")
+          .in("id", idsArtigos)
+      : vazio,
+    idsSumulas.length > 0
+      ? supabase
+          .from("sumulas")
+          .select("id, numero, slug, texto, comentario, vinculante")
+          .in("id", idsSumulas)
+      : vazio,
+  ]);
+
   let disponiveis: QuestaoDisponivel[] = [];
   if (idsRespondidas.length > 0) {
-    const { data: questoes } = await supabase
-      .from("questoes")
-      .select("id, numero, enunciado, exames(edicao, slug), disciplinas(nome)")
-      .in("id", idsRespondidas);
+    const questoes = questoesRes.data;
 
     type LinhaDaQuestao = {
       id: string;
@@ -115,14 +144,8 @@ export default async function AnotacoesPage() {
      lei não é produto pago, é a regra que a pessoa anotou. */
   const dispositivos = new Map<string, DispositivoDoQuadro>();
 
-  const idsArtigos = nos
-    .map((n) => n.artigo_id)
-    .filter((id): id is string => Boolean(id));
   if (idsArtigos.length > 0) {
-    const { data } = await supabase
-      .from("artigos")
-      .select("id, numero, slug, caput, comentario, leis(slug, sigla)")
-      .in("id", idsArtigos);
+    const data = artigosRes.data;
 
     type LinhaArtigo = {
       id: string;
@@ -151,14 +174,8 @@ export default async function AnotacoesPage() {
     }
   }
 
-  const idsSumulas = nos
-    .map((n) => n.sumula_id)
-    .filter((id): id is string => Boolean(id));
   if (idsSumulas.length > 0) {
-    const { data } = await supabase
-      .from("sumulas")
-      .select("id, numero, slug, texto, comentario, vinculante")
-      .in("id", idsSumulas);
+    const data = sumulasRes.data;
 
     for (const s of (data ?? []) as {
       id: string;

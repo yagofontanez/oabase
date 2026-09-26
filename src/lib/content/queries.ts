@@ -33,6 +33,8 @@ export const getArtigo = cache((leiSlug: string, artigoSlug: string) =>
  * Só o que passou do portão de qualidade editorial.
  * É esta lista — e nunca a tabela inteira — que alimenta o sitemap.
  */
+export const contarArtigosPorLei = cache(() => fonte.contarArtigosPorLei());
+
 export const getArtigosIndexaveis = cache(() => fonte.getArtigosIndexaveis());
 
 /**

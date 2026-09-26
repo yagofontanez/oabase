@@ -14,6 +14,7 @@ import {
   type ItemRoadmap,
 } from "@/lib/roadmap";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 
 export type PortaDeEntrada = { href: string; rotulo: string };
 
@@ -296,6 +297,7 @@ export function PlanoConversa({
       setRoadmap((dados.roadmap as ItemRoadmap[]) ?? []);
       if (dados.aviso) setErro(String(dados.aviso));
       if (Array.isArray(dados.roadmap) && dados.roadmap.length > 0) {
+        navegar();
         router.push(
           abrirPrimeiraSessao
             ? `/app/hoje?minutos=${minutosPorDia}`

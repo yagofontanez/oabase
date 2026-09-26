@@ -58,14 +58,16 @@ function LinhaDeCorte({ taxa }: { taxa: number }) {
 }
 
 export default async function DesempenhoPage() {
-  const exames = await getExames();
   const supabase = await supabaseServidor();
 
+  // Uma rodada: a lista de exames ia antes, sozinha, e o resto esperava.
+  //
   // Por questão, não por tentativa: a mesma questão respondida quatro vezes
   // é uma questão no numerador, e é a última tentativa que conta. `distinct
   // on` vive no banco porque o PostgREST não expressa essa consulta.
-  const [desempenhoRes, percentilRes, ultimaRes, porDisciplinaRes] =
+  const [exames, desempenhoRes, percentilRes, ultimaRes, porDisciplinaRes] =
     await Promise.all([
+      getExames(),
       supabase.rpc("meu_desempenho"),
       supabase.rpc("meu_percentil"),
       supabase

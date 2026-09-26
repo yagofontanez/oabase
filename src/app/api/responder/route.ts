@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { memoriasDosArtigos } from "@/lib/caderno-lei-seca-servidor";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 /**
  * Registra a resposta de uma questão.
@@ -15,9 +15,8 @@ import { supabaseServidor } from "@/lib/supabase/servidor";
  */
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

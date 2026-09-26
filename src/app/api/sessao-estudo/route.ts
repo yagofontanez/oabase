@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { minutosDaSessao, type ModoDaSessao } from "@/lib/sessao-estudo";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -33,9 +33,8 @@ function checklist(valor: unknown) {
 
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

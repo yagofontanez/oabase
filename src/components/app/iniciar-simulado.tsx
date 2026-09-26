@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 
 export type OpcaoDeSimulado = {
   chave: string;
@@ -49,6 +50,7 @@ export function IniciarSimulado({ opcoes }: { opcoes: OpcaoDeSimulado[] }) {
       return;
     }
 
+    navegar();
     router.push(`/app/simulado/${data as string}`);
   }
 

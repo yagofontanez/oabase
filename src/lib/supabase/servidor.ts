@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
@@ -32,8 +33,53 @@ export async function supabaseServidor() {
   );
 }
 
-/** Usuário autenticado, ou null. */
-export async function usuarioAtual() {
-  const { data } = await (await supabaseServidor()).auth.getUser();
-  return data.user;
-}
+export type Usuario = {
+  id: string;
+  email: string | null;
+  user_metadata: { nome?: string } & Record<string, unknown>;
+};
+
+/**
+ * Usuário autenticado, ou null — **sem ida à rede**.
+ *
+ * Era `auth.getUser()`, que pergunta ao servidor de Auth a cada chamada: o
+ * proxy perguntava, o layout perguntava de novo e a página, de novo. Com o
+ * Next na Netlify (us-east-2) e o Supabase em São Paulo, cada pergunta era
+ * uma viagem de ~130 ms antes de qualquer dado sair.
+ *
+ * `getClaims()` confere a assinatura do JWT localmente: o projeto assina com
+ * ES256, e a chave pública é buscada uma vez e fica em cache no processo
+ * (`GLOBAL_JWKS` do auth-js). Um cookie adulterado falha a verificação, então
+ * isto é tão confiável quanto `getUser()` para dizer quem é a pessoa. O que
+ * se perde é saber se a sessão foi revogada nos últimos minutos — o JWT vale
+ * até expirar (1h). O RLS já funciona assim: o PostgREST também só confere o
+ * JWT. As rotas de pagamento e a de exclusão de conta continuam com
+ * `getUser()`, onde o cuidado vale mais que a viagem.
+ *
+ * `cache` faz layout e página dividirem a mesma leitura dentro de uma
+ * renderização. `user_metadata` vem do token: quem troca o nome precisa
+ * renovar a sessão para ele aparecer (ver `FormularioNome`).
+ */
+export const usuarioAtual = cache(async (): Promise<Usuario | null> => {
+  const { data } = await (await supabaseServidor()).auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return null;
+  return {
+    id: claims.sub,
+    email: (claims.email as string | undefined) ?? null,
+    user_metadata: (claims.user_metadata as Usuario["user_metadata"]) ?? {},
+  };
+});
+
+/**
+ * Papéis internos, lidos uma vez por renderização. O layout de /app e as
+ * páginas perguntavam os dois, em rodadas separadas.
+ */
+export const papeisInternos = cache(async () => {
+  const supabase = await supabaseServidor();
+  const [admin, editor] = await Promise.all([
+    supabase.rpc("sou_admin"),
+    supabase.rpc("sou_editor"),
+  ]);
+  return { admin: Boolean(admin.data), editor: Boolean(editor.data) };
+});

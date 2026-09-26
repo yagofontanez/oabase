@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 
 const Alerta = () => (
   <svg
@@ -80,6 +81,7 @@ export function FormularioEntrar() {
 
     // `refresh` faz o servidor reler o cookie de sessão antes de navegar.
     router.refresh();
+    navegar();
     router.push(proximo);
   }
   return (

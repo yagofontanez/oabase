@@ -22,6 +22,11 @@ export const fonteMock: FonteDeConteudo = {
   async contarArtigos(leiSlug) {
     return artigos.filter((a) => a.leiSlug === leiSlug).length;
   },
+  async contarArtigosPorLei() {
+    const contagem = new Map<string, number>();
+    for (const a of artigos) contagem.set(a.leiSlug, (contagem.get(a.leiSlug) ?? 0) + 1);
+    return contagem;
+  },
   async getArtigosIndexaveis() {
     return artigos.filter((a) => a.indexavel);
   },

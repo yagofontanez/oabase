@@ -188,11 +188,26 @@ export default async function HojePage({
     : null;
   const recuperacaoAtiva =
     diasDesdeSimulado !== null && diasDesdeSimulado >= 0 && diasDesdeSimulado < 7;
-  const { data: relatorioRecuperacao } = recuperacaoAtiva
-    ? await supabase.rpc("relatorio_do_simulado", {
-        p_simulado_id: ultimoSimulado!.id,
-      })
-    : { data: null };
+  const registro = registroRes.data;
+  // O relatório do último simulado e o roteiro da semana dependem só da
+  // primeira rodada, não um do outro: juntos, são uma viagem ao banco em vez
+  // de duas.
+  const [{ data: relatorioRecuperacao }, { data: linhasRoadmap }] =
+    await Promise.all([
+      recuperacaoAtiva
+        ? supabase.rpc("relatorio_do_simulado", {
+            p_simulado_id: ultimoSimulado!.id,
+          })
+        : Promise.resolve({ data: null }),
+      registro?.versao_roadmap
+        ? supabase
+            .from("roadmap_itens")
+            .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
+            .eq("versao", registro.versao_roadmap)
+            .order("semana")
+            .order("ordem")
+        : Promise.resolve({ data: [] }),
+    ]);
   const errosPorDisciplina = new Map<string, number>();
   for (const linha of (relatorioRecuperacao ?? []) as {
     disciplina_nome: string | null;
@@ -219,17 +234,8 @@ export default async function HojePage({
           Math.min(Math.floor(diasDesdeSimulado! / 2), materiasDaRecuperacao.length - 1)
         ]
       : null;
-  const registro = registroRes.data;
   const plano = (registro?.plano as Plano | null) ?? null;
   const contexto = (registro?.contexto as ContextoSalvoDoPlano | null) ?? null;
-  const { data: linhasRoadmap } = registro?.versao_roadmap
-    ? await supabase
-        .from("roadmap_itens")
-        .select("id, semana, ordem, disciplina, objetivo, horas, estado, anotacao")
-        .eq("versao", registro.versao_roadmap)
-        .order("semana")
-        .order("ordem")
-    : { data: [] };
   const itens = (linhasRoadmap ?? []) as ItemRoadmap[];
   const ativo =
     itens.find((item) => item.estado === "em_andamento") ??

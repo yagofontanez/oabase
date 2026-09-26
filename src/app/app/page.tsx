@@ -86,16 +86,6 @@ function TituloDoCartao({
 }
 
 export default async function PainelPage() {
-  const [usuario, proximo, exames, disciplinas, artigos, leis] =
-    await Promise.all([
-      usuarioAtual(),
-      getProximoExame(),
-      getExames(),
-      getDisciplinas(),
-      getArtigosIndexaveis(),
-      getLeis(),
-    ]);
-
   const supabase = await supabaseServidor();
   const agora = new Date();
   const hojeISO = diaLocal(agora);
@@ -104,10 +94,30 @@ export default async function PainelPage() {
   const desde = new Date(agora);
   desde.setDate(desde.getDate() - 34);
 
-  // Todas as consultas passam por RLS: `respostas`, `assinaturas`,
+  // Uma rodada: o acervo aberto e o que é da pessoa vão juntos. Eram duas —
+  // e a segunda só começava depois que a primeira voltava de São Paulo.
+  //
+  // Todas as consultas da pessoa passam por RLS: `respostas`, `assinaturas`,
   // `sessoes_foco` e `planos_estudo` filtram por dono. Uma sessão só enxerga
   // o que é dela, sem nenhum filtro escrito aqui.
-  const [assinaturaRes, desempenhoRes, focoRes, planoRes] = await Promise.all([
+  const [
+    usuario,
+    proximo,
+    exames,
+    disciplinas,
+    artigos,
+    leis,
+    assinaturaRes,
+    desempenhoRes,
+    focoRes,
+    planoRes,
+  ] = await Promise.all([
+    usuarioAtual(),
+    getProximoExame(),
+    getExames(),
+    getDisciplinas(),
+    getArtigosIndexaveis(),
+    getLeis(),
     supabase
       .from("assinaturas")
       .select("plano, fim")

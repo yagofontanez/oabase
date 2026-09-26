@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { inicioDaSemana } from "@/lib/calendario";
 import type { AcaoDaRevisao } from "@/lib/revisao-semanal";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 const ACOES: AcaoDaRevisao[] = [
   "reagendar_pendencias",
@@ -25,9 +25,8 @@ function texto(valor: unknown, limite: number) {
 
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

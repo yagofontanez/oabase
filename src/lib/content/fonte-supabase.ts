@@ -248,6 +248,20 @@ export const fonteSupabase: FonteDeConteudo = {
     return count ?? 0;
   },
 
+  async contarArtigosPorLei() {
+    // Contagem embutida do PostgREST: `artigos(count)` conta no banco, por
+    // lei, sem trazer linha nenhuma. Conferido contra a contagem lei a lei.
+    const { data, error } = await supabaseAnon()
+      .from("leis")
+      .select("slug, artigos(count)");
+    erro("contagem de artigos por lei", error);
+    return new Map(
+      ((data ?? []) as { slug: string; artigos: { count: number }[] }[]).map(
+        (l) => [l.slug, l.artigos[0]?.count ?? 0],
+      ),
+    );
+  },
+
   async getArtigosIndexaveis() {
     const { data, error } = await supabaseAnon()
       .from("artigos")

@@ -3,7 +3,11 @@ import Link from "next/link";
 import { PreferenciaAvisos } from "@/components/app/preferencia-avisos";
 import { formatarData } from "@/lib/format";
 import { planos } from "@/lib/planos";
-import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
+import {
+  papeisInternos,
+  supabaseServidor,
+  usuarioAtual,
+} from "@/lib/supabase/servidor";
 import {
   CancelarRenovacao,
   ExcluirConta,
@@ -37,38 +41,39 @@ function Bloco({
 }
 
 export default async function ConfiguracoesPage() {
-  const usuario = await usuarioAtual();
+  // Tudo numa rodada: eram seis em fila (usuário, perfil, papéis, plano,
+  // renovação...), e nenhuma consulta dependia da anterior. O perfil não
+  // precisa do id: a política de `perfis` só devolve a linha do dono.
   const supabase = await supabaseServidor();
-
-  const { data: perfil } = await supabase
-    .from("perfis")
-    .select("avisos_email")
-    .eq("id", usuario!.id)
-    .maybeSingle();
-
-  // As ferramentas de edição não têm item de menu: a navegação é de quem
-  // estuda. Este é o único caminho até elas, e só aparece para editor.
-  const [{ data: editor }, { data: admin }] = await Promise.all([
-    supabase.rpc("sou_editor"),
-    supabase.rpc("sou_admin"),
-  ]);
-
-  const { data: assinaturas } = await supabase
-    .from("assinaturas")
-    .select("plano, status, inicio, fim")
-    .order("fim", { ascending: false })
-    .limit(1);
-  const assinatura = assinaturas?.[0] ?? null;
-
-  const { data: recorrencia } = await supabase
-    .from("recorrencias")
-    .select("criado_em")
-    .eq("status", "ativa")
-    .maybeSingle();
+  const [usuario, completo, papeis, perfilRes, assinaturasRes, recorrenciaRes] =
+    await Promise.all([
+      usuarioAtual(),
+      // A data de criação da conta não está no JWT; só esta tela a mostra.
+      supabase.auth.getUser(),
+      // As ferramentas de edição não têm item de menu: a navegação é de quem
+      // estuda. Este é o único caminho até elas, e só aparece para editor.
+      papeisInternos(),
+      supabase.from("perfis").select("avisos_email").maybeSingle(),
+      supabase
+        .from("assinaturas")
+        .select("plano, status, inicio, fim")
+        .order("fim", { ascending: false })
+        .limit(1),
+      supabase
+        .from("recorrencias")
+        .select("criado_em")
+        .eq("status", "ativa")
+        .maybeSingle(),
+    ]);
+  const perfil = perfilRes.data;
+  const { admin, editor } = papeis;
+  const assinatura = assinaturasRes.data?.[0] ?? null;
+  const recorrencia = recorrenciaRes.data;
+  const criadoEmIso = completo.data.user?.created_at;
 
   const nome = (usuario?.user_metadata?.nome as string | undefined) ?? "";
-  const criadoEm = usuario?.created_at
-    ? formatarData(String(usuario.created_at).slice(0, 10))
+  const criadoEm = criadoEmIso
+    ? formatarData(String(criadoEmIso).slice(0, 10))
     : null;
 
   // `cortesia` não está em `planos.ts` de propósito — o que está lá é o que

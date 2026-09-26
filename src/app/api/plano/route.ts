@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 import { diasAte, getDisciplinas, getProximoExame } from "@/lib/content/queries";
 import { formatarData } from "@/lib/format";
 import {
@@ -23,9 +23,8 @@ import { blocosDoPlano } from "@/lib/roadmap";
  */
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }
@@ -281,9 +280,8 @@ export async function POST(request: Request) {
  */
 export async function DELETE() {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

@@ -8,7 +8,7 @@ import {
   type PreferenciasDoCalendario,
 } from "@/lib/calendario";
 import type { EstadoDoRoadmap } from "@/lib/roadmap";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 type LinhaRoadmap = {
   id: string;
@@ -56,9 +56,8 @@ function lerPreferencias(linha: Record<string, unknown> | null) {
 
 async function contextoDoCalendario() {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) return { erro: "Sessão expirada.", status: 401 } as const;
 
   const [{ data: plano }, { data: preferencias }] = await Promise.all([

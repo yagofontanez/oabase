@@ -6,7 +6,7 @@ import {
 } from "@/components/app/estudar";
 import { supabaseServidor } from "@/lib/supabase/servidor";
 import {
-  contarArtigos,
+  contarArtigosPorLei,
   getArtigosIndexaveis,
   getDisciplinas,
   getExames,
@@ -101,20 +101,31 @@ const ICONES: Record<AtalhoDeEstudo["chave"], React.ReactNode> = {
 };
 
 export default async function EstudarPage() {
-  const [disciplinas, artigos, leis, exames, sumulas] = await Promise.all([
+  const supabase = await supabaseServidor();
+
+  // Uma rodada: acervo aberto, contagem de artigos e o que é da pessoa, tudo
+  // junto. Eram três — o acervo, depois o desempenho, depois 42 contagens
+  // lei a lei que só começavam quando a lista de leis chegava.
+  //
+  // `meu_desempenho` conta por questão, não por tentativa — e é ela que sabe
+  // quantas voltaram para revisão hoje. Sem plano, a RLS devolve zero linhas
+  // e a tela mostra o acervo em vez de números vazios.
+  const [
+    disciplinas,
+    artigos,
+    leis,
+    exames,
+    sumulas,
+    contagemPorLei,
+    assinaturaRes,
+    desempenhoRes,
+  ] = await Promise.all([
     getDisciplinas(),
     getArtigosIndexaveis(),
     getLeis(),
     getExames(),
     getSumulas(),
-  ]);
-
-  const supabase = await supabaseServidor();
-
-  // `meu_desempenho` conta por questão, não por tentativa — e é ela que sabe
-  // quantas voltaram para revisão hoje. Sem plano, a RLS devolve zero linhas
-  // e a tela mostra o acervo em vez de números vazios.
-  const [assinaturaRes, desempenhoRes] = await Promise.all([
+    contarArtigosPorLei(),
     supabase.from("assinaturas").select("plano").eq("status", "ativa").limit(1),
     supabase.rpc("meu_desempenho"),
   ]);
@@ -133,9 +144,10 @@ export default async function EstudarPage() {
   const acervoQuestoes = exames.reduce((s, e) => s + e.questoesCarregadas, 0);
   const ingeridos = exames.filter((e) => e.questoesCarregadas > 0).length;
 
-  const contagens = await Promise.all(leis.map((l) => contarArtigos(l.slug)));
-  const contagemPorLei = new Map(leis.map((l, i) => [l.slug, contagens[i]]));
-  const totalDeArtigos = contagens.reduce((s, n) => s + n, 0);
+  const totalDeArtigos = leis.reduce(
+    (s, l) => s + (contagemPorLei.get(l.slug) ?? 0),
+    0,
+  );
 
   const atalhos: AtalhoDeEstudo[] = [
     {

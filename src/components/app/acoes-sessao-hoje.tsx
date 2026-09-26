@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { abrirWidgetFoco } from "@/components/app/widget-foco";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import type { EstadoDoRoadmap } from "@/lib/roadmap";
+import { navegar } from "@/components/barra-de-navegacao";
 
 export function AcoesSessaoHoje({
   itemId,
@@ -50,6 +51,7 @@ export function AcoesSessaoHoje({
 
   function iniciar() {
     if (itemId) {
+      navegar();
       router.push(`/app/sessao/${itemId}?minutos=${minutos}`);
       return;
     }

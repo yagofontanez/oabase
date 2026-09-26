@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { navegar } from "@/components/barra-de-navegacao";
 
 type Topico = { titulo: string; dificuldade: 1 | 2 | 3; materiais: string };
 
@@ -46,6 +47,7 @@ export function ModoProva() {
       const resposta = await fetch("/api/ementa", { method: "POST", body: formulario });
       const dados = await resposta.json();
       if (!resposta.ok) throw new Error(dados.erro ?? "Não consegui montar a prova.");
+      navegar();
       router.push("/app/roadmap");
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : "Sem conexão com o servidor.");

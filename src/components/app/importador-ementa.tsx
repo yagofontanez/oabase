@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { TopicoDaEmenta } from "@/lib/ia/ementa";
 import type { ContextoSalvoDoPlano } from "@/lib/ia/plano";
+import { navegar } from "@/components/barra-de-navegacao";
 
 type Origem = "texto" | "pdf" | "manual";
 type Etapa = "entrada" | "revisao";
@@ -129,6 +130,7 @@ export function ImportadorEmenta({
         setErro(dados.erro ?? "Não consegui gerar o roadmap.");
         return;
       }
+      navegar();
       router.push("/app/roadmap");
     } catch {
       setErro("Sem conexão com o servidor. Tente novamente.");

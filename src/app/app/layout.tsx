@@ -7,7 +7,11 @@ import { NavegacaoApp, TituloDaSecao } from "@/components/app/navegacao";
 import { WidgetFoco } from "@/components/app/widget-foco";
 import { Wordmark } from "@/components/wordmark";
 import { planos } from "@/lib/planos";
-import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
+import {
+  papeisInternos,
+  supabaseServidor,
+  usuarioAtual,
+} from "@/lib/supabase/servidor";
 import { diasAte, getProximoExame } from "@/lib/content/queries";
 
 /**
@@ -27,30 +31,29 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [usuario, proximo, supabase] = await Promise.all([
-    usuarioAtual(),
-    getProximoExame(),
-    supabaseServidor(),
-  ]);
-  if (!usuario) redirect("/entrar?proximo=/app");
-
+  // Uma rodada só. O usuário sai do JWT, sem ida à rede (`usuarioAtual`), e
+  // nada aqui depende dele para começar: as consultas vão com o cookie e o
+  // RLS recorta. Esperar "quem é" antes de perguntar o resto era uma viagem
+  // inteira até São Paulo antes de cada tela.
+  //
   // Quem opera o produto vê as abas de operação no trilho. A checagem é de
   // porta, como a do proxy: quem decide de verdade é `sou_admin()` /
   // `sou_editor()` dentro de cada função do banco.
-  const [disciplinasRes, assinaturaRes, adminRes, editorRes] = await Promise.all([
-    supabase
-      .from("disciplinas")
-      .select("id, slug, nome")
-      .order("nome"),
-    supabase
-      .from("assinaturas")
-      .select("plano, fim")
-      .eq("status", "ativa")
-      .order("fim", { ascending: false })
-      .limit(1),
-    supabase.rpc("sou_admin"),
-    supabase.rpc("sou_editor"),
-  ]);
+  const supabase = await supabaseServidor();
+  const [usuario, proximo, papeis, disciplinasRes, assinaturaRes] =
+    await Promise.all([
+      usuarioAtual(),
+      getProximoExame(),
+      papeisInternos(),
+      supabase.from("disciplinas").select("id, slug, nome").order("nome"),
+      supabase
+        .from("assinaturas")
+        .select("plano, fim")
+        .eq("status", "ativa")
+        .order("fim", { ascending: false })
+        .limit(1),
+    ]);
+  if (!usuario) redirect("/entrar?proximo=/app");
 
   const assinatura = assinaturaRes.data?.[0] ?? null;
   const nomeCompleto =
@@ -80,8 +83,8 @@ export default async function AppLayout({
             : null,
           validoAte: assinatura ? String(assinatura.fim).slice(0, 10) : null,
         }}
-        admin={Boolean(adminRes.data)}
-        editor={Boolean(editorRes.data)}
+        admin={papeis.admin}
+        editor={papeis.editor}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -129,8 +132,8 @@ export default async function AppLayout({
           <div className="border-t border-line px-5 py-2.5 sm:px-7 lg:hidden">
             <NavegacaoApp
               orientacao="linha"
-              admin={Boolean(adminRes.data)}
-              editor={Boolean(editorRes.data)}
+              admin={papeis.admin}
+              editor={papeis.editor}
             />
           </div>
         </header>

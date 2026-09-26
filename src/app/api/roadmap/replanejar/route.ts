@@ -11,7 +11,7 @@ import {
   type ItemParaReplanejar,
 } from "@/lib/replanejamento";
 import type { EstadoDoRoadmap } from "@/lib/roadmap";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 type LinhaRoadmap = {
   id: string;
@@ -49,9 +49,8 @@ function disponibilidadeValida(valor: unknown) {
 
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

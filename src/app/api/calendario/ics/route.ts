@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { ContextoSalvoDoPlano } from "@/lib/ia/plano";
 import { site } from "@/lib/site";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 function escapar(valor: string) {
   return valor
@@ -28,9 +28,8 @@ function instanteDoIcs(data: string, horario: string) {
 
 export async function GET() {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }

@@ -1,6 +1,6 @@
 import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import { getArtigosDaDisciplina, getDisciplinas, getLeis } from "@/lib/content/queries";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 import type { Plano } from "@/lib/ia/plano";
 import { metaDaLinha, type MetaDoRoadmap } from "@/lib/metas-roadmap";
 import type { EstadoDoRoadmap, ItemRoadmap } from "@/lib/roadmap";
@@ -91,9 +91,8 @@ type QuestaoDoCaderno = {
 
 export async function GET() {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) return new Response("Sessão expirada.", { status: 401 });
 
   const { data: registro, error: erroPlano } = await supabase

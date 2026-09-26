@@ -9,7 +9,7 @@ import {
 } from "@/lib/ia/ementa";
 import { ErroDeLimite, type ContextoSalvoDoPlano, type Mensagem } from "@/lib/ia/plano";
 import { blocosDoPlano } from "@/lib/roadmap";
-import { supabaseServidor } from "@/lib/supabase/servidor";
+import { supabaseServidor, usuarioAtual } from "@/lib/supabase/servidor";
 
 export const runtime = "nodejs";
 
@@ -123,9 +123,8 @@ function lerTopicosDaProva(valor: FormDataEntryValue | null): TopicoDaProva[] {
 
 export async function POST(request: Request) {
   const supabase = await supabaseServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Sessão conferida no JWT, sem ida ao servidor de Auth (ver `usuarioAtual`).
+  const user = await usuarioAtual();
   if (!user) return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
 
   let formulario: FormData;

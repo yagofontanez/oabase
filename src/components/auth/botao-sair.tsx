@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { navegar } from "@/components/barra-de-navegacao";
 
 const Porta = () => (
   <svg
@@ -42,6 +43,7 @@ export function BotaoSair({
     // `refresh` derruba o cache do servidor antes de navegar; sem isso a
     // próxima tela ainda renderizaria com a sessão antiga.
     router.refresh();
+    navegar();
     router.push("/");
   }
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import { JsonLd } from "@/lib/jsonld";
 import { operador } from "@/lib/legal";
+import { BarraDeNavegacao } from "@/components/barra-de-navegacao";
 import { PwaRegistro } from "@/components/pwa-registro";
 import { abs, site } from "@/lib/site";
 import "./globals.css";
@@ -148,6 +149,7 @@ export default function RootLayout({
             ],
           }}
         />
+        <BarraDeNavegacao />
         {children}
         <PwaRegistro />
       </body>

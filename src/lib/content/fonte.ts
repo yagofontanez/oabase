@@ -26,6 +26,11 @@ export type FonteDeConteudo = {
   getArtigo(leiSlug: string, artigoSlug: string): Promise<Artigo | null>;
   /** Só o número. Baixar a lei inteira para chamar `.length` custa caro. */
   contarArtigos(leiSlug: string): Promise<number>;
+  /**
+   * Total de artigos de cada lei, numa consulta só. Contar lei por lei eram
+   * 42 requisições que só começavam depois de a lista de leis chegar.
+   */
+  contarArtigosPorLei(): Promise<Map<string, number>>;
   getArtigosIndexaveis(): Promise<Artigo[]>;
   /** Só os parâmetros de rota dos artigos pré-renderizados no build. */
   getRotasDeArtigosMaisBuscados(

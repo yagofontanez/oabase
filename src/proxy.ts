@@ -31,9 +31,14 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // `getClaims()`, não `getUser()`: confere a assinatura do JWT localmente
+  // (ES256, chave pública em cache no processo) em vez de perguntar ao
+  // servidor de Auth a cada navegação — uma viagem até São Paulo a menos por
+  // clique. Continua renovando a sessão: com o token vencido, ele passa por
+  // `getSession()`, que troca o refresh token e grava os cookies novos pelo
+  // `setAll` acima. Cookie adulterado falha a assinatura e cai como anônimo.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
   const rota = request.nextUrl.pathname;
 
