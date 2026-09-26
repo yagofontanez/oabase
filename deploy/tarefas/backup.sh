@@ -35,6 +35,15 @@ fi
 mv "$ARQ.parcial" "$ARQ"
 echo "$(date -u +%FT%TZ) backup: ok — $(du -h "$ARQ" | cut -f1), $TABELAS tabelas"
 
+# Métrica para o monitor (Grafana, "Último backup"): o node-exporter lê
+# /metricas pelo coletor de arquivos de texto. Só em sucesso — se o backup
+# para de rodar, o horário envelhece e o painel fica vermelho em 26 h.
+if [ -d /metricas ]; then
+  printf '# HELP oabase_backup_ultimo_sucesso_timestamp Fim do último backup bem-sucedido.\n# TYPE oabase_backup_ultimo_sucesso_timestamp gauge\noabase_backup_ultimo_sucesso_timestamp %s\n# HELP oabase_backup_tamanho_bytes Tamanho do último dump.\n# TYPE oabase_backup_tamanho_bytes gauge\noabase_backup_tamanho_bytes %s\n' \
+    "$(date +%s)" "$(stat -c %s "$ARQ")" > /metricas/backup.prom.tmp
+  chmod 644 /metricas/backup.prom.tmp && mv /metricas/backup.prom.tmp /metricas/backup.prom
+fi
+
 # Domingo vira semanal.
 [ "$(date -u +%u)" = "7" ] && cp "$ARQ" "$DIR/semanal/"
 find "$DIR/diario" -name '*.dump' -mtime +7 -delete

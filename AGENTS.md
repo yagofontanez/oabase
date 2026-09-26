@@ -1063,11 +1063,13 @@ lista de 142 termos uma ordem de prioridade que a ordem alfabética não tem.
 
 ## Hospedagem (VPS em São Paulo)
 
-A produção está migrando da Netlify para uma VPS da Hostinger em **São Paulo**
+**Desde 26/09/2026 a produção roda numa VPS da Hostinger em São Paulo**
 (`179.199.147.201`), com Docker. O motivo é a distância: o Supabase está em
 `sa-east-1`, e a Netlify rodava as funções em Ohio — ~130 ms por consulta
-contra 4 ms da VPS. Até a virada do DNS, a Netlify continua atendendo
-`oabase.com.br`, e a VPS responde em `novo.oabase.com.br` (com `noindex`).
+contra 4 ms da VPS (a busca caiu de ~840 ms para ~130 ms). A Netlify fica
+de reserva por uma ou duas semanas: voltar é apontar o `A` para `75.2.60.5`
+e reverter o commit que tirou as funções agendadas. `novo.oabase.com.br`
+continua como homologação, com `noindex`.
 
 **O que roda lá** (`deploy/docker-compose.yml`): `app` (o Next em modo
 `standalone`, sem porta publicada), `caddy` (proxy e HTTPS automático) e
@@ -1079,9 +1081,30 @@ o backup). Segredos em `/opt/oabase/.env` (execução) e `/opt/oabase/.env.build
 hospedar Auth, PostgREST e RLS junto, com migração de contas e sessões — e
 não daria ganho de velocidade, porque a VPS já está a 4 ms dele.
 
-**`TAREFAS_DO_APP=1` só depois da virada.** Com Netlify e VPS rodando a
-tarefa de e-mail no mesmo dia, o e-mail sai em dobro. A reconciliação é
-idempotente, mas liga junto.
+**As tarefas agendadas moram só na VPS.** As funções da Netlify chamavam
+`https://oabase.com.br/api/tarefas/*` — que, depois da virada, é a VPS:
+deixá-las ligadas faria cada tarefa rodar duas vezes no mesmo servidor, e o
+e-mail do dia sair em dobro. Por isso foram removidas antes do DNS mudar.
+`TAREFAS_DO_APP=1` no `/opt/oabase/.env` é o interruptor da VPS.
+
+**Monte pasta, não arquivo.** O Caddyfile era montado como arquivo, e montar
+um arquivo só prende o container àquele arquivo: `git pull` e `rsync` gravam
+um novo, e o Caddy seguia lendo o antigo — até depois de `caddy reload`.
+Hoje é `./caddy:/etc/caddy`. Vale para qualquer configuração montada.
+
+**Monitor em `https://monitor.oabase.com.br`** (Grafana, login próprio, sem
+cadastro nem anônimo; senha em `/opt/oabase/.env.monitor`, gerada na VPS).
+Prometheus (15 dias), node-exporter (a máquina), cAdvisor (cada container) e
+as métricas do próprio Caddy (requisições, códigos, latência). O painel
+"OABase — produção" é arquivo do repositório
+(`deploy/monitor/grafana/dashboards/oabase.json`) e inclui **"Último
+backup"**, que o `backup.sh` grava pelo coletor de texto do node-exporter:
+backup que para de rodar em silêncio aparece vermelho em 26 h. O
+node-exporter usa a rede do host e por isso escuta só em `172.17.0.1`, com
+o ufw liberando a porta 9100 apenas para `172.16.0.0/12`. Consulta de código
+HTTP usa `caddy_http_request_duration_seconds_count` — o
+`caddy_http_requests_total` não tem o rótulo `code`, e o gráfico sai vazio
+sem erro nenhum.
 
 **Três armadilhas do build, todas vistas na primeira tentativa:**
 

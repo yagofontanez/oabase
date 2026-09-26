@@ -40,7 +40,10 @@ services:
       DOMINIO: ${DOMINIO:?defina DOMINIO no deploy/.env}
       EMAIL_ACME: ${EMAIL_ACME:-dev.yagofontanez@gmail.com}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # A pasta, não o arquivo: montar um arquivo só prende o container ao
+      # arquivo daquele momento — `git pull` grava um novo, e o Caddy seguia
+      # lendo o antigo, mesmo depois de `caddy reload`.
+      - ./caddy:/etc/caddy:ro
       # Certificados. Perder este volume obriga a emitir de novo — e a
       # autoridade limita quantas vezes por semana.
       - caddy-dados:/data
@@ -55,6 +58,77 @@ services:
     depends_on: [app]
     volumes:
       - /opt/oabase/backups:/backups
+      - /opt/oabase/metricas:/metricas
+    networks: [interna]
+
+  # ---------------------------------------------------------------------
+  # Monitor: Grafana em monitor.oabase.com.br. Só o Grafana passa pelo
+  # Caddy; Prometheus e coletores ficam na rede interna.
+  # ---------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-dados:/prometheus
+    networks: [interna]
+
+  # A máquina. Rede do host para medir a rede de verdade — e por isso escuta
+  # só no endereço interno do Docker (172.17.0.1), não no IP público. O ufw
+  # libera essa porta só para as redes privadas do Docker (172.16.0.0/12).
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=172.17.0.1:9100
+      - --collector.textfile.directory=/metricas
+    volumes:
+      - /:/host:ro,rslave
+      - /opt/oabase/metricas:/metricas:ro
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.6
+    restart: unless-stopped
+    privileged: true
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=15s
+      - --store_container_labels=false
+    devices: ["/dev/kmsg"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks: [interna]
+
+  grafana:
+    image: grafana/grafana-oss:13.0.2
+    restart: unless-stopped
+    # Só a senha do admin, gerada na VPS (/opt/oabase/.env.monitor).
+    env_file: /opt/oabase/.env.monitor
+    environment:
+      GF_SERVER_ROOT_URL: https://monitor.oabase.com.br
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/oabase.json
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: America/Sao_Paulo
+    volumes:
+      - ./monitor/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitor/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-dados:/var/lib/grafana
     networks: [interna]
 
 secrets:
@@ -62,6 +136,8 @@ secrets:
     file: /opt/oabase/.env.build
 
 volumes:
+  prometheus-dados:
+  grafana-dados:
   cache-next:
   caddy-dados:
   caddy-config:

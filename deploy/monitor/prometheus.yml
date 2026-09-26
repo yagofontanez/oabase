@@ -1,0 +1,23 @@
+# Coleta das métricas do monitor (Grafana em monitor.oabase.com.br).
+# Tudo pela rede interna do compose — nada disto é exposto na internet.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # A máquina: CPU, memória, disco, rede, carga — e o último backup, que o
+  # backup.sh grava no coletor de arquivos de texto do node-exporter.
+  - job_name: vps
+    static_configs:
+      - targets: ["host.docker.internal:9100"]
+        labels: { instancia: oabase-prod }
+
+  # Cada container: CPU e memória do app, do Caddy, das tarefas.
+  - job_name: containers
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # O tráfego do site, visto pelo Caddy: requisições, códigos, latência.
+  - job_name: site
+    static_configs:
+      - targets: ["caddy:9180"]
