@@ -52,6 +52,10 @@ export function Campo({
   autoComplete,
   autoFocus,
   obrigatorio = true,
+  placeholder,
+  disabled,
+  invalido,
+  descritoPor,
 }: {
   rotulo: string;
   tipo?: "text" | "email" | "password";
@@ -63,6 +67,10 @@ export function Campo({
   autoComplete?: string;
   autoFocus?: boolean;
   obrigatorio?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  invalido?: boolean;
+  descritoPor?: string;
 }) {
   const id = useId();
   const [revelada, setRevelada] = useState(false);
@@ -83,8 +91,10 @@ export function Campo({
           required={obrigatorio}
           autoComplete={autoComplete}
           autoFocus={autoFocus}
-          aria-invalid={Boolean(erro)}
-          aria-describedby={erro || dica ? `${id}-nota` : undefined}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={Boolean(erro) || invalido}
+          aria-describedby={erro || dica ? `${id}-nota` : descritoPor}
           className={`w-full rounded-[12px] border bg-surface px-4 py-3 text-[0.96rem] text-ink shadow-[0_1px_2px_rgba(16,32,27,0.04)] transition-[border-color,box-shadow] outline-none placeholder:text-muted hover:border-brand-200 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 ${
             erro
               ? "border-vinho-300 focus:ring-vinho-100"

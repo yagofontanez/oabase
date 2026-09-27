@@ -1,9 +1,9 @@
-/** As telas de autenticação são uma experiência própria, sem navegação da
- * landing. A altura fica presa ao viewport para não criar uma segunda dobra. */
+/** Autenticação tem navegação própria. A página pode crescer com teclado,
+ * zoom e mensagens de feedback sem cortar os controles. */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <main className="h-svh overflow-hidden">{children}</main>;
+  return <main className="min-h-svh">{children}</main>;
 }

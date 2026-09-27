@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 
 /**
@@ -15,13 +15,20 @@ import { supabaseNavegador } from "@/lib/supabase/browser";
  * Autenticação) — e validado de novo em /auth/callback, que é quem de fato
  * redireciona.
  */
-export function BotaoGoogle({ rotulo = "Continuar com o Google" }: { rotulo?: string }) {
+export function BotaoGoogle({ rotulo = "Continuar com o Google", className = "", disabled, aoErro, carregamento }: {
+  rotulo?: string;
+  className?: string;
+  disabled?: boolean;
+  aoErro?: (erro: string | null) => void;
+  carregamento?: ReactNode;
+}) {
   const [indo, setIndo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   async function entrar() {
     setIndo(true);
     setErro(null);
+    aoErro?.(null);
     const proximo = new URLSearchParams(window.location.search).get("proximo") ?? "/app";
     const volta = new URL("/auth/callback", window.location.origin);
     volta.searchParams.set("proximo", proximo);
@@ -37,6 +44,7 @@ export function BotaoGoogle({ rotulo = "Continuar com o Google" }: { rotulo?: st
     // Sem erro, o navegador já está saindo para o Google.
     if (error) {
       setErro("Não consegui abrir o login do Google. Tente de novo.");
+      aoErro?.("Não consegui abrir o login do Google. Tente de novo.");
       setIndo(false);
     }
   }
@@ -46,9 +54,9 @@ export function BotaoGoogle({ rotulo = "Continuar com o Google" }: { rotulo?: st
       <button
         type="button"
         onClick={entrar}
-        disabled={indo}
+        disabled={indo || disabled}
         aria-busy={indo}
-        className="flex items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-6 py-3 font-semibold text-ink shadow-[0_6px_18px_-12px_rgba(22,32,29,0.5)] transition-[border-color,transform] hover:border-brand-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+        className={`flex items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-6 py-3 font-semibold text-ink shadow-[0_6px_18px_-12px_rgba(22,32,29,0.5)] transition-[border-color,transform] hover:border-brand-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70 ${className}`}
       >
         {/* Marca do Google nas cores oficiais, como pede o guia de uso. */}
         <svg viewBox="0 0 48 48" className="h-5 w-5 shrink-0" aria-hidden="true">
@@ -57,9 +65,10 @@ export function BotaoGoogle({ rotulo = "Continuar com o Google" }: { rotulo?: st
           <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
           <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
         </svg>
+        {indo && carregamento}
         {indo ? "Abrindo o Google…" : rotulo}
       </button>
-      {erro && (
+      {erro && !aoErro && (
         <p role="alert" className="text-center text-[0.84rem] text-vinho-700">
           {erro}
         </p>

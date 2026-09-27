@@ -1,10 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
-import { BotaoGoogle, OuComEmail } from "@/components/auth/botao-google";
+import { BotaoGoogle } from "@/components/auth/botao-google";
+import { ProgressoEntrada } from "@/components/auth/progresso-entrada";
+import styles from "@/components/auth/entrada.module.css";
 import Link from "next/link";
 import { navegar } from "@/components/barra-de-navegacao";
 
@@ -16,16 +18,11 @@ const Alerta = () => (
   </svg>
 );
 
-const Girando = () => (
-  <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px] shrink-0 animate-spin" aria-hidden="true">
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.2" strokeOpacity="0.3" />
-    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-  </svg>
-);
-
 const SENHA_MINIMA = 8;
 export function FormularioCriarConta() {
   const router = useRouter();
+  const feedbackId = useId();
+  const senhaDicaId = useId();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -33,6 +30,7 @@ export function FormularioCriarConta() {
   const [erroSenha, setErroSenha] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [confirmar, setConfirmar] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
     setErro(null);
@@ -61,101 +59,101 @@ export function FormularioCriarConta() {
       return;
     }
 
+    setSucesso(true);
     router.refresh();
     navegar();
     router.push("/app");
   }
   if (confirmar) {
     return (
-      <div
-        role="status"
-        className="flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-6"
-      >
-        <p className="font-display text-xl font-semibold text-brand-800">
-          Confirme seu e-mail
-        </p>
-        <p className="text-[0.93rem] text-body">
-          Enviamos um link para <strong className="text-ink">{email}</strong>.
-          Clique nele para ativar a conta. Ao entrar, o primeiro passo será
-          montar seu plano em três decisões — se não aparecer em alguns
-          minutos, procure na caixa de spam.
-        </p>
+      <div className={styles.confirmation} role="status">
+        <span className={styles.confirmationIcon} aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="7" width="24" height="18" rx="4" />
+            <path d="m5 9 11 8L27 9" />
+          </svg>
+        </span>
+        <span className={styles.formEyebrow}>SÓ FALTA UM PASSO</span>
+        <h2>Confirme seu e-mail</h2>
+        <p>Enviamos um link para <strong>{email.trim()}</strong>. Clique nele para ativar sua conta e começar seu plano de estudos.</p>
+        <p className={styles.confirmationHint}>Não chegou? Aguarde alguns minutos e confira a caixa de spam.</p>
+        <Link href="/entrar" className={styles.textLink}>Ir para o login <span aria-hidden="true">→</span></Link>
       </div>
     );
   }
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-4" noValidate>
-      <BotaoGoogle rotulo="Criar conta com o Google" />
-      <OuComEmail />
-
-      {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2.5 rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
-        >
-          <span className="mt-0.5"><Alerta /></span>
-          {erro}
-        </p>
-      )}
-
-      <Campo
-        rotulo="Nome"
-        nome="nome"
-        valor={nome}
-        aoMudar={setNome}
-        autoComplete="given-name"
-        autoFocus
-      />
-
-      <Campo
-        rotulo="E-mail"
-        tipo="email"
-        nome="email"
-        valor={email}
-        aoMudar={setEmail}
-        autoComplete="email"
-      />
-
-      <Campo
-        rotulo="Senha"
-        tipo="password"
-        nome="senha"
-        valor={senha}
-        aoMudar={(v) => {
-          setSenha(v);
-          if (erroSenha && v.length >= SENHA_MINIMA) setErroSenha(null);
-        }}
-        autoComplete="new-password"
-        erro={erroSenha ?? undefined}
-        dica={`Pelo menos ${SENHA_MINIMA} caracteres.`}
-      />
-
-      <button
-        type="submit"
+    <form onSubmit={enviar} className={styles.form} noValidate aria-label="Criar conta no OABase">
+      <BotaoGoogle
+        rotulo="Criar conta com o Google"
+        className={styles.socialButton}
         disabled={enviando}
-        aria-busy={enviando}
-        className="mt-1 flex items-center justify-center gap-2.5 rounded-full bg-vinho-600 px-6 py-3.5 font-semibold text-white shadow-[0_10px_28px_-14px_rgba(106,34,57,0.75)] transition-[background-color,transform] active:scale-[0.98] hover:bg-vinho-700 disabled:cursor-not-allowed disabled:bg-vinho-200 disabled:shadow-none disabled:active:scale-100"
-      >
-        {enviando && <Girando />}
-        {enviando ? "Criando conta…" : "Criar conta"}
-      </button>
+        aoErro={setErro}
+        carregamento={<ProgressoEntrada />}
+      />
+      <div className={styles.divider} aria-hidden="true">ou comece com e-mail</div>
 
-      <p className="auth-nota-plano text-[0.82rem] text-muted">
-        Criar conta é grátis. Você só paga quando escolher um plano — e tem 7
-        dias para desistir e receber o valor de volta.
-      </p>
-      {/* Vale para os dois caminhos (Google ou e-mail), e por isso fica fora
-          da nota acima — que some em telas baixas; esta, não. */}
-      <p className="text-[0.78rem] text-muted">
-        Ao criar a conta, você aceita os{" "}
-        <Link href="/termos" className="underline underline-offset-2 hover:text-brand-700">
-          Termos de Uso
-        </Link>{" "}
-        e a{" "}
-        <Link href="/privacidade" className="underline underline-offset-2 hover:text-brand-700">
-          Política de Privacidade
-        </Link>
-        .
+      <div className={styles.fields}>
+        <Campo
+          rotulo="Nome"
+          nome="nome"
+          valor={nome}
+          aoMudar={setNome}
+          autoComplete="given-name"
+          placeholder="Seu nome"
+          disabled={enviando}
+        />
+        <Campo
+          rotulo="E-mail"
+          tipo="email"
+          nome="email"
+          valor={email}
+          aoMudar={setEmail}
+          autoComplete="email"
+          placeholder="Seu e-mail"
+          disabled={enviando}
+          descritoPor={erro ? feedbackId : undefined}
+        />
+        <div className={styles.password}>
+          <Campo
+            rotulo="Senha"
+            tipo="password"
+            nome="senha"
+            valor={senha}
+            aoMudar={(v) => {
+              setSenha(v);
+              if (erroSenha && v.length >= SENHA_MINIMA) setErroSenha(null);
+            }}
+            autoComplete="new-password"
+            placeholder="Crie sua senha"
+            disabled={enviando}
+            invalido={Boolean(erroSenha)}
+            descritoPor={erroSenha ? feedbackId : senhaDicaId}
+          />
+          <span id={senhaDicaId} className={styles.passwordHint}>Pelo menos {SENHA_MINIMA} caracteres</span>
+        </div>
+      </div>
+
+      <div className={styles.feedback}>
+        {(erro || erroSenha) && (
+          <p id={feedbackId} role="alert" className={styles.message}>
+            <Alerta /><span>{erro || erroSenha}</span>
+          </p>
+        )}
+        {sucesso && (
+          <p role="status" className={`${styles.message} ${styles.success}`}>
+            <span aria-hidden="true">✓</span>Conta criada. Vamos montar seu plano.
+          </p>
+        )}
+      </div>
+      <button type="submit" disabled={enviando} aria-busy={enviando && !sucesso} className={styles.submit}>
+        <span aria-live="polite">{sucesso ? "Seu caminho começa agora" : enviando ? "Preparando seu espaço…" : "Criar minha conta"}</span>
+        {enviando ? (sucesso ? <span aria-hidden="true">✓</span> : <ProgressoEntrada />) : (
+          <svg className={styles.submitArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+        )}
+      </button>
+      {/* Sempre visível para ambos os métodos de cadastro, inclusive em telas baixas. */}
+      <p className={styles.terms}>
+        Ao criar a conta, você aceita os <Link href="/termos">Termos de Uso</Link> e a <Link href="/privacidade">Política de Privacidade</Link>.
       </p>
     </form>
   );

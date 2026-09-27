@@ -1,0 +1,377 @@
+.entrance {
+  display: grid;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  min-height: 100svh;
+  padding: clamp(8px, 1.6svh, 14px);
+  background: var(--color-paper);
+}
+
+.brand {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  padding: clamp(16px, 3.7svh, 32px) clamp(32px, 4.2vw, 72px) clamp(12px, 2.8svh, 24px);
+  border: 1px solid var(--color-brand-800);
+  border-radius: var(--radius-amplo);
+  background: radial-gradient(ellipse at 100% 40%, color-mix(in srgb, var(--color-brand-500) 26%, transparent), transparent 65%), var(--color-noite);
+  color: var(--color-brand-100);
+}
+
+.brandTop, .brandBottom, .accessHeader, .footer, .footer nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brandLink { padding: 5px 0; }
+.brandLink > span { font-size: 26px; }
+.brandEdition { font-size: 9px; letter-spacing: 0.15em; color: var(--color-brand-200); }
+.brandBody { width: 100%; max-width: 560px; margin: auto; padding-top: clamp(10px, 5.5svh, 48px); }
+.manifesto { position: relative; z-index: 1; animation: arrive 650ms 80ms backwards; }
+.eyebrow { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
+.eyebrow i, .present i, .origin i { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--color-ouro-400); }
+.manifesto h2 { margin-top: clamp(12px, 2.6svh, 23px); color: var(--color-surface); font-size: clamp(32px, min(3.7vw, 6.2svh), 60px); font-weight: 800; line-height: 1.12; letter-spacing: -0.055em; }
+.manifesto h2 > span { position: relative; display: inline-block; color: var(--color-ouro-200); }
+.manifesto h2 svg { position: absolute; left: 0; bottom: -9px; width: 100%; height: 12px; opacity: 0.75; }
+.manifesto p { margin-top: clamp(12px, 3.3svh, 29px); color: var(--color-brand-200); font-size: 14px; line-height: 1.85; }
+
+.scene { position: relative; width: 100%; max-width: min(440px, 44svh); margin: -6px auto 0; aspect-ratio: 520 / 420; animation: arrive 850ms 160ms backwards; }
+.sceneLight { position: absolute; inset: 14% 5% 5%; border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--color-brand-400) 12%, transparent), transparent 70%); animation: breathe 12s ease-in-out infinite; }
+.map { position: absolute; width: 100%; height: 100%; overflow: visible; mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent); }
+.draw { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 1.6s 180ms both cubic-bezier(0.2, 0.7, 0.2, 1); }
+.traveler {
+  offset-path: path("M-40 364H50Q88 364 88 326V304Q88 266 126 266H220Q258 266 258 228V204Q258 166 296 166H388Q426 166 426 128V102Q426 64 464 64H560");
+  animation: advance 12s 1s linear infinite;
+  opacity: 0;
+}
+.beacon { transform-box: fill-box; transform-origin: center; animation: beacon 5s ease-in-out infinite; }
+.annotation { position: absolute; font-size: 10px; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap; }
+.past { top: 72%; left: 29%; color: var(--color-brand-200); }
+.present { top: 49%; left: 62%; display: flex; align-items: center; gap: 7px; color: var(--color-ouro-200); }
+.future { top: 18%; left: 49%; color: var(--color-brand-200); }
+.sceneCaption { position: absolute; bottom: 0; left: 20px; font-size: 8px; letter-spacing: 0.19em; color: var(--color-brand-200); opacity: 0.75; }
+.brandBottom { margin-top: clamp(8px, 3.7svh, 32px); padding-top: clamp(6px, 2.3svh, 20px); border-top: 1px solid color-mix(in srgb, var(--color-brand-200) 16%, transparent); font-size: 10px; color: var(--color-brand-200); }
+.motionControl { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; cursor: pointer; font-size: 9px; color: var(--color-brand-200); transition: color 180ms; }
+.motionControl:hover { color: var(--color-surface); }
+.entrance[data-pausado="true"] .scene *, .entrance[data-pausado="true"] .mobilePath::after { animation-play-state: paused; }
+
+.access { display: flex; flex-direction: column; min-width: 0; padding: clamp(6px, 3svh, 27px) clamp(32px, 4.4vw, 80px) clamp(6px, 2.3svh, 20px); }
+.accessHeader { justify-content: flex-end; }
+.backLink { display: inline-flex; align-items: center; gap: 9px; min-height: clamp(32px, 5svh, 44px); font-size: 11px; color: var(--color-body); transition: color 180ms; }
+.backLink span { transition: transform 180ms; }
+.backLink:hover { color: var(--color-brand-600); }
+.backLink:hover span { transform: translateX(-3px); }
+.mobileLogo, .mobilePath { display: none; }
+.formArea { width: 100%; max-width: 384px; margin: auto; padding-block: clamp(4px, 3.6svh, 35px); animation: arrive 650ms 100ms backwards; }
+.formEyebrow { display: block; color: var(--color-brand-600); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; }
+.formHeading h1 { margin-top: clamp(6px, 1.8svh, 16px); font-size: clamp(28px, min(3vw, 4.8svh), 43px); font-weight: 800; line-height: 1.13; letter-spacing: -0.055em; }
+.formHeading h1 > span { color: var(--color-brand-500); }
+.formHeading p { margin-top: clamp(4px, 1.5svh, 13px); font-size: 13px; color: var(--color-body); }
+.form { display: flex; flex-direction: column; margin-top: clamp(12px, 3.4svh, 30px); }
+.socialButton { position: relative; min-height: clamp(42px, 5.8svh, 50px); padding-block: 8px; border-radius: var(--radius-suave); box-shadow: var(--shadow-baixa); font-size: 13px; transition: border-color 180ms, background-color 180ms, transform 180ms, box-shadow 180ms; }
+.socialButton:hover { background: var(--color-brand-50); box-shadow: none; transform: translateY(-1px); }
+.socialButton:active { transform: translateY(1px); }
+.divider { display: flex; align-items: center; gap: 15px; margin-block: clamp(6px, 2.6svh, 23px); color: var(--color-body); font-size: 10px; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--color-line); }
+.fields { display: flex; flex-direction: column; gap: clamp(6px, 2svh, 18px); }
+.form label { font-size: 12px; font-weight: 600; }
+.form input { height: clamp(42px, 5.8svh, 51px); font-size: 16px; background: var(--color-surface); border-color: var(--color-hairline); border-radius: var(--radius-suave); box-shadow: 0 2px 3px color-mix(in srgb, var(--color-noite) 2%, transparent); transition: border-color 180ms, box-shadow 180ms, background-color 180ms; }
+.form input::placeholder { font-size: 13px; color: var(--color-muted); }
+.form input:hover { border-color: var(--color-brand-300); }
+.form input:focus { outline: none; border-color: var(--color-brand-500); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-100) 65%, transparent); }
+.form input[aria-invalid="true"] { border-color: var(--color-vinho-400); box-shadow: 0 0 0 3px var(--color-vinho-50); }
+.form input:autofill { box-shadow: 0 0 0 100px var(--color-brand-50) inset; }
+.form input:disabled { opacity: 0.7; }
+.form button { cursor: pointer; }
+.form button:disabled { cursor: wait; }
+.password { position: relative; }
+.password input { padding-right: 52px; }
+.password button { width: 40px; height: 40px; display: grid; place-items: center; right: 5px; }
+.forgot { position: absolute; top: -2px; right: 0; font-size: 11px; }
+.textLink { color: var(--color-brand-700); font-weight: 600; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color 180ms, color 180ms; }
+.textLink:hover { color: var(--color-brand-500); text-decoration-color: var(--color-brand-300); }
+.feedback { display: flex; align-items: center; min-height: clamp(44px, 7svh, 70px); padding-block: clamp(4px, 1.1svh, 10px); }
+.message { display: flex; align-items: flex-start; gap: 9px; width: 100%; padding: 9px 11px; border-left: 2px solid var(--color-vinho-400); border-radius: 0 8px 8px 0; background: var(--color-vinho-50); color: var(--color-vinho-700); font-size: 11px; line-height: 1.6; animation: feedback 220ms ease-out; }
+.message > svg { flex-shrink: 0; margin-top: 1px; }
+.success { border-color: var(--color-brand-500); background: var(--color-brand-50); color: var(--color-brand-700); }
+.submit { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: clamp(42px, 6svh, 52px); padding: 8px 24px; overflow: hidden; border: 1px solid transparent; border-radius: 999px; background: var(--color-brand-600); color: var(--color-surface); font-size: 13px; font-weight: 600; box-shadow: 0 6px 16px -10px var(--color-brand-700); transition: background-color 180ms, box-shadow 180ms, transform 180ms; }
+.submit:hover:enabled { background: var(--color-brand-700); box-shadow: 0 8px 20px -10px var(--color-brand-700); transform: translateY(-1px); }
+.submit:active:enabled { transform: translateY(1px); box-shadow: none; }
+.submit:disabled { background: var(--color-brand-700); box-shadow: none; }
+.submitArrow { position: absolute; right: 22px; width: 17px; height: 17px; transition: transform 180ms; }
+.submit:hover:enabled .submitArrow { transform: translateX(3px); }
+.progress { position: relative; display: inline-flex; align-items: center; justify-content: space-between; width: 30px; height: 16px; }
+.progress::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 1px; background: currentColor; opacity: 0.25; }
+.progress i { position: relative; width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: step 1.2s ease-in-out infinite; }
+.progress i:nth-child(2) { animation-delay: 150ms; }
+.progress i:nth-child(3) { animation-delay: 300ms; }
+.createAccount { margin-top: clamp(8px, 2.8svh, 25px); text-align: center; color: var(--color-body); font-size: 11px; }
+.createAccount a { margin-left: 4px; }
+.createAccount a > span { display: inline-block; padding-left: 2px; }
+.footer { width: 100%; padding-top: clamp(4px, 1.8svh, 16px); color: var(--color-body); font-size: 9px; }
+.footer nav { gap: 10px; }
+.footer a { transition: color 180ms; }
+.footer a:hover { color: var(--color-brand-500); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Cena do cadastro: ramos que crescem de um ponto de partida. */
+.sceneRamos .map { mask-image: linear-gradient(90deg, black 80%, transparent); }
+.branch { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 1.4s both cubic-bezier(0.3, 0.6, 0.2, 1); }
+.node { transform-box: fill-box; transform-origin: center; animation: pop 500ms both cubic-bezier(0.3, 1.5, 0.5, 1), arrival 5.2s ease-out infinite; }
+.spark { offset-rotate: 0deg; opacity: 0; animation: spark 5.2s ease-in-out infinite; }
+.ripple { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ripple 5.2s ease-out infinite; }
+.branchLabel { translate: -50% calc(-100% - 14px); color: var(--color-brand-200); animation: arrive 500ms both; }
+.origin { top: calc(330 / 420 * 100% + 22px); left: calc(90 / 520 * 100% - 10px); display: flex; align-items: center; gap: 7px; color: var(--color-ouro-200); }
+.sceneRamos .sceneCaption { left: auto; right: 12px; }
+@keyframes pop { from { transform: scale(0); opacity: 0; } }
+@keyframes arrival { 0%, 76%, 100% { transform: scale(1); } 84% { transform: scale(1.3); } }
+@keyframes spark { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 0.95; } 80% { offset-distance: 100%; opacity: 0.95; } 88%, 100% { offset-distance: 100%; opacity: 0; } }
+@keyframes ripple { 0% { transform: scale(1); opacity: 0.5; } 60%, 100% { transform: scale(5); opacity: 0; } }
+
+@keyframes arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes advance { 0% { offset-distance: 0%; opacity: 0; } 12%, 88% { opacity: 0.85; } 100% { offset-distance: 100%; opacity: 0; } }
+@keyframes beacon { 0%, 100% { transform: scale(0.9); opacity: 0.55; } 50% { transform: scale(1.1); opacity: 1; } }
+@keyframes breathe { 0%, 100% { transform: translateY(8px); opacity: 0.6; } 50% { transform: translateY(-8px); opacity: 1; } }
+@keyframes feedback { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@keyframes step { 0%, 70%, 100% { opacity: 0.35; transform: scale(0.8); } 35% { opacity: 1; transform: scale(1.15); } }
+@keyframes mobileAdvance { from { transform: translateX(0); opacity: 0; } 20%, 80% { opacity: 1; } to { transform: translateX(104px); opacity: 0; } }
+
+@media (min-width: 1600px) {
+  .entrance { padding: 20px; }
+  .brandBody { padding-top: 60px; }
+  .scene { margin-top: 10px; }
+  .formArea { max-width: 408px; }
+}
+
+@media (min-width: 901px) and (max-height: 800px) {
+  .brand { padding-top: 22px; padding-bottom: 16px; }
+  .brandBody { padding-top: 22px; }
+  .manifesto h2 { font-size: clamp(30px, 6svh, 42px); }
+  .scene { max-width: min(350px, 40svh); margin-top: -16px; }
+  .brandBottom { margin-top: 12px; padding-top: 10px; }
+  .access { padding-top: 12px; padding-bottom: 14px; }
+  .formArea { padding-block: 10px; }
+  .formHeading h1 { font-size: 35px; }
+  .formHeading p { margin-top: 10px; }
+  .form { margin-top: 24px; }
+  .divider { margin-block: 17px; }
+  .fields { gap: 14px; }
+  .form input { height: 48px; }
+  .feedback { min-height: 64px; }
+  .createAccount { margin-top: 20px; }
+  .footer { padding-top: 8px; }
+}
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .brand { padding-inline: 28px; }
+  .brandEdition { display: none; }
+  .access { padding-inline: 30px; }
+  .annotation { font-size: 9px; }
+  .brandBottom { gap: 6px; }
+  .motionControl span { display: none; }
+}
+
+/* Mobile tem uma abertura própria; a cena desktop não é empilhada. */
+@media (max-width: 900px) {
+  .entrance { display: block; padding: 0; }
+  .brand { display: none; }
+  .access { position: relative; isolation: isolate; min-height: 100svh; padding: clamp(8px, 2.2svh, 18px) 28px clamp(8px, 2.4svh, 20px); }
+  .access::before { content: ""; position: absolute; z-index: -1; top: 0; left: 0; right: 0; height: 280px; pointer-events: none; background: radial-gradient(ellipse at 5% 0%, var(--color-brand-100), transparent 65%); opacity: 0.6; }
+  .accessHeader { justify-content: space-between; }
+  .mobileLogo { display: block; }
+  .backLink { font-size: 10px; }
+  .formArea { max-width: 384px; padding-block: clamp(4px, 3.6svh, 35px); }
+  .formHeading h1 { font-size: clamp(28px, 4.8svh, 38px); }
+  .mobilePath { position: relative; display: flex; justify-content: space-between; align-items: center; width: 110px; height: 12px; margin-bottom: clamp(10px, 3svh, 25px); }
+  .mobilePath::before { content: ""; position: absolute; top: 5px; left: 0; right: 0; height: 1px; background: var(--color-brand-200); }
+  .mobilePath::after { content: ""; position: absolute; top: 3px; left: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--color-brand-500); animation: mobileAdvance 2s ease-out 2; opacity: 0; }
+  .mobilePath span { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--color-brand-300); }
+  .mobilePath span:nth-child(2) { background: var(--color-ouro-500); box-shadow: 0 0 0 5px var(--color-ouro-100); }
+  .mobilePath span:nth-child(3) { background: var(--color-paper); border: 1px solid var(--color-brand-300); }
+  .footer { max-width: 500px; margin-inline: auto; }
+}
+
+@media (max-width: 380px), (max-width: 900px) and (max-height: 720px) {
+  .access { padding: 12px 22px 16px; }
+  .formArea { padding-block: 22px; }
+  .mobilePath { margin-bottom: 18px; }
+  .formHeading h1 { font-size: 34px; }
+  .form { margin-top: 23px; }
+  .divider { margin-block: 18px; }
+  .footer { flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrance *, .entrance *::before, .entrance *::after { animation: none !important; transition: none !important; }
+  .motionControl { display: none; }
+  .traveler, .spark, .ripple { display: none; }
+  .progress i { opacity: 1; }
+}
+
+/* Cadastro usa a mesma moldura, com densidade guiada pela altura disponível.
+   O conteúdo cabe por composição; não há overflow:hidden cortando controles. */
+.registration { min-height: 100svh; }
+.registration .brandBody { padding-top: clamp(10px, 3vh, 32px); }
+.registration .scene { max-width: min(420px, 43svh); }
+.registration .access { padding-block: clamp(6px, 2svh, 18px); }
+.registration .formArea { padding-block: clamp(4px, 1.3svh, 12px); }
+.registration .formHeading h1 { font-size: clamp(26px, min(3vw, 4.3svh), 38px); margin-top: clamp(6px, 1.3svh, 12px); }
+.registration .formHeading p { margin-top: clamp(4px, 1.1svh, 10px); font-size: 12px; }
+.registration .form { margin-top: clamp(10px, 2.5svh, 22px); }
+.registration .divider { margin-block: clamp(5px, 1.7svh, 15px); }
+.registration .fields { gap: clamp(6px, 1.4svh, 12px); }
+.registration .form input { height: clamp(40px, 5.4svh, 48px); }
+.registration .feedback { min-height: clamp(44px, 6.6svh, 60px); padding-block: clamp(4px, 0.9svh, 8px); }
+.registration .createAccount { margin-top: clamp(8px, 1.9svh, 17px); }
+.registration .message { padding: 6px 10px; font-size: 10.5px; line-height: 1.5; }
+.registration .mobilePath { margin-bottom: 18px; }
+.passwordHint { position: absolute; top: 2px; right: 0; font-size: 10px; color: var(--color-body); }
+.terms { margin-top: 14px; color: var(--color-body); font-size: 10px; line-height: 1.6; text-align: center; text-wrap: pretty; }
+.terms a { color: var(--color-brand-700); text-decoration: underline; text-decoration-color: var(--color-brand-200); text-underline-offset: 3px; transition: text-decoration-color 180ms; }
+.terms a:hover { text-decoration-color: var(--color-brand-600); }
+.confirmation { margin-top: 26px; padding: 28px; border: 1px solid var(--color-brand-100); border-radius: var(--radius-medio); background: var(--color-brand-50); animation: arrive 400ms ease-out; }
+.confirmationIcon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 24px; border: 1px solid var(--color-brand-200); border-radius: 16px; color: var(--color-brand-600); background: var(--color-surface); }
+.confirmationIcon svg { width: 32px; height: 32px; }
+.confirmation h2 { margin-top: 10px; font-size: 22px; }
+.confirmation p { margin-top: 12px; font-size: 13px; line-height: 1.7; }
+.confirmation strong { color: var(--color-brand-800); overflow-wrap: anywhere; }
+.confirmation .confirmationHint { padding-top: 14px; margin-top: 18px; border-top: 1px solid var(--color-brand-100); font-size: 11px; }
+.confirmation > a { display: inline-flex; align-items: center; gap: 12px; margin-top: 18px; min-height: 36px; font-size: 12px; }
+
+@media (max-height: 800px) {
+  .registration { padding: 10px; }
+  .registration .access { padding-block: 8px; }
+  .registration .accessHeader .backLink { min-height: 32px; }
+  .registration .formArea { padding-block: 8px; }
+  .registration .formHeading h1 { margin-top: 9px; font-size: 32px; }
+  .registration .formHeading p { margin-top: 7px; }
+  .registration .form { margin-top: 16px; }
+  .registration .socialButton { min-height: 44px; padding-block: 9px; }
+  .registration .divider { margin-block: 10px; }
+  .registration .fields { gap: 9px; }
+  .registration .form input { height: 44px; padding-block: 9px; }
+  .registration .feedback { min-height: 54px; padding-block: 6px; }
+  .registration .submit { min-height: 46px; padding-block: 10px; }
+  .registration .terms { margin-top: 10px; }
+  .registration .createAccount { margin-top: 12px; }
+  .registration .footer { padding-top: 6px; }
+  .registration .mobilePath { margin-bottom: 13px; }
+}
+
+@media (max-width: 900px) {
+  .registration { padding: 0; }
+  .registration .access { padding-inline: 26px; }
+  .registration .formArea { max-width: 384px; }
+  .registration .formHeading h1 { font-size: 34px; }
+}
+
+@media (max-height: 700px) {
+  .registration .formHeading h1 { font-size: 28px; line-height: 1.12; }
+  .registration .formHeading p, .registration .mobilePath, .registration .footer { display: none; }
+  .registration .formArea { padding-block: 6px; }
+  .registration .form { margin-top: 13px; }
+  .registration .fields { gap: 8px; }
+  .registration .divider { margin-block: 8px; }
+  .registration .feedback { min-height: 50px; padding-block: 5px; }
+  .registration .terms { margin-top: 8px; }
+  .registration .createAccount { margin-top: 10px; }
+  .registration .brand { padding-block: 18px; }
+  .registration .brandBody { padding-top: 12px; }
+  .registration .manifesto h2 { font-size: 36px; }
+  .registration .manifesto p { margin-top: 22px; }
+  .registration .scene { max-width: 30svh; }
+  .registration .sceneCaption { display: none; }
+  .registration .brandBottom { margin-top: 12px; padding-top: 6px; }
+  .registration .confirmation { margin-top: 18px; padding: 20px; }
+}
+
+/* Na horizontal, o título ocupa a esquerda e o formulário usa a direita. */
+@media (max-height: 540px) and (min-width: 600px) {
+  .registration { display: block; padding: 0; }
+  .registration .brand { display: none; }
+  .registration .access { min-height: 100svh; padding: 8px 24px; }
+  .registration .accessHeader { justify-content: space-between; }
+  .registration .mobileLogo { display: block; }
+  .registration .formArea { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); column-gap: 32px; width: 100%; max-width: 860px; align-items: center; padding-block: 2px; }
+  .registration .formHeading { grid-column: 1; grid-row: 1; align-self: end; }
+  .registration .formHeading h1 { font-size: 30px; }
+  .registration .form { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  .registration .createAccount { grid-column: 1; grid-row: 2; align-self: start; text-align: left; margin-top: 20px; }
+  .registration .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+  .registration .password { grid-column: 1 / -1; }
+  .registration .fields > div { min-width: 0; }
+  .registration .form input { height: 40px; }
+  .registration .form input::placeholder { font-size: 11px; }
+  .registration .socialButton, .registration .submit { min-height: 40px; padding-block: 8px; }
+  .registration .divider { margin-block: 6px; }
+  .registration .feedback { min-height: 44px; padding-block: 4px; }
+  .registration .terms { font-size: 9px; }
+  .registration .confirmation { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; padding: 18px; }
+  .registration .confirmationIcon { display: none; }
+}
+
+@media (max-width: 380px) and (max-height: 600px) {
+  .registration .access { padding: 8px 20px; }
+  .registration .formHeading h1 { font-size: 26px; margin-top: 7px; }
+  .registration .formArea { padding-block: 4px; }
+  .registration .form { margin-top: 10px; }
+  .registration .divider { margin-block: 6px; }
+  .registration .fields { gap: 6px; }
+  .registration .feedback { min-height: 48px; }
+  .registration .message { padding: 6px 8px; }
+  .registration .terms { margin-top: 7px; }
+  .registration .createAccount { margin-top: 8px; }
+}
+
+@media (min-width: 901px) and (max-height: 650px) {
+  .registration .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 10px; }
+  .registration .fields > div { min-width: 0; }
+  .registration .password { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) and (min-height: 801px) {
+  .registration .access { padding-block: 14px; }
+  .registration .mobilePath { margin-bottom: 14px; }
+}
+
+@media (max-width: 380px) and (max-height: 600px) {
+  .registration .formHeading .formEyebrow { display: none; }
+  .registration .formHeading h1 { margin-top: 0; font-size: 20px; line-height: 1.2; }
+  .registration .formHeading h1 br { display: none; }
+  .registration .feedback { min-height: 72px; }
+  .registration .fields > div, .registration .password > div { gap: 4px; }
+  .registration .form { margin-top: 8px; }
+  .registration .divider { margin-block: 4px; }
+}
+
+/* Login em tela baixa: o mesmo corte que o cadastro já faz abaixo de 700px —
+   sai o que é decoração ou repete o título, fica tudo que é controle. */
+@media (max-height: 700px) {
+  .formHeading p, .mobilePath, .sceneCaption { display: none; }
+  .formEyebrow { font-size: 8px; }
+  .brand { padding-block: 18px; }
+  .brandBody { padding-top: 12px; }
+  .manifesto p { margin-top: 18px; }
+  .scene { max-width: 30svh; }
+  .brandBottom { margin-top: 12px; padding-top: 6px; }
+}
+
+@media (min-width: 901px) and (max-height: 640px) {
+  .formEyebrow { display: none; }
+  .formHeading h1 { margin-top: 0; }
+  .feedback { min-height: 36px; }
+  .createAccount { margin-top: 6px; }
+}
+
+/* No cadastro o formulário vem primeiro, à esquerda, e a cena fica à direita
+   — as duas telas não parecem a mesma com outro texto. O brilho do fundo
+   acompanha, vindo do lado do formulário. */
+@media (min-width: 901px) {
+  .registration { grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr); }
+  .registration .brand { order: 2; background: radial-gradient(ellipse at 0% 40%, color-mix(in srgb, var(--color-brand-500) 26%, transparent), transparent 65%), var(--color-noite); }
+  .registration .accessHeader { justify-content: flex-start; }
+}
