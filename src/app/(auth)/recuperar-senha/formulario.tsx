@@ -1,6 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { AvisoEntrada, BotaoEntrada } from "@/components/auth/aviso-entrada";
 import { Campo } from "@/components/auth/campo";
+import styles from "@/components/auth/entrada.module.css";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 export function FormularioRecuperar() {
@@ -8,6 +10,7 @@ export function FormularioRecuperar() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const avisoId = useId();
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
     setErro(null);
@@ -26,48 +29,38 @@ export function FormularioRecuperar() {
   }
   if (enviado) {
     return (
-      <div
-        role="status"
-        className="flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-6"
-      >
-        <p className="font-display text-xl font-semibold text-brand-800">
-          Link enviado
-        </p>
-        <p className="text-[0.93rem] text-body">
-          Se existir uma conta com <strong className="text-ink">{email}</strong>
-          , o link de redefinição chega em instantes. Ele vale por uma hora.
-        </p>
+      <div className={styles.confirmation} role="status">
+        <span className={styles.confirmationIcon} aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="7" width="24" height="18" rx="4" />
+            <path d="m5 9 11 8L27 9" />
+          </svg>
+        </span>
+        <span className={styles.formEyebrow}>CONFIRA SEU E-MAIL</span>
+        <h2>Link enviado</h2>
+        <p>Se existir uma conta com <strong>{email.trim()}</strong>, o link de redefinição chega em instantes. Ele vale por uma hora.</p>
+        <p className={styles.confirmationHint}>Não chegou? Aguarde alguns minutos e confira a caixa de spam.</p>
       </div>
     );
   }
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-5" noValidate>
-      {erro && (
-        <p
-          role="alert"
-          className="rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
-        >
-          {erro}
-        </p>
-      )}
-
-      <Campo
-        rotulo="E-mail da conta"
-        tipo="email"
-        nome="email"
-        valor={email}
-        aoMudar={setEmail}
-        autoComplete="email"
-        autoFocus
-      />
-
-      <button
-        type="submit"
-        disabled={enviando}
-        className="rounded-full bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-[0_10px_28px_-14px_rgba(11,98,80,0.9)] transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:shadow-none"
-      >
-        {enviando ? "Enviando…" : "Enviar link de redefinição"}
-      </button>
+    <form onSubmit={enviar} className={styles.form} noValidate aria-label="Pedir link de redefinição de senha">
+      <div className={styles.fields}>
+        <Campo
+          rotulo="E-mail da conta"
+          tipo="email"
+          nome="email"
+          valor={email}
+          aoMudar={setEmail}
+          autoComplete="email"
+          placeholder="Seu e-mail"
+          autoFocus
+          disabled={enviando}
+          descritoPor={erro ? avisoId : undefined}
+        />
+      </div>
+      <AvisoEntrada id={avisoId} erro={erro} />
+      <BotaoEntrada enviando={enviando}>{enviando ? "Enviando…" : "Enviar link de redefinição"}</BotaoEntrada>
     </form>
   );
 }

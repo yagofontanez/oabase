@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AvisoEntrada } from "@/components/auth/aviso-entrada";
+import styles from "@/components/auth/entrada.module.css";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 
 type Detalhes = {
@@ -59,23 +61,19 @@ export function ConsentimentoOAuth({ authorizationId }: { authorizationId: strin
   }
 
   if (erro && !detalhes) {
-    return (
-      <p role="alert" className="rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-sm text-vinho-700">
-        {erro}
-      </p>
-    );
+    return <AvisoEntrada erro={erro} />;
   }
 
   if (!detalhes) {
-    return <p role="status" className="text-sm text-muted">Validando o aplicativo…</p>;
+    return <p role="status" className={styles.consentStatus}>Validando o aplicativo…</p>;
   }
 
   const escopos = detalhes.scope.split(" ").filter(Boolean);
   return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-ink/10 bg-white/65 p-5">
+    <div className={styles.form}>
+      <div className={styles.consentCard}>
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-lg font-bold text-brand-800" aria-hidden="true">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-lg font-bold text-brand-800" aria-hidden="true">
             {detalhes.client.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
@@ -83,7 +81,7 @@ export function ConsentimentoOAuth({ authorizationId }: { authorizationId: strin
             <span className="block truncate text-xs text-muted">{detalhes.redirect_uri}</span>
           </div>
         </div>
-        <ul className="mt-5 flex flex-col gap-2.5">
+        <ul className="mt-4 flex flex-col gap-2.5">
           {escopos.map((escopo) => (
             <li key={escopo} className="flex items-center gap-2.5 text-sm text-body">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-[0.65rem] font-bold text-brand-700" aria-hidden="true">✓</span>
@@ -91,26 +89,27 @@ export function ConsentimentoOAuth({ authorizationId }: { authorizationId: strin
             </li>
           ))}
         </ul>
+        <p className={styles.consentNote}>
+          A conexão poderá consultar seu roadmap, progresso e conteúdo de estudo. Ela não recebe acesso a pagamentos, suporte ou áreas administrativas.
+        </p>
       </div>
 
-      {erro && <p role="alert" className="text-sm text-vinho-700">{erro}</p>}
-      <p className="text-xs leading-relaxed text-muted">
-        A conexão poderá consultar seu roadmap, progresso e conteúdo de estudo. Ela não recebe acesso a pagamentos, suporte ou áreas administrativas.
-      </p>
-      <div className="grid grid-cols-2 gap-3">
+      <AvisoEntrada erro={erro} />
+      <div className={styles.consentActions}>
         <button
           type="button"
           disabled={Boolean(decidindo)}
           onClick={() => void decidir("negar")}
-          className="rounded-full border border-ink/15 px-4 py-3 text-sm font-semibold text-body transition-colors hover:bg-white disabled:opacity-50"
+          className={styles.secondary}
         >
           {decidindo === "negar" ? "Negando…" : "Negar"}
         </button>
         <button
           type="button"
           disabled={Boolean(decidindo)}
+          aria-busy={decidindo === "aprovar"}
           onClick={() => void decidir("aprovar")}
-          className="rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+          className={styles.submit}
         >
           {decidindo === "aprovar" ? "Conectando…" : "Permitir conexão"}
         </button>

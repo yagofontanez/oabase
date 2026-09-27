@@ -112,8 +112,35 @@ function Ramificacao() {
   );
 }
 
-export function Entrada({ children, variante = "entrar" }: { children: ReactNode; variante?: "entrar" | "criar" }) {
+type Cabecalho = { eyebrow: string; titulo: ReactNode; descricao?: string };
+
+const CABECALHOS: Record<"entrar" | "criar", Cabecalho> = {
+  entrar: { eyebrow: "BOM TER VOCÊ POR AQUI", titulo: <>Continue de<br />onde parou</>, descricao: "Seu próximo passo começa aqui." },
+  criar: { eyebrow: "CONTA GRATUITA · SEM CARTÃO", titulo: <>Seu caminho <br />começa aqui</>, descricao: "Organize seus estudos. Avance no seu ritmo." },
+};
+
+/**
+ * Moldura das telas de conta: entrar, criar conta, recuperar e redefinir a
+ * senha e autorizar um assistente. Entrar e criar têm o texto próprio aqui;
+ * as demais passam `cabecalho` e `rodape`. Só o cadastro troca a cena e o
+ * lado do formulário — o resto é acesso a uma conta que já existe.
+ */
+export function Entrada({
+  children,
+  variante = "entrar",
+  cabecalho,
+  rodape,
+}: {
+  children: ReactNode;
+  variante?: "entrar" | "criar";
+  cabecalho?: Cabecalho;
+  rodape?: ReactNode;
+}) {
   const criando = variante === "criar";
+  const topo = cabecalho ?? CABECALHOS[variante];
+  const linhaFinal = rodape === undefined
+    ? <>{criando ? "Já tem conta?" : "Ainda não tem conta?"} <Link href={criando ? "/entrar" : "/criar-conta"} className={styles.textLink}>{criando ? "Entre e continue" : "Crie sua conta"} <span aria-hidden="true">↗</span></Link></>
+    : rodape;
   return (
     <section className={`${styles.entrance} ${criando ? styles.registration : ""}`} data-entrada>
       <aside className={styles.brand} aria-label="Direito se estuda com direção">
@@ -145,12 +172,12 @@ export function Entrada({ children, variante = "entrar" }: { children: ReactNode
         <div className={styles.formArea}>
           <div className={styles.mobilePath} aria-hidden="true"><span /><span /><span /></div>
           <div className={styles.formHeading}>
-            <span className={styles.formEyebrow}>{criando ? "CONTA GRATUITA · SEM CARTÃO" : "BOM TER VOCÊ POR AQUI"}</span>
-            <h1>{criando ? <>Seu caminho <br />começa aqui</> : <>Continue de<br />onde parou</>}<span>.</span></h1>
-            <p>{criando ? "Organize seus estudos. Avance no seu ritmo." : "Seu próximo passo começa aqui."}</p>
+            <span className={styles.formEyebrow}>{topo.eyebrow}</span>
+            <h1>{topo.titulo}<span>.</span></h1>
+            {topo.descricao && <p>{topo.descricao}</p>}
           </div>
           {children}
-          <p className={styles.createAccount}>{criando ? "Já tem conta?" : "Ainda não tem conta?"} <Link href={criando ? "/entrar" : "/criar-conta"} className={styles.textLink}>{criando ? "Entre e continue" : "Crie sua conta"} <span aria-hidden="true">↗</span></Link></p>
+          {linhaFinal && <p className={styles.createAccount}>{linhaFinal}</p>}
         </div>
         <footer className={styles.footer}>
           <span>OABase · Estudo com direção</span>

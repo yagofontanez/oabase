@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { MolduraAuth } from "@/components/auth/moldura";
+import { AvisoEntrada } from "@/components/auth/aviso-entrada";
+import { Entrada } from "@/components/auth/entrada";
 import { usuarioAtual } from "@/lib/supabase/servidor";
 import { ConsentimentoOAuth } from "./consentimento";
 
@@ -21,16 +22,16 @@ export default async function ConsentimentoPage({
 
   if (!authorizationId) {
     return (
-      <MolduraAuth
-        eyebrow="Conexão MCP"
-        titulo="Pedido inválido"
-        descricao="O endereço não contém uma solicitação de autorização válida."
+      <Entrada
+        cabecalho={{
+          eyebrow: "CONEXÃO MCP",
+          titulo: "Pedido inválido",
+          descricao: "O endereço não contém uma solicitação de autorização válida.",
+        }}
         rodape="Feche esta janela e tente conectar novamente pelo seu assistente."
       >
-        <p className="rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-sm text-vinho-700">
-          Identificador de autorização ausente.
-        </p>
-      </MolduraAuth>
+        <AvisoEntrada erro="Identificador de autorização ausente." />
+      </Entrada>
     );
   }
 
@@ -41,13 +42,15 @@ export default async function ConsentimentoPage({
   }
 
   return (
-    <MolduraAuth
-      eyebrow="Conexão MCP"
-      titulo="Autorizar assistente"
-      descricao="Confira quem está pedindo acesso antes de conectar sua conta de estudos."
+    <Entrada
+      cabecalho={{
+        eyebrow: "CONEXÃO MCP",
+        titulo: <>Autorizar<br />assistente</>,
+        descricao: "Confira quem está pedindo acesso antes de conectar sua conta de estudos.",
+      }}
       rodape="Permita a conexão apenas se reconhecer e confiar no aplicativo."
     >
       <ConsentimentoOAuth authorizationId={authorizationId} />
-    </MolduraAuth>
+    </Entrada>
   );
 }

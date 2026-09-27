@@ -1,7 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { AvisoEntrada, BotaoEntrada } from "@/components/auth/aviso-entrada";
 import { Campo } from "@/components/auth/campo";
+import styles from "@/components/auth/entrada.module.css";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import { navegar } from "@/components/barra-de-navegacao";
@@ -12,6 +14,8 @@ export function FormularioRedefinir() {
   const [erro, setErro] = useState<string | null>(null);
   const [erroSenha, setErroSenha] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [salva, setSalva] = useState(false);
+  const avisoId = useId();
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
     setErro(null);
@@ -32,43 +36,36 @@ export function FormularioRedefinir() {
       setEnviando(false);
       return;
     }
+    setSalva(true);
     router.refresh();
     navegar();
     router.push("/app");
   }
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-5" noValidate>
-      {erro && (
-        <p
-          role="alert"
-          className="rounded-xl border border-vinho-200 bg-vinho-50 px-4 py-3 text-[0.9rem] text-vinho-700"
-        >
-          {erro}
-        </p>
-      )}
-
-      <Campo
-        rotulo="Nova senha"
-        tipo="password"
-        nome="senha"
-        valor={senha}
-        aoMudar={(v) => {
-          setSenha(v);
-          if (erroSenha && v.length >= SENHA_MINIMA) setErroSenha(null);
-        }}
-        autoComplete="new-password"
-        autoFocus
-        erro={erroSenha ?? undefined}
-        dica={`Pelo menos ${SENHA_MINIMA} caracteres.`}
-      />
-
-      <button
-        type="submit"
-        disabled={enviando}
-        className="rounded-full bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-[0_10px_28px_-14px_rgba(11,98,80,0.9)] transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:shadow-none"
-      >
-        {enviando ? "Salvando…" : "Salvar nova senha"}
-      </button>
+    <form onSubmit={enviar} className={styles.form} noValidate aria-label="Definir nova senha">
+      <div className={styles.fields}>
+        <div className={styles.password}>
+          <Campo
+            rotulo="Nova senha"
+            tipo="password"
+            nome="senha"
+            valor={senha}
+            aoMudar={(v) => {
+              setSenha(v);
+              if (erroSenha && v.length >= SENHA_MINIMA) setErroSenha(null);
+            }}
+            autoComplete="new-password"
+            placeholder="Crie sua nova senha"
+            autoFocus
+            disabled={enviando}
+            invalido={Boolean(erroSenha)}
+            descritoPor={erro || erroSenha ? avisoId : undefined}
+          />
+          <span className={styles.passwordHint}>Pelo menos {SENHA_MINIMA} caracteres</span>
+        </div>
+      </div>
+      <AvisoEntrada id={avisoId} erro={erro ?? erroSenha} sucesso={salva ? "Senha salva. Abrindo seu espaço." : null} />
+      <BotaoEntrada enviando={enviando}>{salva ? "Senha salva" : enviando ? "Salvando…" : "Salvar nova senha"}</BotaoEntrada>
     </form>
   );
 }

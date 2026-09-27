@@ -375,3 +375,12 @@
   .registration .brand { order: 2; background: radial-gradient(ellipse at 0% 40%, color-mix(in srgb, var(--color-brand-500) 26%, transparent), transparent 65%), var(--color-noite); }
   .registration .accessHeader { justify-content: flex-start; }
 }
+
+/* Autorização de assistente (OAuth): cartão do aplicativo e duas decisões. */
+.consentCard { padding: clamp(14px, 2.2svh, 20px); border: 1px solid var(--color-hairline); border-radius: var(--radius-medio); background: var(--color-surface); box-shadow: var(--shadow-baixa); }
+.consentNote { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-line); color: var(--color-body); font-size: 11px; line-height: 1.6; }
+.consentStatus { margin-top: 24px; color: var(--color-muted); font-size: 13px; }
+.consentActions { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 10px; }
+.secondary { min-height: clamp(42px, 6svh, 52px); padding: 8px 20px; border: 1px solid var(--color-hairline); border-radius: 999px; background: var(--color-surface); color: var(--color-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 180ms, color 180ms; }
+.secondary:hover:enabled { border-color: var(--color-brand-300); color: var(--color-ink); }
+.secondary:disabled, .consentActions .submit:disabled { opacity: 0.6; cursor: wait; }

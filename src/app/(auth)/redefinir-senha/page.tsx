@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MolduraAuth } from "@/components/auth/moldura";
+import { Entrada } from "@/components/auth/entrada";
+import styles from "@/components/auth/entrada.module.css";
 import { FormularioRedefinir } from "./formulario";
 export const metadata: Metadata = {
   title: "Nova senha",
@@ -8,23 +9,15 @@ export const metadata: Metadata = {
 };
 export default function RedefinirSenhaPage() {
   return (
-    <MolduraAuth
-      eyebrow="Acesso à conta"
-      titulo="Escolha uma senha nova"
-      descricao="Você chegou aqui pelo link que enviamos. Defina a nova senha e já entramos com ela."
-      rodape={
-        <>
-          O link expirou?{" "}
-          <Link
-            href="/recuperar-senha"
-            className="font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4 transition-colors hover:decoration-brand-500"
-          >
-            Pedir outro
-          </Link>
-        </>
-      }
+    <Entrada
+      cabecalho={{
+        eyebrow: "ACESSO À CONTA",
+        titulo: <>Escolha uma<br />senha nova</>,
+        descricao: "Você chegou aqui pelo link que enviamos. Defina a nova senha e já entramos com ela.",
+      }}
+      rodape={<>O link expirou? <Link href="/recuperar-senha" className={styles.textLink}>Pedir outro <span aria-hidden="true">↗</span></Link></>}
     >
       <FormularioRedefinir />
-    </MolduraAuth>
+    </Entrada>
   );
 }
