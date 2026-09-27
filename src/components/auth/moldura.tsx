@@ -127,8 +127,12 @@ export function MolduraAuth({
           </div>
         </aside>
 
-        <div className={`flex h-full min-h-0 items-center overflow-hidden px-6 py-[clamp(1.5rem,5vh,3.5rem)] sm:px-12 lg:px-[clamp(3rem,6vw,6.5rem)] ${criando ? "bg-[#edf5f0]" : "bg-[#f7f1e8]"}`}>
-          <div className="mx-auto w-full max-w-[470px]">
+        {/* Centraliza quando cabe e rola a partir do topo quando não cabe.
+            Com `items-center` + `overflow-hidden`, conteúdo mais alto que a
+            janela transbordava para os dois lados e era cortado em cima e
+            embaixo — logo e "Já tem conta?" somiam sem como rolar até eles. */}
+        <div className={`flex h-full min-h-0 overflow-y-auto px-6 py-[clamp(1.5rem,5vh,3.5rem)] sm:px-12 lg:px-[clamp(3rem,6vw,6.5rem)] ${criando ? "bg-[#edf5f0]" : "bg-[#f7f1e8]"}`}>
+          <div className="mx-auto my-auto w-full max-w-[470px]">
             <div className="flex items-center justify-between gap-4">
               <Wordmark className="block" />
               <span className={`inline-flex rounded-full px-3 py-1.5 text-[0.7rem] font-bold ${criando ? "bg-vinho-100 text-vinho-700" : "bg-brand-100 text-brand-800"}`}>{eyebrow}</span>

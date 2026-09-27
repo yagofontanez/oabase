@@ -48,7 +48,7 @@ export function BotaoGoogle({ rotulo = "Continuar com o Google" }: { rotulo?: st
         onClick={entrar}
         disabled={indo}
         aria-busy={indo}
-        className="flex items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-6 py-3.5 font-semibold text-ink shadow-[0_6px_18px_-12px_rgba(22,32,29,0.5)] transition-[border-color,transform] hover:border-brand-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+        className="flex items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-6 py-3 font-semibold text-ink shadow-[0_6px_18px_-12px_rgba(22,32,29,0.5)] transition-[border-color,transform] hover:border-brand-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
       >
         {/* Marca do Google nas cores oficiais, como pede o guia de uso. */}
         <svg viewBox="0 0 48 48" className="h-5 w-5 shrink-0" aria-hidden="true">

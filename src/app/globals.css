@@ -631,6 +631,31 @@
   }
 }
 
+/* Degraus antes do corte de 760 px: com o botão do Google, o cadastro ficou
+   mais alto que a janela de um notebook comum (1366×768, 1440×900). Sai
+   primeiro a descrição — o título já diz o essencial —, depois a nota do
+   plano. Formulário, botões e "Já tem conta?" nunca saem. */
+@media (max-height: 940px) {
+  .auth-descricao {
+    display: none;
+  }
+  .auth-conteudo {
+    margin-top: 1.25rem;
+  }
+}
+@media (max-height: 860px) {
+  .auth-nota-plano {
+    display: none;
+  }
+  .auth-conteudo {
+    margin-top: 1rem;
+  }
+  .auth-rodape {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+  }
+}
+
 /* Em notebooks baixos e celulares na horizontal, a tarefa continua inteira
    no primeiro viewport. As explicações reaparecem assim que há altura; os
    campos e as ações nunca são cortados para acomodar decoração. */
