@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 export default function RedefinirSenhaPage() {
   return (
     <Entrada
+      variante="redefinir"
       cabecalho={{
         eyebrow: "ACESSO À CONTA",
         titulo: <>Escolha uma<br />senha nova</>,

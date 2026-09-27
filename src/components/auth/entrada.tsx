@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Wordmark } from "@/components/wordmark";
+import { CenaChave, CenaConexao, CenaEnvio } from "./cenas-entrada";
 import { MovimentoEntrada } from "./movimento-entrada";
 import styles from "./entrada.module.css";
 
@@ -113,8 +114,26 @@ function Ramificacao() {
 }
 
 type Cabecalho = { eyebrow: string; titulo: ReactNode; descricao?: string };
+type Variante = "entrar" | "criar" | "recuperar" | "redefinir" | "conectar";
 
-const CABECALHOS: Record<"entrar" | "criar", Cabecalho> = {
+/** Cada tela tem a própria cena: o movimento conta o que ela faz. */
+const CENA: Record<Variante, ReactNode> = {
+  entrar: <Caminho />,
+  criar: <Ramificacao />,
+  recuperar: <CenaEnvio />,
+  redefinir: <CenaChave />,
+  conectar: <CenaConexao />,
+};
+
+const MANIFESTO: Record<Variante, ReactNode> = {
+  entrar: <>Um passo de cada vez.<br />Todo o seu estudo no mesmo lugar.</>,
+  criar: <>A primeira decisão é começar.<br />O próximo passo, a gente organiza.</>,
+  recuperar: <>Esquecer a senha acontece.<br />Seu estudo continua guardado.</>,
+  redefinir: <>Uma senha nova,<br />o mesmo progresso de sempre.</>,
+  conectar: <>Seu assistente estuda junto.<br />Você decide o que ele vê.</>,
+};
+
+const CABECALHOS: Partial<Record<Variante, Cabecalho>> & { entrar: Cabecalho } = {
   entrar: { eyebrow: "BOM TER VOCÊ POR AQUI", titulo: <>Continue de<br />onde parou</>, descricao: "Seu próximo passo começa aqui." },
   criar: { eyebrow: "CONTA GRATUITA · SEM CARTÃO", titulo: <>Seu caminho <br />começa aqui</>, descricao: "Organize seus estudos. Avance no seu ritmo." },
 };
@@ -132,12 +151,12 @@ export function Entrada({
   rodape,
 }: {
   children: ReactNode;
-  variante?: "entrar" | "criar";
+  variante?: Variante;
   cabecalho?: Cabecalho;
   rodape?: ReactNode;
 }) {
   const criando = variante === "criar";
-  const topo = cabecalho ?? CABECALHOS[variante];
+  const topo = cabecalho ?? CABECALHOS[variante] ?? CABECALHOS.entrar;
   const linhaFinal = rodape === undefined
     ? <>{criando ? "Já tem conta?" : "Ainda não tem conta?"} <Link href={criando ? "/entrar" : "/criar-conta"} className={styles.textLink}>{criando ? "Entre e continue" : "Crie sua conta"} <span aria-hidden="true">↗</span></Link></>
     : rodape;
@@ -154,9 +173,9 @@ export function Entrada({
           <div className={styles.manifesto}>
             <span className={styles.eyebrow}><i />Da primeira prova à OAB</span>
             <h2>Direito se estuda<br />com <span>direção.<svg viewBox="0 0 230 12" fill="none" aria-hidden="true"><path d="M2 9C58 2 141 1 228 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg></span></h2>
-            <p>{criando ? <>A primeira decisão é começar.<br />O próximo passo, a gente organiza.</> : <>Um passo de cada vez.<br />Todo o seu estudo no mesmo lugar.</>}</p>
+            <p>{MANIFESTO[variante]}</p>
           </div>
-          {criando ? <Ramificacao /> : <Caminho />}
+          {CENA[variante]}
         </div>
         <div className={styles.brandBottom}>
           <span>Seu ritmo. Seu caminho.</span>

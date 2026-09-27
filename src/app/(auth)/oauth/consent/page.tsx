@@ -23,6 +23,7 @@ export default async function ConsentimentoPage({
   if (!authorizationId) {
     return (
       <Entrada
+        variante="conectar"
         cabecalho={{
           eyebrow: "CONEXÃO MCP",
           titulo: "Pedido inválido",
@@ -43,6 +44,7 @@ export default async function ConsentimentoPage({
 
   return (
     <Entrada
+      variante="conectar"
       cabecalho={{
         eyebrow: "CONEXÃO MCP",
         titulo: <>Autorizar<br />assistente</>,
