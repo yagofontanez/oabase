@@ -28,9 +28,10 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       ],
     },
     // O índice primeiro, as partições depois — e nenhum `/sitemap.xml`:
-    // aquele caminho responde 404 e não há como mudar isso (ver a nota no
-    // `netlify.toml`; foi tentado). Anunciar endereço que não responde é
-    // pior do que anunciar um só.
+    // o Next não deixa rota nenhuma responder ali, e quem o faz funcionar é
+    // a reescrita do Caddy (deploy/caddy/Caddyfile) — que só existe em
+    // produção. Anunciar endereço que depende da hospedagem é pior do que
+    // anunciar o que o próprio app serve.
     //
     // O índice é o endereço para enviar ao Search Console: quando a base
     // passar de 50 mil URLs e nascer o `1.xml`, ele passa a listar as duas

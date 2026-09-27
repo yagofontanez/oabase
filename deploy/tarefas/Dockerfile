@@ -1,5 +1,5 @@
-# Tarefas agendadas do OABase: as duas que a Netlify rodava (e-mails do dia
-# e reconciliação de cobranças) e o backup do banco.
+# Tarefas agendadas do OABase: e-mails do dia, reconciliação de cobranças e
+# backup do banco.
 #
 # Base `postgres:17-alpine` pelo `pg_dump`: ele precisa ser da mesma versão
 # principal do servidor (o Supabase está no 17) ou mais nova, senão recusa.

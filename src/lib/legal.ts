@@ -58,7 +58,9 @@ export const vigencia = {
   // dia, mais tarde: exclusão da conta em Configurações e o que fica dela.
   termos: "2026-09-25",
   // 26/09/2026: dados recebidos no login com o Google.
-  privacidade: "2026-09-26",
+  // 27/09/2026: hospedagem saiu da Netlify para a Hostinger (São Paulo), e a
+  // cópia de segurança criptografada no Backblaze entrou na lista.
+  privacidade: "2026-09-27",
 } as const;
 
 /**
@@ -95,9 +97,16 @@ export const subprocessadores = [
     local: "Estados Unidos",
   },
   {
-    nome: "Netlify",
-    papel: "Hospedagem do site",
+    nome: "Hostinger",
+    papel: "Servidor onde o site roda",
     dados: "endereço IP e dados de registro de acesso",
+    local: "Brasil (São Paulo)",
+  },
+  {
+    nome: "Backblaze",
+    papel: "Cópia de segurança do banco de dados, criptografada antes do envio",
+    dados:
+      "os mesmos dados do banco, ilegíveis para o Backblaze — a chave fica fora dele",
     local: "Estados Unidos",
   },
 ] as const;

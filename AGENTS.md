@@ -749,7 +749,7 @@ caminho do webhook é exercitado todo dia, o da reconciliação só quando algo
 já deu errado.
 
 **A reconciliação é a rede do webhook.** `/api/tarefas/reconciliar`, de hora
-em hora pela Netlify, pega as cobranças ainda `PENDING`, pergunta à Asaas
+em hora pelo cron da VPS, pega as cobranças ainda `PENDING`, pergunta à Asaas
 quais foram pagas e confirma. Existe porque o acesso pago inteiro depende de
 um POST chegar: se ele não chega, a pessoa paga e nada acontece — e a
 primeira notícia viria por reclamação. Cada linha reconciliada sai como
@@ -943,17 +943,14 @@ uma coisa e outra.
 `webhook_asaas`, ambos em `interno.segredos`. Quem conseguir disparar e-mail
 não deve, pelo mesmo vazamento, conseguir confirmar pagamento.
 
-**O deploy é na Netlify, não na Vercel.** O agendamento é uma *scheduled
-function* (`netlify/functions/emails-diarios.mts`), com o `schedule` exportado
-do próprio arquivo — é assim que a Netlify lê, não pelo `netlify.toml`. Ela só
-faz `fetch` em `/api/tarefas/emails` com o `CRON_SECRET`: a lógica fica na
-rota, dentro do Next, porque as funções da Netlify são empacotadas pelo
-esbuild e o alias `@/...` não resolve lá.
+**O agendamento é o cron do container `tarefas`** (`deploy/tarefas/crontab`,
+08h de Brasília). Ele só chama `/api/tarefas/emails` com o `CRON_SECRET`: a
+lógica fica na rota, dentro do Next, e o agendador não sabe nada de e-mail.
 
-**A função síncrona da Netlify tem segundos de vida, não os 300 da Vercel.**
-Daí o `TETO_POR_EXECUCAO` na rota: um lote grande morreria no meio, deixando
-parte das pessoas marcada como avisada e parte não. O excedente entra na
-execução do dia seguinte, e o relatório devolve `pendentes`.
+**O cron desiste da chamada em 120 s.** Daí o `TETO_POR_EXECUCAO` na rota: um
+lote grande morreria no meio, deixando parte das pessoas marcada como avisada
+e parte não. O excedente entra na execução do dia seguinte, e o relatório
+devolve `pendentes`.
 
 **Lembrete só com 5 questões ou mais na fila**, e só para quem tem assinatura
 ativa. Lembrar de revisar quem perdeu o acesso é propaganda disfarçada de
@@ -1110,26 +1107,39 @@ não o apaga.
 **Desde 26/09/2026 a produção roda numa VPS da Hostinger em São Paulo**
 (`179.199.147.201`), com Docker. O motivo é a distância: o Supabase está em
 `sa-east-1`, e a Netlify rodava as funções em Ohio — ~130 ms por consulta
-contra 4 ms da VPS (a busca caiu de ~840 ms para ~130 ms). A Netlify fica
-de reserva por uma ou duas semanas: voltar é apontar o `A` para `75.2.60.5`
-e reverter o commit que tirou as funções agendadas. `novo.oabase.com.br`
+contra 4 ms da VPS (a busca caiu de ~840 ms para ~130 ms). O site da
+Netlify foi apagado em 27/09/2026, depois de um dia inteiro da VPS sozinha
+(tarefas, backup e e-mail do dia conferidos): não há mais para onde voltar
+pelo DNS, e recuperação é o backup mais `deploy/`. `novo.oabase.com.br`
 continua como homologação, com `noindex`.
 
 **O que roda lá** (`deploy/docker-compose.yml`): `app` (o Next em modo
 `standalone`, sem porta publicada), `caddy` (proxy e HTTPS automático) e
-`tarefas` (cron com as duas rotas que eram funções agendadas da Netlify, mais
-o backup). Segredos em `/opt/oabase/.env` (execução) e `/opt/oabase/.env.build`
+`tarefas` (cron com as rotas de e-mail e de reconciliação, mais o backup). Segredos em `/opt/oabase/.env` (execução) e `/opt/oabase/.env.build`
 (build), os dois `chmod 600` e fora do git. Deploy: `deploy/deploy.sh`.
 
 **O Supabase continua sendo o banco.** Levar o Postgres para a VPS obrigaria a
 hospedar Auth, PostgREST e RLS junto, com migração de contas e sessões — e
 não daria ganho de velocidade, porque a VPS já está a 4 ms dele.
 
-**As tarefas agendadas moram só na VPS.** As funções da Netlify chamavam
-`https://oabase.com.br/api/tarefas/*` — que, depois da virada, é a VPS:
-deixá-las ligadas faria cada tarefa rodar duas vezes no mesmo servidor, e o
-e-mail do dia sair em dobro. Por isso foram removidas antes do DNS mudar.
-`TAREFAS_DO_APP=1` no `/opt/oabase/.env` é o interruptor da VPS.
+**As tarefas agendadas rodam num servidor só.** `TAREFAS_DO_APP=1` no
+`/opt/oabase/.env` é o interruptor: numa segunda máquina (homologação, ou uma
+VPS nova antes de o DNS virar) ele fica desligado, senão o e-mail do dia sai
+em dobro. Foi assim na virada da Netlify — as funções agendadas de lá foram
+removidas antes do DNS mudar.
+
+**O registro de acesso é obrigação, não diagnóstico.** O Marco Civil (art.
+15) manda guardar data, hora e IP de cada acesso por 6 meses, e a Política de
+Privacidade promete. Na Netlify quem guardava era ela; na VPS o Caddy não
+grava nada sem o bloco `log`, e passou o primeiro dia assim. Hoje vai para o
+volume `caddy-logs` (`/var/log/caddy/acesso.log`), roda a cada 50 MiB e
+apaga depois de ~6 meses. Sai sem cabeçalhos, sem query string (a busca e o
+código de login) e sem o token de `/compartilhar`, que é a chave do link.
+
+**`/sitemap.xml` é reescrita do Caddy.** O Next reserva o caminho e não deixa
+rota responder ali; na Netlify isso nunca funcionou e o endereço dava 404. O
+`robots.txt` continua anunciando `/sitemap-index.xml`, que é o que o app
+serve sozinho em qualquer hospedagem.
 
 **Monte pasta, não arquivo.** O Caddyfile era montado como arquivo, e montar
 um arquivo só prende o container àquele arquivo: `git pull` e `rsync` gravam
@@ -1163,9 +1173,6 @@ sem erro nenhum.
    aspas simples (o compose lê literal); no `.env.build` vai com `\$` (o
    dotenv do Next expande `$`). Um arquivo só não serve aos dois.
 
-**O modo `standalone` só liga no Docker** (`OABASE_STANDALONE=1`): enquanto
-a Netlify atender o domínio, o build dela segue igual.
-
 **Backup** (`deploy/tarefas/backup.sh`, 03h30 de Brasília): `pg_dump` de
 `public`, `interno` e `auth` — sem `auth`, restaurar traria os dados sem as
 contas que são donas deles. Fica 7 dias diários + 4 semanais na VPS e vai
@@ -1188,13 +1195,12 @@ fail2ban, 2 GB de swap, usuário `deploy` no grupo `docker`.
 
 ## Desempenho do painel
 
-**O servidor está longe do banco, e isso manda em tudo.** As funções da
-Netlify rodam em `us-east-2` (Ohio) e o Supabase em `sa-east-1` (São Paulo):
-cada consulta que o servidor espera é ~130 ms de viagem. O que decide a
-velocidade de uma tela não é quantas consultas ela faz, e sim quantas
-**rodadas em série** — cinco em paralelo custam uma viagem, cinco em fila
-custam cinco. Mudar a região das funções para `gru` resolve na raiz, mas é
-recurso do plano Pro da Netlify; a conta hoje é Free.
+**A distância até o banco manda em tudo.** Na Netlify as funções rodavam
+em `us-east-2` (Ohio) e o Supabase em `sa-east-1` (São Paulo): cada consulta
+era ~130 ms de viagem, e foi isso que levou à VPS em São Paulo (4 ms). A regra
+continua valendo com a viagem curta: o que decide a velocidade de uma tela
+não é quantas consultas ela faz, e sim quantas **rodadas em série** — cinco em
+paralelo custam uma viagem, cinco em fila custam cinco.
 
 **Uma rodada por tela.** Ao escrever uma página de `/app`, tudo que não
 depende de resultado anterior vai no mesmo `Promise.all` — acervo aberto e

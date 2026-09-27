@@ -1,4 +1,4 @@
-# Horários em UTC, os mesmos das funções agendadas da Netlify.
+# Horários em UTC.
 # Saída vai para o log do container (docker compose logs tarefas).
 
 # E-mails do dia (ativação, revisão, fatura, fim de plano): 08h de Brasília.

@@ -34,9 +34,8 @@ import { confirmarCobranca } from "@/lib/pagamento/confirmar";
 export const dynamic = "force-dynamic";
 
 /**
- * Teto por execução, pelo mesmo motivo do teto de e-mails: a função síncrona
- * da Netlify tem segundos de vida, e cada cobrança aqui custa uma ida à
- * Asaas. O que sobrar entra na execução seguinte — que é daqui a uma hora.
+ * Teto por execução, pelo mesmo motivo do teto de e-mails: o cron desiste
+ * da chamada em 120 s, e cada cobrança aqui custa uma ida à Asaas. O que sobrar entra na execução seguinte — que é daqui a uma hora.
  */
 const TETO_POR_EXECUCAO = 25;
 
@@ -133,7 +132,7 @@ export async function GET(request: Request) {
   const assinaturas = await reconciliarAssinaturas(supabase, segredo);
 
   // 200 mesmo com falhas: elas voltam na execução seguinte, e o relatório vai
-  // para o log da Netlify. Devolver erro aqui só marcaria o cron como quebrado
+  // para o log do container `tarefas`. Devolver erro aqui só marcaria o cron como quebrado
   // quando quem está fora do ar é a Asaas.
   return NextResponse.json({ ok: true, ...relatorio, assinaturas });
 }

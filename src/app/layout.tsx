@@ -62,9 +62,9 @@ export const metadata: Metadata = {
 
     **E precisa estar definida no momento do build.** A metadata do layout
     raiz é assada em cada página pré-renderizada, que aqui são quase todas —
-    definir a variável só no runtime não muda o HTML já gerado. Na Netlify
-    isso é automático (ela injeta o ambiente no build), mas quem definir a
-    variável depois precisa disparar um deploy novo, não só reiniciar.
+    definir a variável só no runtime não muda o HTML já gerado. Na VPS ela
+    vai em `/opt/oabase/.env.build`, e quem definir a variável depois precisa
+    rodar o deploy de novo, não só reiniciar.
   */
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,

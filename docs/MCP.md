@@ -84,7 +84,7 @@ MCP_ALLOWED_ORIGINS=https://chatgpt.com,https://claude.ai \
 pnpm mcp
 ```
 
-Na implantação principal da Netlify, a mesma fábrica é servida como Route
+Na implantação principal, a mesma fábrica é servida como Route
 Handler em `https://oabase.com.br/api/mcp`; não é necessário manter um
 processo Node separado. A página explicativa continua em `/mcp`.
 

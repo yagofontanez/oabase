@@ -5,11 +5,8 @@ const nextConfig: NextConfig = {
    * Servidor enxuto para o container (ver `Dockerfile`). O build copia só os
    * arquivos que o app de fato carrega, e o `server.js` gerado substitui o
    * `next start` — a imagem final não precisa de `node_modules` inteiro.
-   *
-   * Só no build do Docker: enquanto a Netlify atender o domínio, o build
-   * dela segue exatamente como antes.
    */
-  ...(process.env.OABASE_STANDALONE === "1" ? { output: "standalone" as const } : {}),
+  output: "standalone",
 
   /**
    * Uma URL por página.
@@ -62,8 +59,7 @@ const nextConfig: NextConfig = {
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
-        // API e links de compartilhamento não são página: estavam no
-        // `netlify.toml`, e vieram para cá para valer em qualquer hospedagem.
+        // API e links de compartilhamento não são página.
         source: "/api/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },

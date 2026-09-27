@@ -48,6 +48,9 @@ services:
       # autoridade limita quantas vezes por semana.
       - caddy-dados:/data
       - caddy-config:/config
+      # Registro de acesso (Marco Civil, 6 meses). Volume próprio: sobrevive
+      # a recriar o container e não se mistura com os certificados.
+      - caddy-logs:/var/log/caddy
     networks: [interna]
 
   tarefas:
@@ -141,6 +144,7 @@ volumes:
   cache-next:
   caddy-dados:
   caddy-config:
+  caddy-logs:
 
 networks:
   interna:

@@ -18,6 +18,25 @@
 {$DOMINIO} {
 	encode zstd gzip
 
+	# Registro de acesso: o Marco Civil (art. 15) obriga a guardar data, hora
+	# e IP de cada acesso por 6 meses, e a Política de Privacidade promete.
+	# Na Netlify quem guardava era ela; aqui, sem este bloco, ninguém guarda.
+	# Só o necessário: sem cabeçalhos, sem query string (é o que a pessoa
+	# digitou na busca, e o código de login) e sem o token de /compartilhar,
+	# que é a própria chave do link. Some sozinho depois de ~6 meses.
+	log {
+		output file /var/log/caddy/acesso.log {
+			roll_size 50MiB
+			roll_keep 200
+			roll_keep_for 4392h
+		}
+		format filter {
+			request>headers delete
+			resp_headers delete
+			request>uri regexp "(/compartilhar/)[^/?]+|\?.*" "${1}…"
+		}
+	}
+
 	# HSTS sem includeSubDomains: mail., ftp. e send. são da HostGator e da
 	# Resend, e não são obrigação desta VPS.
 	header Strict-Transport-Security "max-age=31536000"
@@ -25,6 +44,12 @@
 	# www → domínio principal, mantendo o caminho.
 	@www host www.oabase.com.br
 	redir @www https://oabase.com.br{uri} permanent
+
+	# O endereço que todo mundo digita. O Next reserva `/sitemap.xml` para a
+	# convenção de metadata e não deixa rota nenhuma responder ali (ver
+	# src/app/sitemap-index.xml/route.ts); a reescrita acontece antes de a
+	# requisição chegar a ele. Na Netlify isso foi tentado e não funcionava.
+	rewrite /sitemap.xml /sitemap-index.xml
 
 	# A homologação não pode ser indexada: seria uma cópia inteira do site
 	# num segundo endereço — conteúdo duplicado contra o próprio domínio.

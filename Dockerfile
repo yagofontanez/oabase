@@ -38,7 +38,7 @@ COPY . .
 # cai nos dados de exemplo (`fonte-mock.ts`) nas páginas estáticas. Foi o
 # que aconteceu no primeiro build: o id aqui não batia com o do compose.
 RUN --mount=type=secret,id=ambiente,target=/app/.env.production,required=true \
-    OABASE_STANDALONE=1 pnpm build \
+    pnpm build \
  && rm -f .next/standalone/.env* \
  && cp -r public .next/standalone/ \
  && cp -r .next/static .next/standalone/.next/

@@ -9,8 +9,9 @@ import { useEffect, useRef } from "react";
  * pré-carregada — os links do trilho, visíveis na tela. `router.push` depois
  * de um botão ("Iniciar sessão", "Criar simulado", "Abrir tópico") navega
  * para rota que ninguém pré-carregou, e aí nada na tela reagia até o servidor
- * responder: com a Netlify em Ohio e o banco em São Paulo, perto de um
- * segundo de tela parada — a queixa exata era "parece que travou".
+ * responder: com o servidor em Ohio (na Netlify, antes da VPS) e o banco em
+ * São Paulo, perto de um segundo de tela parada — a queixa exata era
+ * "parece que travou".
  *
  * Começa no clique (captura de qualquer `<a>` interno) ou por `navegar()`,
  * para a navegação feita em código. Só aparece depois de 80 ms, para não

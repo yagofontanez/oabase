@@ -9,9 +9,9 @@ export const revalidate = 3600;
  * Com `generateSitemaps`, o Next publica as partições em `/sitemap/0.xml`,
  * `/sitemap/1.xml`… e **reserva `/sitemap.xml` para a própria convenção de
  * metadata**: uma rota ali derruba o build com "Conflicting route and
- * metadata". Por isso o índice mora aqui, e `netlify.toml` reescreve
- * `/sitemap.xml` para este caminho — a pessoa digita o endereço de sempre e
- * recebe um índice de verdade.
+ * metadata". Por isso o índice mora aqui, e o Caddy reescreve `/sitemap.xml`
+ * para este caminho (deploy/caddy/Caddyfile) — a pessoa digita o endereço de
+ * sempre e recebe um índice de verdade.
  *
  * Índice, e não redirecionamento para a partição zero: quando a base de
  * legislação passar de 50 mil URLs e nascer o `1.xml`, quem só conhece este

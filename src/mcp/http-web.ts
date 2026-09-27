@@ -34,8 +34,8 @@ function criarHandler() {
       transporte: "http",
     });
   }, {
-    // A Netlify cria uma instância por requisição. As ferramentas atuais
-    // encerram com uma resposta JSON; streams contínuos são recusados abaixo.
+    // Uma instância por requisição. As ferramentas atuais encerram com uma
+    // resposta JSON; streams contínuos são recusados abaixo.
     responseMode: "auto",
     keepAliveMs: 0,
     onerror: (error) =>
@@ -142,8 +142,8 @@ export async function responderMcp(request: Request) {
   const requestId = crypto.randomUUID();
   let status = 500;
   try {
-    // A Netlify já restringe os hosts associados ao site e pode reescrever o
-    // host interno do Request. URLs OAuth nunca são montadas a partir dele.
+    // Atrás do Caddy, o host do Request é o endereço interno do container
+    // (ver src/lib/url-publica.ts). URLs OAuth nunca são montadas a partir dele.
     const origem = origemPermitida(request);
     if (origem === false) {
       status = 403;

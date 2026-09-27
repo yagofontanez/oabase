@@ -44,8 +44,8 @@ export type Usuario = {
  *
  * Era `auth.getUser()`, que pergunta ao servidor de Auth a cada chamada: o
  * proxy perguntava, o layout perguntava de novo e a página, de novo. Com o
- * Next na Netlify (us-east-2) e o Supabase em São Paulo, cada pergunta era
- * uma viagem de ~130 ms antes de qualquer dado sair.
+ * Next na Netlify (us-east-2, antes da VPS) e o Supabase em São Paulo, cada
+ * pergunta era uma viagem de ~130 ms antes de qualquer dado sair.
  *
  * `getClaims()` confere a assinatura do JWT localmente: o projeto assina com
  * ES256, e a chave pública é buscada uma vez e fica em cache no processo

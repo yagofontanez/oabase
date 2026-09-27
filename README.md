@@ -25,7 +25,7 @@
 - [Next.js 16](https://nextjs.org/) + React 19 + TypeScript;
 - Tailwind CSS 4;
 - Supabase (Postgres, Auth e RLS);
-- Netlify para deploy e funções agendadas;
+- VPS com Docker e Caddy para deploy e tarefas agendadas (ver `deploy/`);
 - Python stdlib + `pdftotext` + `psql` no pipeline de ingestão.
 
 ## Rodar localmente

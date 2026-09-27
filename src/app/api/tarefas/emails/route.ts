@@ -18,9 +18,8 @@ import { ambienteAsaas, cobrancasDaAssinatura } from "@/lib/pagamento/asaas";
  * Tarefa diária de e-mail: ativação de conta, lembrete de revisão e aviso de
  * fim de plano.
  *
- * Chamada pela função agendada da Netlify
- * (netlify/functions/emails-diarios.mts), que envia
- * `Authorization: Bearer $CRON_SECRET`. Sem sessão, como o webhook — e a saída é a mesma: funções `security
+ * Chamada pelo cron do container `tarefas` (deploy/tarefas/crontab), que
+ * envia `Authorization: Bearer $CRON_SECRET`. Sem sessão, como o webhook — e a saída é a mesma: funções `security
  * definer` guardadas por um segredo próprio em `interno.segredos`. Segredo
  * separado do webhook de propósito: quem consegue disparar e-mail não deveria,
  * pelo mesmo vazamento, conseguir confirmar pagamento.
@@ -41,10 +40,10 @@ export const dynamic = "force-dynamic";
 /**
  * Teto de envios por execução.
  *
- * Na Netlify a função síncrona tem alguns segundos de vida, não os 300 que a
- * Vercel dá — um lote grande estouraria o tempo e morreria no meio, deixando
- * parte das pessoas marcada como avisada e parte não. Com teto, o excedente
- * simplesmente entra na execução do dia seguinte.
+ * O cron desiste da chamada em 120 s (`tarefa.sh`) — um lote grande
+ * estouraria o tempo e morreria no meio, deixando parte das pessoas marcada
+ * como avisada e parte não. Com teto, o excedente simplesmente entra na
+ * execução do dia seguinte.
  *
  * Com o volume atual isso nunca é alcançado; existe para o dia em que for.
  */

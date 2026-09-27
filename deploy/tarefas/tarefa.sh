@@ -1,8 +1,9 @@
 #!/bin/sh
-# Chama uma rota de tarefa do app, como a função agendada da Netlify fazia.
+# Chama uma rota de tarefa do app.
 #
-# `TAREFAS_DO_APP=1` liga. Fica desligado enquanto a Netlify ainda responde
-# pelo domínio: com as duas rodando, o e-mail do dia sairia em dobro.
+# `TAREFAS_DO_APP=1` liga. Só um servidor pode tê-lo ligado: com dois
+# rodando (homologação e produção, ou uma VPS nova antes da virada do DNS),
+# o e-mail do dia sairia em dobro.
 set -eu
 . /run/ambiente.sh
 
