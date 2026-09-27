@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { urlPublica } from "@/lib/url-publica";
 
 /**
  * Volta do login com o Google.
@@ -21,13 +22,13 @@ export async function GET(request: NextRequest) {
 
   // Cancelou no Google, ou o Google recusou: volta ao login com o motivo.
   if (!code) {
-    const volta = new URL("/entrar", request.url);
+    const volta = urlPublica(request, "/entrar");
     volta.searchParams.set("erro", "google");
     if (pedido) volta.searchParams.set("proximo", proximo);
     return NextResponse.redirect(volta);
   }
 
-  const resposta = NextResponse.redirect(new URL(proximo, request.url));
+  const resposta = NextResponse.redirect(urlPublica(request, proximo));
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     console.error("Login com Google: troca do código falhou:", error.message);
-    const volta = new URL("/entrar", request.url);
+    const volta = urlPublica(request, "/entrar");
     volta.searchParams.set("erro", "google");
     return NextResponse.redirect(volta);
   }

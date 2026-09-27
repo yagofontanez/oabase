@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { urlPublica } from "@/lib/url-publica";
 
 /**
  * Confirma o link de cadastro emitido pelo Supabase.
@@ -14,10 +15,10 @@ export async function GET(request: NextRequest) {
   const type = request.nextUrl.searchParams.get("type");
 
   if (!tokenHash || type !== "email") {
-    return NextResponse.redirect(new URL("/entrar", request.url));
+    return NextResponse.redirect(urlPublica(request, "/entrar"));
   }
 
-  const resposta = NextResponse.redirect(new URL("/app", request.url));
+  const resposta = NextResponse.redirect(urlPublica(request, "/app"));
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.redirect(new URL("/entrar", request.url));
+    return NextResponse.redirect(urlPublica(request, "/entrar"));
   }
 
   return resposta;
