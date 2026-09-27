@@ -678,6 +678,22 @@ assinatura ativa. O app usa sempre a chave anônima.
 instante do cadastro ainda não existe sessão, então `auth.uid()` é nulo e
 qualquer política de dono barraria a inserção.
 
+**Login com Google** (Supabase Auth, PKCE): `BotaoGoogle` nas telas de entrar
+e criar conta, e `/auth/callback` troca o código pela sessão. O `proximo` é
+validado de novo ali — só caminho interno — porque é essa rota que
+redireciona. Endereços de retorno permitidos ficam no `uri_allow_list` do
+Auth (produção, `www`, homologação e `localhost:3000`). Três consequências:
+
+- **O nome vem em outro campo.** O Google grava `full_name`/`name`, o
+  cadastro por e-mail grava `nome`. `usuarioAtual()` e os gatilhos
+  `criar_perfil_no_cadastro` e `avisar_novo_cadastro` leem os três.
+- **Conta existente é a mesma conta.** Quem já tinha e-mail e senha e entra
+  pelo Google com o mesmo e-mail é ligado pela identidade (o Google entrega
+  e-mail verificado) — não nasce conta duplicada.
+- **Quem só entra pelo Google não tem senha.** Excluir a conta pedia a
+  senha; agora, sem identidade `email`, a confirmação é digitar o e-mail da
+  conta. Quem decide é a lista de identidades do Auth, no servidor.
+
 **Nada de `useSearchParams` em formulário de autenticação.** Ele obriga um
 limite de Suspense e tira o formulário do HTML inicial — o campo de login
 precisa existir antes de o JS rodar. Leia o parâmetro de `window.location` na

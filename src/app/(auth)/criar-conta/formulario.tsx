@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
+import { BotaoGoogle, OuComEmail } from "@/components/auth/botao-google";
+import Link from "next/link";
 import { navegar } from "@/components/barra-de-navegacao";
 
 const Alerta = () => (
@@ -83,6 +85,20 @@ export function FormularioCriarConta() {
   }
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4" noValidate>
+      <BotaoGoogle rotulo="Criar conta com o Google" />
+      <p className="-mt-1 text-center text-[0.78rem] text-muted">
+        Ao continuar, você aceita os{" "}
+        <Link href="/termos" className="underline underline-offset-2 hover:text-brand-700">
+          Termos de Uso
+        </Link>{" "}
+        e a{" "}
+        <Link href="/privacidade" className="underline underline-offset-2 hover:text-brand-700">
+          Política de Privacidade
+        </Link>
+        .
+      </p>
+      <OuComEmail />
+
       {erro && (
         <p
           role="alert"

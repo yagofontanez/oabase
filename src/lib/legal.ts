@@ -57,7 +57,8 @@ export const vigencia = {
   // da assinatura e cartão guardado pelo processador (Privacidade). No mesmo
   // dia, mais tarde: exclusão da conta em Configurações e o que fica dela.
   termos: "2026-09-25",
-  privacidade: "2026-09-25",
+  // 26/09/2026: dados recebidos no login com o Google.
+  privacidade: "2026-09-26",
 } as const;
 
 /**

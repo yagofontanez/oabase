@@ -67,6 +67,13 @@ const secoes: Secao[] = [
           que você quiser exibir.
         </P>
         <P>
+          <strong>Ao entrar com o Google:</strong> o Google nos envia seu
+          nome, e-mail e o endereço da foto do seu perfil, e o identificador
+          da sua conta Google. Não recebemos sua senha do Google nem acesso a
+          e-mails, contatos ou arquivos. Você pode revogar esse acesso a
+          qualquer momento na sua conta Google.
+        </P>
+        <P>
           <strong>Ao pedir atualizações sobre concursos jurídicos:</strong>
           e-mail, carreira de interesse e o registro do seu consentimento.
           Essa lista é opcional, não cria conta e serve apenas para avisar

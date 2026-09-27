@@ -6,7 +6,8 @@ import { cancelarAssinatura, ErroAsaas } from "@/lib/pagamento/asaas";
 /**
  * Exclusão da conta pela própria pessoa (LGPD, art. 18, VI).
  *
- * **Pede a senha de novo.** Excluir não tem volta, e uma sessão esquecida
+ * **Pede a senha de novo** (ou, para quem só entra pelo Google e não tem
+ * senha, o e-mail da conta digitado). Excluir não tem volta, e uma sessão esquecida
  * aberta num computador de biblioteca não pode bastar para apagar o
  * histórico de estudo de alguém. A conferência é um login avulso, num
  * cliente sem cookie, com a chave anônima de sempre.
@@ -33,25 +34,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
   }
 
-  let senha = "";
+  let corpo: { senha?: unknown; confirmacao?: unknown } = {};
   try {
-    senha = String(((await request.json()) as { senha?: unknown }).senha ?? "");
+    corpo = (await request.json()) as typeof corpo;
   } catch {
     return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
   }
 
-  const avulso = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-  const { error: erroSenha } = await avulso.auth.signInWithPassword({
-    email: user.email,
-    password: senha,
-  });
-  if (erroSenha) {
+  // Quem tem senha confirma com a senha. Quem só entra pelo Google não tem
+  // senha nenhuma — pedir uma seria impedir a pessoa de excluir a própria
+  // conta. Aí a confirmação é digitar o e-mail da conta. Quem decide qual das
+  // duas vale é a lista de identidades que o Auth devolve, não o navegador.
+  const temSenha = (user.identities ?? []).some((i) => i.provider === "email");
+  if (temSenha) {
+    const avulso = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const { error: erroSenha } = await avulso.auth.signInWithPassword({
+      email: user.email,
+      password: String(corpo.senha ?? ""),
+    });
+    if (erroSenha) {
+      return NextResponse.json(
+        { erro: "Senha incorreta.", campo: "senha" },
+        { status: 400 },
+      );
+    }
+  } else if (String(corpo.confirmacao ?? "").trim().toLowerCase() !== user.email.toLowerCase()) {
     return NextResponse.json(
-      { erro: "Senha incorreta.", campo: "senha" },
+      { erro: "Digite o e-mail da sua conta, exatamente como aparece em Configurações.", campo: "senha" },
       { status: 400 },
     );
   }

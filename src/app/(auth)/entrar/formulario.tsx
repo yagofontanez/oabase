@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import { navegar } from "@/components/barra-de-navegacao";
+import { BotaoGoogle, OuComEmail } from "@/components/auth/botao-google";
 
 const Alerta = () => (
   <svg
@@ -54,6 +55,18 @@ export function FormularioEntrar() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Volta de um login com Google que não se completou (cancelado na tela do
+  // Google, ou recusado). Lido do endereço depois da montagem, como o resto
+  // desta tela: o formulário precisa estar no HTML antes do JS.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("erro") === "google") {
+      queueMicrotask(() =>
+        setErro("O login com o Google não foi concluído. Tente de novo ou entre com e-mail e senha."),
+      );
+    }
+  }, []);
+
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
     setErro(null);
@@ -86,6 +99,9 @@ export function FormularioEntrar() {
   }
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4" noValidate>
+      <BotaoGoogle />
+      <OuComEmail />
+
       {erro && (
         <p
           role="alert"

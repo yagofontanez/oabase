@@ -253,9 +253,12 @@ export function CancelarRenovacao({ acessoAte }: { acessoAte: string | null }) {
 export function ExcluirConta({
   planoAtivo,
   renovacaoAtiva,
+  temSenha,
 }: {
   planoAtivo: boolean;
   renovacaoAtiva: boolean;
+  /** Conta criada só com o Google não tem senha: confirma digitando o e-mail. */
+  temSenha: boolean;
 }) {
   const [aberto, setAberto] = useState(false);
   const [senha, setSenha] = useState("");
@@ -266,7 +269,7 @@ export function ExcluirConta({
   async function excluir(evento: React.FormEvent) {
     evento.preventDefault();
     if (!senha) {
-      setErroSenha("Digite sua senha para confirmar.");
+      setErroSenha(temSenha ? "Digite sua senha para confirmar." : "Digite o e-mail da sua conta para confirmar.");
       return;
     }
     setEnviando(true);
@@ -276,7 +279,7 @@ export function ExcluirConta({
       const resposta = await fetch("/api/conta/excluir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ senha }),
+        body: JSON.stringify(temSenha ? { senha } : { confirmacao: senha }),
       });
       const dados = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
@@ -334,8 +337,8 @@ export function ExcluirConta({
         </li>
       </ul>
       <Campo
-        rotulo="Sua senha"
-        tipo="password"
+        rotulo={temSenha ? "Sua senha" : "Digite o e-mail da sua conta"}
+        tipo={temSenha ? "password" : "email"}
         nome="senha-exclusao"
         valor={senha}
         aoMudar={(v) => {
@@ -343,7 +346,7 @@ export function ExcluirConta({
           if (erroSenha) setErroSenha(undefined);
         }}
         erro={erroSenha}
-        autoComplete="current-password"
+        autoComplete={temSenha ? "current-password" : "off"}
       />
       {erro && <Aviso tipo="erro" texto={erro} />}
       <div className="flex flex-wrap gap-3">

@@ -64,10 +64,20 @@ export const usuarioAtual = cache(async (): Promise<Usuario | null> => {
   const { data } = await (await supabaseServidor()).auth.getClaims();
   const claims = data?.claims;
   if (!claims?.sub) return null;
+  const meta = (claims.user_metadata as Usuario["user_metadata"]) ?? {};
   return {
     id: claims.sub,
     email: (claims.email as string | undefined) ?? null,
-    user_metadata: (claims.user_metadata as Usuario["user_metadata"]) ?? {},
+    // Cadastro por e-mail grava `nome`; o Google grava `full_name` e `name`.
+    // As telas leem `nome`, então ele é preenchido com o que houver.
+    user_metadata: {
+      ...meta,
+      nome:
+        meta.nome ||
+        (meta.full_name as string | undefined) ||
+        (meta.name as string | undefined) ||
+        undefined,
+    },
   };
 });
 

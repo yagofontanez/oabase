@@ -266,6 +266,7 @@ export default async function ConfiguracoesPage() {
         <ExcluirConta
           planoAtivo={assinatura?.status === "ativa" && !cortesia}
           renovacaoAtiva={Boolean(recorrencia)}
+          temSenha={(completo.data.user?.identities ?? []).some((i) => i.provider === "email")}
         />
       </Bloco>
     </div>
