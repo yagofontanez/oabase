@@ -230,6 +230,7 @@ export const exames: Exame[] = [
     questoesCarregadas: 80,
     questoesAnuladas: 2,
     gabaritoDefinitivo: true,
+    amostraGratuita: true,
     distribuicao: distribuicao(),
   },
 ];

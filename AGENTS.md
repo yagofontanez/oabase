@@ -113,7 +113,7 @@ busca que só funciona depois da hidratação não existe para quem está numa
 conexão ruim, que é boa parte de quem estuda pelo celular.
 
 **Post é filtrado em memória**, e isso é decisão de escala, não descuido: são
-cinco textos, e montar o `or=(...ilike...)` do PostgREST exigiria escapar
+seis textos, e montar o `or=(...ilike...)` do PostgREST exigiria escapar
 vírgula, parêntese e aspas do que a pessoa digitou. Com cem textos, o lugar de
 mudar é `fonte-supabase.ts` — um vetor de busca em `posts`, como o de
 `artigos`.
@@ -460,6 +460,23 @@ na rota, e não no banco, seria uma regra contornável.
 multiplica o intervalo pela facilidade (teto 2.8); erro joga para amanhã e
 derruba a facilidade em 0.2 (piso 1.3). Errar tem de doer no calendário, não
 só no número.
+
+**Amostra gratuita: um exame inteiro, para conta logada.** Quem chegava pelo
+TikTok precisava pagar antes de ver uma questão resolvida. `exames.amostra_gratuita`
+marca um exame (o 46º; no máximo um, por índice único) cujas questões e
+comentários qualquer conta logada lê — plano ou não. Visitante sem login
+continua vendo zero: a amostra existe para trazer a pessoa para dentro, não
+para abrir o produto ao rastreador. A regra mora em três lugares que dizem a
+mesma coisa: a RLS de `questoes` e de `comentarios`, e `pode_ver_questao()`,
+que `registrar_resposta` e `registrar_resposta_mcp` chamam no lugar de
+`tem_assinatura_ativa()` porque são `security definer`. **Simulado continua
+sendo do plano**, e agora por checagem explícita em `criar_simulado`: ela é
+invoker e confiava na RLS para voltar vazia a quem não assina — com a amostra
+visível, deixaria montar simulado do 46º. Trocar a amostra é um `UPDATE` em
+`exames`; as telas (`/app/questoes`, o painel, `/precos`, o cadastro) leem a
+marca do banco e não citam edição em literal. Um exame, e não "N questões por
+dia": a regra cabe numa expressão de RLS; cota diária pediria contar
+respostas dentro da política a cada leitura.
 
 **Anuladas ficam fora da fila.** Não têm resposta certa para treinar.
 Continuam no acervo como material de estudo, e é assim que `/desempenho` as

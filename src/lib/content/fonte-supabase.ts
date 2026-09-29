@@ -416,7 +416,7 @@ export const fonteSupabase: FonteDeConteudo = {
     const { data, error } = await supabaseAnon()
       .from("exames")
       .select(
-        "slug, edicao, ano, data_prova, total_questoes, questoes_carregadas, questoes_anuladas, gabarito_definitivo, exame_disciplinas(questoes, disciplinas!inner(slug))",
+        "slug, edicao, ano, data_prova, total_questoes, questoes_carregadas, questoes_anuladas, gabarito_definitivo, amostra_gratuita, exame_disciplinas(questoes, disciplinas!inner(slug))",
       )
       .order("edicao", { ascending: false });
     erro("exames", error);
@@ -427,7 +427,7 @@ export const fonteSupabase: FonteDeConteudo = {
     const { data, error } = await supabaseAnon()
       .from("exames")
       .select(
-        "slug, edicao, ano, data_prova, total_questoes, questoes_carregadas, questoes_anuladas, gabarito_definitivo, exame_disciplinas(questoes, disciplinas!inner(slug))",
+        "slug, edicao, ano, data_prova, total_questoes, questoes_carregadas, questoes_anuladas, gabarito_definitivo, amostra_gratuita, exame_disciplinas(questoes, disciplinas!inner(slug))",
       )
       .eq("slug", slug)
       .maybeSingle();
@@ -516,7 +516,7 @@ export const fonteSupabase: FonteDeConteudo = {
    * acento opcional, incidência medida no peso. Reimplementar isso aqui em
    * TypeScript seria a segunda cópia da regra, e as duas divergiriam.
    *
-   * **Post é filtrado em memória, de propósito.** São cinco textos. Montar um
+   * **Post é filtrado em memória, de propósito.** São seis textos. Montar um
    * `or=(titulo.ilike...,corpo.ilike...)` do PostgREST exigiria escapar
    * vírgula, parêntese e aspas do que a pessoa digitou — uma superfície de
    * injeção de filtro para percorrer cinco linhas que o site já carrega. No
@@ -650,6 +650,7 @@ type LinhaExame = {
   questoes_carregadas: number;
   questoes_anuladas: number;
   gabarito_definitivo: boolean;
+  amostra_gratuita: boolean | null;
   exame_disciplinas: {
     questoes: number;
     disciplinas: { slug: string } | { slug: string }[] | null;
@@ -667,6 +668,7 @@ function paraExame(linha: unknown): Exame {
     questoesCarregadas: e.questoes_carregadas ?? 0,
     questoesAnuladas: e.questoes_anuladas ?? 0,
     gabaritoDefinitivo: Boolean(e.gabarito_definitivo),
+    amostraGratuita: Boolean(e.amostra_gratuita),
     distribuicao: (e.exame_disciplinas ?? [])
       .map((d) => ({
         disciplinaSlug: um(d.disciplinas)?.slug ?? "",

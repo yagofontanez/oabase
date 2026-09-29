@@ -140,6 +140,8 @@ export type Exame = {
   questoesAnuladas: number;
   /** false = gabarito preliminar; a OAB não publicou definitivo para a edição. */
   gabaritoDefinitivo: boolean;
+  /** Aberto a qualquer conta logada, sem plano (no máximo um exame). */
+  amostraGratuita: boolean;
   /** Só existe quando a classificação por disciplina foi confirmada. */
   distribuicao: { disciplinaSlug: string; questoes: number }[];
 };

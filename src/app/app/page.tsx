@@ -118,12 +118,8 @@ export default async function PainelPage() {
     getDisciplinas(),
     getArtigosIndexaveis(),
     getLeis(),
-    supabase
-      .from("assinaturas")
-      .select("plano, fim")
-      .eq("status", "ativa")
-      .order("fim", { ascending: false })
-      .limit(1),
+    // A mesma pergunta que a RLS faz: ativa **e** dentro da validade.
+    supabase.rpc("tem_assinatura_ativa"),
     // Conta por questão, não por tentativa: quem errou três vezes e acertou
     // na quarta tem uma questão dominada, não três erros. `distinct on` vive
     // no banco porque o PostgREST não sabe expressar essa consulta.
@@ -136,7 +132,7 @@ export default async function PainelPage() {
     supabase.from("planos_estudo").select("plano").maybeSingle(),
   ]);
 
-  const temAssinatura = Boolean(assinaturaRes.data?.[0]);
+  const temAssinatura = assinaturaRes.data === true;
   const desempenho = (Array.isArray(desempenhoRes.data)
     ? desempenhoRes.data[0]
     : desempenhoRes.data) as
@@ -215,6 +211,7 @@ export default async function PainelPage() {
   const dias = diasAte(proximo.data);
   const ingeridos = exames.filter((e) => e.questoesCarregadas > 0);
   const acervo = ingeridos.reduce((s, e) => s + e.questoesCarregadas, 0);
+  const amostra = ingeridos.find((e) => e.amostraGratuita);
   const cobertura = Math.round((ingeridos.length / EXAMES_APLICADOS) * 100);
   const mediaDiaria = Math.round(focoSemana / 7);
 
@@ -272,6 +269,13 @@ export default async function PainelPage() {
         acao: "Criar meu plano",
         href: "/app/plano",
       }
+    : !temAssinatura && amostra
+      ? {
+          titulo: `Resolva o ${amostra.edicao}º Exame de graça`,
+          texto: `As ${amostra.questoesCarregadas} questões da prova de verdade, com gabarito oficial da FGV, comentário e revisão espaçada — sem plano e sem cartão. Os outros exames ficam para quando fizer sentido assinar.`,
+          acao: `Começar pelo ${amostra.edicao}º`,
+          href: "/app/questoes",
+        }
     : !temAssinatura
       ? {
           titulo: "Leve o plano para a prática",

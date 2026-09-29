@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Resolvedor,
   type QuestaoDaFila,
@@ -77,11 +78,10 @@ export default async function QuestoesPage({
   // justamente na tela que mais se abre.
   const [assinaturaRes, exames, disciplinas, desempenhoRes, semDisciplinaRes, filaRes] =
     await Promise.all([
-      supabase
-        .from("assinaturas")
-        .select("plano")
-        .eq("status", "ativa")
-        .limit(1),
+      // A mesma pergunta que a RLS faz — status ativo **e** dentro da
+      // validade. Olhar só `status` abria a tela para plano vencido, com a
+      // fila vazia e nenhuma explicação.
+      supabase.rpc("tem_assinatura_ativa"),
       getExames(),
       getDisciplinas(),
       supabase.rpc("meu_desempenho"),
@@ -100,7 +100,10 @@ export default async function QuestoesPage({
       }),
     ]);
 
-  const temPlano = Boolean(assinaturaRes.data?.[0]);
+  const temPlano = assinaturaRes.data === true;
+  // Um exame inteiro aberto a qualquer conta (`exames.amostra_gratuita`). Sem
+  // plano, a RLS devolve só as questões dele — a fila acima já veio assim.
+  const amostra = exames.find((e) => e.amostraGratuita && e.questoesCarregadas > 0);
   const numeros = (Array.isArray(desempenhoRes.data)
     ? desempenhoRes.data[0]
     : desempenhoRes.data) as
@@ -111,7 +114,13 @@ export default async function QuestoesPage({
      exige assinatura ativa. Mas "nenhuma questão encontrada" seria uma
      mentira sobre o motivo, então a checagem acontece aqui e a tela diz o
      que de fato está acontecendo. */
-  if (!temPlano) {
+  if (!temPlano && amostra && exame && exame !== amostra.slug) {
+    // Outro exame pedido pelo endereço: a RLS devolveria fila vazia, e
+    // "nenhuma questão neste filtro" mentiria sobre o motivo.
+    redirect(`/app/questoes${modo !== "novas" ? `?modo=${modo}` : ""}`);
+  }
+
+  if (!temPlano && !amostra) {
     return (
       <div className="painel-conteudo flex max-w-[720px] flex-col gap-6">
         <header className="flex flex-col gap-2">
@@ -152,6 +161,8 @@ export default async function QuestoesPage({
     }),
   );
 
+  const naAmostra = !temPlano;
+  const exameAtivo = naAmostra ? amostra!.slug : exame;
   const ingeridos = exames.filter((e) => e.questoesCarregadas > 0);
   const acervo = ingeridos.reduce((s, e) => s + e.questoesCarregadas, 0);
   const modoAtual = MODOS.find((m) => m.chave === modo)!;
@@ -184,6 +195,22 @@ export default async function QuestoesPage({
           <p className="text-[0.96rem] text-muted">{modoAtual.texto}</p>
         </div>
       </header>
+
+      {naAmostra && (
+        <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-[var(--radius-medio)] border border-ouro-200 bg-ouro-50 px-5 py-4">
+          <p className="max-w-[62ch] text-[0.94rem] text-body">
+            <strong className="text-ink">Você está resolvendo o {amostra!.edicao}º Exame de graça</strong>
+            {" "}— as {amostra!.questoesCarregadas} questões, com gabarito, comentário e revisão espaçada.
+            Os outros {ingeridos.length - 1} exames e o simulado cronometrado fazem parte do plano.
+          </p>
+          <Link
+            href="/app/assinar"
+            className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            Ver planos
+          </Link>
+        </section>
+      )}
 
       {/* ---- Filtros ---- */}
       <section className="superficie flex flex-col gap-4 p-5">
@@ -223,7 +250,7 @@ export default async function QuestoesPage({
 
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
           <span className="rotulo mr-1">Exame</span>
-          <Link
+          {!naAmostra && <Link
             href={href(modo, null)}
             className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold transition-colors ${
               !exame
@@ -232,20 +259,37 @@ export default async function QuestoesPage({
             }`}
           >
             todos
-          </Link>
-          {ingeridos.map((e) => (
-            <Link
-              key={e.slug}
-              href={href(modo, e.slug)}
-              className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold tabular-nums transition-colors ${
-                exame === e.slug
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-muted hover:text-ink"
-              }`}
-            >
-              {e.edicao}º
-            </Link>
-          ))}
+          </Link>}
+          {ingeridos.map((e) =>
+            naAmostra && e.slug !== amostra!.slug ? (
+              // Fora da amostra: aparece, para a pessoa ver o tamanho do
+              // acervo, e leva aos planos em vez de a uma fila vazia.
+              <Link
+                key={e.slug}
+                href="/app/assinar"
+                title="Faz parte do plano"
+                className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[0.85rem] font-semibold tabular-nums text-muted/70 transition-colors hover:text-ink"
+              >
+                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                  <rect x="3" y="7" width="10" height="7" rx="1.5" />
+                  <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+                </svg>
+                {e.edicao}º
+              </Link>
+            ) : (
+              <Link
+                key={e.slug}
+                href={href(modo, e.slug)}
+                className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold tabular-nums transition-colors ${
+                  exameAtivo === e.slug
+                    ? "bg-brand-50 text-brand-700"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {e.edicao}º
+              </Link>
+            ),
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
@@ -275,15 +319,15 @@ export default async function QuestoesPage({
           ))}
         </div>
 
-        <p className="text-[0.8rem] text-muted">
+        {!naAmostra && <p className="text-[0.8rem] text-muted">
           {semDisciplina.toLocaleString("pt-BR")} das{" "}
           {acervo.toLocaleString("pt-BR")} questões ainda não têm disciplina
           atribuída. Filtrar por exame é exato; por disciplina, aproximado.
-        </p>
+        </p>}
       </section>
 
       {fila.length > 0 ? (
-        <Resolvedor key={`${modo}-${exame ?? "todos"}`} fila={fila} />
+        <Resolvedor key={`${modo}-${exameAtivo ?? "todos"}`} fila={fila} />
       ) : (
         <div className="superficie mx-auto flex w-full max-w-[620px] flex-col gap-3 p-8 text-center">
           <p className="text-[1.15rem] font-bold text-ink">

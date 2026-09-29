@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/page-header";
 import { JsonLd } from "@/lib/jsonld";
 import { abs, site } from "@/lib/site";
 import { planosDisponiveis } from "@/lib/planos";
-import { diasAte, getProximoExame } from "@/lib/content/queries";
+import { diasAte, getExames, getProximoExame } from "@/lib/content/queries";
+import type { Exame } from "@/lib/content/types";
 export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Planos e preços",
@@ -16,10 +17,12 @@ export const metadata: Metadata = {
 /* As perguntas descrevem o que existe hoje. Citar recurso que ainda não foi
    ao ar numa página de preço não é otimismo — é promessa que a pessoa paga
    para ter. */
-const perguntas = [
+const perguntasDe = (amostra: Exame | undefined) => [
   {
     q: "O que continua de graça?",
-    a: "Toda a legislação comentada, as fichas dos exames e as estatísticas de incidência. Sem cadastro e sem limite de leitura.",
+    a: amostra
+      ? `Toda a legislação comentada, as fichas dos exames e as estatísticas de incidência, sem cadastro e sem limite de leitura. E, com uma conta gratuita, o ${amostra.edicao}º Exame inteiro para resolver: as ${amostra.questoesCarregadas} questões, com gabarito, comentário e revisão espaçada, sem cartão.`
+      : "Toda a legislação comentada, as fichas dos exames e as estatísticas de incidência. Sem cadastro e sem limite de leitura.",
   },
   {
     q: "Posso desistir depois de pagar?",
@@ -39,8 +42,12 @@ const perguntas = [
   },
 ];
 export default async function PrecosPage() {
-  const proximo = await getProximoExame();
+  const [proximo, exames] = await Promise.all([getProximoExame(), getExames()]);
   const dias = diasAte(proximo.data);
+  // O exame aberto vem do banco (`exames.amostra_gratuita`): a oferta
+  // gratuita da página é a mesma que a RLS aplica, não um texto à parte.
+  const amostra = exames.find((e) => e.amostraGratuita && e.questoesCarregadas > 0);
+  const perguntas = perguntasDe(amostra);
   return (
     <>
       <JsonLd
@@ -87,10 +94,32 @@ export default async function PrecosPage() {
             <span className="text-ouro-500">ainda não é advogado</span>
           </>
         }
-        descricao="Toda a legislação comentada e as estatísticas do site seguem abertas. O plano libera o banco de questões e as ferramentas de treino."
+        descricao={
+          amostra
+            ? `Toda a legislação comentada e as estatísticas do site seguem abertas, e a conta gratuita resolve o ${amostra.edicao}º Exame inteiro. O plano libera os outros exames e as ferramentas de treino.`
+            : "Toda a legislação comentada e as estatísticas do site seguem abertas. O plano libera o banco de questões e as ferramentas de treino."
+        }
       />
 
       <Container className="py-16">
+        {amostra && (
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-2xl border border-ouro-200 bg-ouro-50 px-7 py-6">
+            <div className="flex max-w-[60ch] flex-col gap-1">
+              <span className="text-[0.8rem] font-bold tracking-[0.12em] text-ouro-600 uppercase">Antes de pagar</span>
+              <p className="text-[1.05rem] text-ink">
+                <strong>Resolva o {amostra.edicao}º Exame inteiro de graça</strong> — as{" "}
+                {amostra.questoesCarregadas} questões, com gabarito oficial, comentário e
+                revisão espaçada. Só precisa de uma conta, sem cartão.
+              </p>
+            </div>
+            <Link
+              href="/criar-conta"
+              className="rounded-full bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700"
+            >
+              Criar conta gratuita
+            </Link>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {planosDisponiveis.map((plano) => (
             <div

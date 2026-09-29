@@ -138,6 +138,28 @@ caso("a fila de questões volta vazia sem assinatura", async () => {
   if (/"enunciado"/.test(corpo)) throw new Error("veio enunciado de questão");
 });
 
+// A amostra gratuita (um exame inteiro) é para conta logada, não para
+// visitante: os dois casos acima já cobrem que o anônimo não a vê. Estes
+// cobrem o que a própria amostra não pode virar.
+caso("no máximo um exame está aberto como amostra", async () => {
+  const resposta = await fetch(
+    `${url}/rest/v1/exames?select=edicao&amostra_gratuita=eq.true`,
+    { headers: cabecalhos },
+  );
+  const linhas = await resposta.json();
+  if (!Array.isArray(linhas)) throw new Error(`resposta inesperada (HTTP ${resposta.status})`);
+  if (linhas.length > 1) {
+    throw new Error(`${linhas.length} exames abertos: ${linhas.map((l) => l.edicao).join(", ")}`);
+  }
+});
+
+caso("anônimo não chama pode_ver_questao", async () => {
+  const { status, corpo } = await chamar("pode_ver_questao", {
+    p_questao_id: "00000000-0000-0000-0000-000000000000",
+  });
+  if (status < 400) throw new Error(`chamada aceita (HTTP ${status}): ${corpo.slice(0, 80)}`);
+});
+
 caso("nem a fila nem nada devolve gabarito", async () => {
   const { corpo } = await selecionar("questoes", "gabarito");
   if (/"gabarito"\s*:\s*"[A-D]"/.test(corpo)) {
