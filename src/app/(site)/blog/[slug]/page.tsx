@@ -39,13 +39,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * O corpo é texto simples com parágrafos separados por linha em branco, e
- * subtítulos marcados com `## `.
+ * O corpo é texto simples com parágrafos separados por linha em branco,
+ * subtítulos marcados com `## ` e destaque com `**assim**`.
  *
  * Não é Markdown completo de propósito: renderizar HTML vindo do banco exigiria
  * sanitização, e um blog de dez textos não justifica essa superfície. Quando o
  * volume pedir mais, o lugar de mudar é aqui — não em cada post.
  */
+/** `**destaque**` vira <strong> sem passar HTML adiante: o texto é cortado nas
+    marcas e cada pedaço é nó do React. Marca sem par fica como está. */
+function Trecho({ texto }: { texto: string }) {
+  const partes = texto.split(/\*\*(.+?)\*\*/g);
+  return (
+    <>
+      {partes.map((parte, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} className="font-semibold text-ink">
+            {parte}
+          </strong>
+        ) : (
+          parte
+        ),
+      )}
+    </>
+  );
+}
+
 function Corpo({ texto }: { texto: string }) {
   const blocos = texto
     .split(/\n{2,}/)
@@ -63,7 +82,9 @@ function Corpo({ texto }: { texto: string }) {
             {bloco.slice(3)}
           </h2>
         ) : (
-          <p key={i}>{bloco}</p>
+          <p key={i}>
+            <Trecho texto={bloco} />
+          </p>
         ),
       )}
     </div>
