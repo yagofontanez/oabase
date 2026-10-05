@@ -74,6 +74,11 @@ export async function getUrlsIndexaveis(): Promise<
 
   return [
     ...ESTATICAS,
+    // A página da prova grátis só existe enquanto houver exame aberto
+    // (`amostra_gratuita`); sem ele ela dá 404, e 404 não entra no sitemap.
+    ...(exames.some((e) => e.amostraGratuita && e.questoesCarregadas > 0)
+      ? [{ path: "/prova-gratis", priority: 0.9, changeFrequency: "monthly" as const }]
+      : []),
     ...leis.map((lei) => ({
       path: `/legislacao/${lei.slug}`,
       priority: 0.8,

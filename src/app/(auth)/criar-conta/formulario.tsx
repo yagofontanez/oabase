@@ -9,6 +9,7 @@ import { ProgressoEntrada } from "@/components/auth/progresso-entrada";
 import styles from "@/components/auth/entrada.module.css";
 import Link from "next/link";
 import { navegar } from "@/components/barra-de-navegacao";
+import { destinoInterno } from "@/lib/destino";
 
 const Alerta = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px] shrink-0" aria-hidden="true">
@@ -40,10 +41,16 @@ export function FormularioCriarConta() {
     }
     setErroSenha(null);
     setEnviando(true);
+    // Lido do endereço só agora, pelo mesmo motivo do login: sem
+    // `useSearchParams`, o formulário existe no HTML antes do JS.
+    const proximo = destinoInterno(new URLSearchParams(window.location.search).get("proximo"));
     const { data, error } = await supabaseNavegador().auth.signUp({
       email: email.trim(),
       password: senha,
-      options: { data: { nome: nome.trim() } },
+      // Com confirmação de e-mail, quem leva a pessoa adiante é o link do
+      // e-mail, que cai em /auth/confirm — o destino viaja no cadastro e é
+      // validado de novo lá.
+      options: { data: { nome: nome.trim(), ...(proximo !== "/app" && { proximo }) } },
     });
     if (error) {
       setErro(mensagemDeErro(error));
@@ -62,7 +69,7 @@ export function FormularioCriarConta() {
     setSucesso(true);
     router.refresh();
     navegar();
-    router.push("/app");
+    router.push(proximo);
   }
   if (confirmar) {
     return (
@@ -75,7 +82,7 @@ export function FormularioCriarConta() {
         </span>
         <span className={styles.formEyebrow}>SÓ FALTA UM PASSO</span>
         <h2>Confirme seu e-mail</h2>
-        <p>Enviamos um link para <strong>{email.trim()}</strong>. Clique nele para ativar sua conta e começar seu plano de estudos.</p>
+        <p>Enviamos um link para <strong>{email.trim()}</strong>. Clique nele para ativar sua conta e começar.</p>
         <p className={styles.confirmationHint}>Não chegou? Aguarde alguns minutos e confira a caixa de spam.</p>
         <Link href="/entrar" className={styles.textLink}>Ir para o login <span aria-hidden="true">→</span></Link>
       </div>
@@ -141,7 +148,7 @@ export function FormularioCriarConta() {
         )}
         {sucesso && (
           <p role="status" className={`${styles.message} ${styles.success}`}>
-            <span aria-hidden="true">✓</span>Conta criada. Vamos montar seu plano.
+            <span aria-hidden="true">✓</span>Conta criada. Entrando…
           </p>
         )}
       </div>

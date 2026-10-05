@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { urlPublica } from "@/lib/url-publica";
+import { destinoInterno } from "@/lib/destino";
 
 /**
  * Volta do login com o Google.
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const code = params.get("code");
   const pedido = params.get("proximo");
-  const proximo = pedido?.startsWith("/") && !pedido.startsWith("//") ? pedido : "/app";
+  const proximo = destinoInterno(pedido);
 
   // Cancelou no Google, ou o Google recusou: volta ao login com o motivo.
   if (!code) {

@@ -13,7 +13,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 **A fronteira aberto/pago é a regra mais importante do repositório.**
 
 - Rotas públicas (`/`, `/legislacao`, `/sumulas`, `/glossario`,
-  `/proximo-exame`, `/exames`, `/estatisticas`, `/precos`, `/blog`) são
+  `/proximo-exame`, `/exames`, `/estatisticas`, `/precos`, `/blog`,
+  `/prova-gratis`) são
   indexáveis, renderizadas no servidor com ISR e entram no sitemap.
 - Tudo sob `/app` é produto pago: `robots: { index: false }` na rota **e**
   `Disallow` em `robots.ts`. Nunca depender de um mecanismo só.
@@ -246,6 +247,23 @@ aos milhares e não posiciona nada; o que só existe aqui são as 44 provas.
 sobre por que a classificação por disciplina ainda não vale como medição.
 Publicar a tabela redonda que todo site publica seria dar precisão falsa a
 alguém que organiza as últimas semanas de estudo em cima dela.
+
+## Prova grátis (`/prova-gratis`)
+
+É o destino do link da bio do TikTok. Os vídeos prometem "o 46º inteiro de
+graça", e a home não fala disso — quem clicava não achava o que foi buscar.
+A página repete a promessa e tem um botão só, que leva a
+`/criar-conta?proximo=/app/questoes`: depois do cadastro a pessoa cai na
+primeira questão, não no painel. O `proximo` sobrevive à confirmação por
+e-mail porque viaja nos metadados do cadastro e `/auth/confirm` o lê.
+
+**Endereço próprio é o que mede o funil.** O log do Caddy descarta a query
+string, então `?utm=` some; o caminho fica. Cliques da bio = acessos a
+`/prova-gratis`.
+
+Todo `proximo` passa por `destinoInterno()` (`src/lib/destino.ts`). Conferir
+só "começa com `/` e não com `//`" deixa passar `/\site.com`, que o
+navegador lê como outro site.
 
 ## Links internos
 

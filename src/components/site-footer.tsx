@@ -10,6 +10,7 @@ const colunas = [
     links: [
       { href: "/busca", label: "Buscar no acervo" },
       { href: "/proximo-exame", label: "Próximo exame" },
+      { href: "/prova-gratis", label: "Prova da OAB grátis" },
       { href: "/legislacao", label: "Legislação comentada" },
       { href: "/sumulas", label: "Súmulas Vinculantes" },
       { href: "/glossario", label: "Glossário jurídico" },

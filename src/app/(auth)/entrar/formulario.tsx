@@ -6,6 +6,7 @@ import { Campo } from "@/components/auth/campo";
 import { mensagemDeErro } from "@/lib/auth-erros";
 import { supabaseNavegador } from "@/lib/supabase/browser";
 import { navegar } from "@/components/barra-de-navegacao";
+import { destinoInterno } from "@/lib/destino";
 import { BotaoGoogle } from "@/components/auth/botao-google";
 import { ProgressoEntrada } from "@/components/auth/progresso-entrada";
 import styles from "@/components/auth/entrada.module.css";
@@ -72,10 +73,7 @@ export function FormularioEntrar() {
     const destinoPedido = new URLSearchParams(window.location.search).get("proximo");
     // `proximo` também preserva o pedido OAuth. Só aceitamos caminho interno:
     // sem isso, um link de login poderia virar redirecionamento para phishing.
-    const proximo =
-      destinoPedido?.startsWith("/") && !destinoPedido.startsWith("//")
-        ? destinoPedido
-        : "/app";
+    const proximo = destinoInterno(destinoPedido);
 
     // `refresh` faz o servidor reler o cookie de sessão antes de navegar.
     router.refresh();

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { destinoInterno } from "@/lib/destino";
 
 /**
  * Renova a sessão a cada navegação e guarda a fronteira do produto.
@@ -55,10 +56,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(destino);
   }
 
+  // Quem já tem sessão e clica num "Fazer a prova grátis" vai direto para a
+  // prova, não para o painel: o `proximo` vale também aqui.
   if (user && (rota === "/entrar" || rota === "/criar-conta")) {
+    const pedido = new URL(destinoInterno(request.nextUrl.searchParams.get("proximo")), "https://x");
     const destino = request.nextUrl.clone();
-    destino.pathname = "/app";
-    destino.search = "";
+    destino.pathname = pedido.pathname;
+    destino.search = pedido.search;
     return NextResponse.redirect(destino);
   }
 
