@@ -14,6 +14,7 @@ import {
   addEdge,
   Background,
   BackgroundVariant,
+  ConnectionMode,
   Controls,
   Handle,
   MiniMap,
@@ -167,15 +168,36 @@ function BotaoRemover({ onClick }: { onClick: () => void }) {
   );
 }
 
-/** Pontos de conexão. Os quatro lados, para a ligação não dar volta na tela. */
+/** Lado de saída e de chegada pela posição relativa dos centros. */
+function ladosDaLigacao(a: Node, b: Node) {
+  const centro = (n: Node) => ({
+    x: n.position.x + (n.measured?.width ?? 260) / 2,
+    y: n.position.y + (n.measured?.height ?? 160) / 2,
+  });
+  const ca = centro(a), cb = centro(b);
+  const dx = cb.x - ca.x, dy = cb.y - ca.y;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { sourceHandle: dx > 0 ? "right" : "left", targetHandle: dx > 0 ? "left" : "right" }
+    : { sourceHandle: dy > 0 ? "bottom" : "top", targetHandle: dy > 0 ? "top" : "bottom" };
+}
+
+/**
+ * Pontos de conexão. Os quatro lados, para a ligação não dar volta na tela.
+ *
+ * Todos são `source` com `id`, e o quadro roda em `ConnectionMode.Loose`: a
+ * ligação não tem direção (ver AGENTS.md), e o lado de cada ponta é escolhido
+ * na hora de desenhar, pela posição dos cartões — `ladosDaLigacao`. Sem `id`,
+ * o React Flow ligava sempre à primeira alça de cada tipo: a ponta caía no
+ * topo do cartão mesmo quando ele estava ao lado, e a linha dava a volta.
+ */
 function Alcas({ cor }: { cor: Cor }) {
   const estilo = `!h-2 !w-2 !border-0 ${CORES[cor].alca}`;
   return (
     <>
-      <Handle type="target" position={Position.Top} className={estilo} />
-      <Handle type="target" position={Position.Left} className={estilo} />
-      <Handle type="source" position={Position.Right} className={estilo} />
-      <Handle type="source" position={Position.Bottom} className={estilo} />
+      <Handle id="top" type="source" position={Position.Top} className={estilo} />
+      <Handle id="left" type="source" position={Position.Left} className={estilo} />
+      <Handle id="right" type="source" position={Position.Right} className={estilo} />
+      <Handle id="bottom" type="source" position={Position.Bottom} className={estilo} />
     </>
   );
 }
@@ -413,6 +435,16 @@ function QuadroInterno({
       label: l.rotulo || undefined,
     })),
   );
+
+  // O lado de cada ponta sai da posição atual dos cartões, então a linha
+  // acompanha quando um deles é arrastado.
+  const arestas = useMemo(() => {
+    const porId = new Map(nos.map((n) => [n.id, n]));
+    return ligacoes.map((l) => {
+      const a = porId.get(l.source), b = porId.get(l.target);
+      return a && b ? { ...l, ...ladosDaLigacao(a, b) } : l;
+    });
+  }, [ligacoes, nos]);
 
   const [disponiveis, setDisponiveis] = useState(questoesDisponiveis);
   const [seletorAberto, setSeletorAberto] = useState(false);
@@ -842,7 +874,8 @@ function QuadroInterno({
       <div className="relative flex min-h-0 flex-1">
         <ReactFlow
           nodes={nos}
-          edges={ligacoes}
+          edges={arestas}
+          connectionMode={ConnectionMode.Loose}
           onNodesChange={aoMudarNos}
           onEdgesChange={aoMudarLigacoes}
           nodeTypes={TIPOS_DE_NO}
@@ -930,7 +963,9 @@ function QuadroInterno({
           )}
 
           {/* ---- Barra de ações ---- */}
-          <Panel position="top-left" className="!m-4">
+          {/* Acima do painel da tela vazia, que vem depois e cobriria o
+              seletor de lei aberto. */}
+          <Panel position="top-left" className="!z-10 !m-4">
             <div className="superficie flex flex-wrap items-center gap-2 p-2">
               <button
                 type="button"
