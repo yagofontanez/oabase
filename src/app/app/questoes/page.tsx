@@ -180,6 +180,35 @@ export default async function QuestoesPage({
     return busca ? `/app/questoes?${busca}` : "/app/questoes";
   }
 
+  const filtroDisciplina = (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="rotulo mr-1">Disciplina</span>
+      <Link
+        href={href(modo, exame, null)}
+        className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold transition-colors ${
+          !disciplina
+            ? "bg-brand-50 text-brand-700"
+            : "text-muted hover:text-ink"
+        }`}
+      >
+        todas
+      </Link>
+      {disciplinas.map((d) => (
+        <Link
+          key={d.slug}
+          href={href(modo, exame, d.slug)}
+          className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold transition-colors ${
+            disciplina === d.slug
+              ? "bg-brand-50 text-brand-700"
+              : "text-muted hover:text-ink"
+          }`}
+        >
+          {d.nome}
+        </Link>
+      ))}
+    </div>
+  );
+
   return (
     /* Uma coluna só, na largura cheia do painel.
        O cartão da questão parava nos 820 do resolvedor e ficava centralizado
@@ -192,27 +221,21 @@ export default async function QuestoesPage({
           <h1 className="text-[clamp(1.6rem,2.6vw,1.95rem)] leading-[1.1] font-extrabold tracking-[-0.035em] text-ink">
             Questões
           </h1>
-          <p className="text-[0.96rem] text-muted">{modoAtual.texto}</p>
+          <p className="text-[0.96rem] text-muted">
+            {naAmostra && modo === "novas"
+              ? `${amostra!.edicao}º Exame, de graça: ${amostra!.questoesCarregadas} questões com gabarito e comentário.`
+              : modoAtual.texto}
+          </p>
         </div>
       </header>
 
-      {naAmostra && (
-        <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-[var(--radius-medio)] border border-ouro-200 bg-ouro-50 px-5 py-4">
-          <p className="max-w-[62ch] text-[0.94rem] text-body">
-            <strong className="text-ink">Você está resolvendo o {amostra!.edicao}º Exame de graça</strong>
-            {" "}— as {amostra!.questoesCarregadas} questões, com gabarito, comentário e revisão espaçada.
-            Os outros {ingeridos.length - 1} exames e o simulado cronometrado fazem parte do plano.
-          </p>
-          <Link
-            href="/app/assinar"
-            className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-700"
-          >
-            Ver planos
-          </Link>
-        </section>
-      )}
-
-      {/* ---- Filtros ---- */}
+      {/* ---- Filtros ----
+          Na amostra grátis, a primeira questão vem logo depois do título.
+          Quem chegava pelo anúncio para "fazer o 46º grátis" encontrava antes
+          dela um "Ver planos", 43 exames com cadeado e 17 disciplinas — no
+          celular, telas de filtro e de cadeado antes da prova prometida. A
+          linha de exames some (só um está aberto), a de disciplina fica
+          recolhida e o convite aos planos desce para depois da questão. */}
       <section className="superficie flex flex-col gap-4 p-5">
         <div className="flex flex-wrap gap-2">
           {MODOS.map((m) => {
@@ -248,6 +271,7 @@ export default async function QuestoesPage({
           })}
         </div>
 
+        {!naAmostra && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
           <span className="rotulo mr-1">Exame</span>
           {!naAmostra && <Link
@@ -291,33 +315,18 @@ export default async function QuestoesPage({
             ),
           )}
         </div>
+        )}
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          <span className="rotulo mr-1">Disciplina</span>
-          <Link
-            href={href(modo, exame, null)}
-            className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold transition-colors ${
-              !disciplina
-                ? "bg-brand-50 text-brand-700"
-                : "text-muted hover:text-ink"
-            }`}
-          >
-            todas
-          </Link>
-          {disciplinas.map((d) => (
-            <Link
-              key={d.slug}
-              href={href(modo, exame, d.slug)}
-              className={`rounded-full px-3 py-1.5 text-[0.85rem] font-semibold transition-colors ${
-                disciplina === d.slug
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-muted hover:text-ink"
-              }`}
-            >
-              {d.nome}
-            </Link>
-          ))}
-        </div>
+        {naAmostra ? (
+          <details className="group border-t border-line pt-4">
+            <summary className="cursor-pointer text-[0.9rem] font-semibold text-muted hover:text-ink">
+              Filtrar por disciplina
+            </summary>
+            <div className="mt-3">{filtroDisciplina}</div>
+          </details>
+        ) : (
+          <div className="border-t border-line pt-4">{filtroDisciplina}</div>
+        )}
 
         {!naAmostra && <p className="text-[0.8rem] text-muted">
           {semDisciplina.toLocaleString("pt-BR")} das{" "}
@@ -351,6 +360,22 @@ export default async function QuestoesPage({
             Responder questões novas
           </Link>
         </div>
+      )}
+
+      {naAmostra && (
+        <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-[var(--radius-medio)] border border-ouro-200 bg-ouro-50 px-5 py-4">
+          <p className="max-w-[62ch] text-[0.94rem] text-body">
+            <strong className="text-ink">Você está resolvendo o {amostra!.edicao}º Exame de graça</strong>
+            {" "}— as {amostra!.questoesCarregadas} questões, com gabarito, comentário e revisão espaçada.
+            Os outros {ingeridos.length - 1} exames e o simulado cronometrado fazem parte do plano.
+          </p>
+          <Link
+            href="/app/assinar"
+            className="rounded-full bg-brand-600 px-5 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            Ver planos
+          </Link>
+        </section>
       )}
     </div>
   );
