@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { Reveal } from "@/components/reveal";
-import { getAcervo, getLeis } from "@/lib/content/queries";
+import { diasAte, getAcervo, getExames, getLeis, getProximoExame } from "@/lib/content/queries";
 import { JsonLd } from "@/lib/jsonld";
 import { planosDisponiveis } from "@/lib/planos";
 import { abs, site } from "@/lib/site";
@@ -35,7 +35,18 @@ const ferramentas = [
   ["Preparação para a OAB", "Treine com questões oficiais da 1ª fase, gabaritos da FGV, simulados e incidência medida."],
 ] as const;
 
-const perguntas = [
+type Amostra = { edicao: number; questoes: number } | null;
+
+function perguntasDaHome(amostra: Amostra) {
+  return [
+  ...(amostra
+    ? [
+        {
+          q: `O ${amostra.edicao}º Exame é grátis mesmo?`,
+          a: `É. As ${amostra.questoes} questões do ${amostra.edicao}º Exame de Ordem ficam abertas para qualquer conta, sem plano e sem cartão, com gabarito oficial da FGV e comentário em cada uma. Não há período de teste que vira cobrança: os outros exames e o simulado cronometrado é que fazem parte do plano.`,
+        },
+      ]
+    : []),
   {
     q: "O OABase serve para prova da faculdade?",
     a: "Sim. Você pode escolher uma disciplina, cadastrar os tópicos da avaliação, informar a data e a sua disponibilidade. O sistema transforma isso em um roadmap de estudo e acompanha a execução até a prova.",
@@ -54,13 +65,14 @@ const perguntas = [
   },
   {
     q: "O que continua aberto sem cadastro?",
-    a: "A consulta de legislação, súmulas, glossário, exames, estatísticas e textos do blog continua aberta. A conta guarda o que é seu: planos, progresso, foco, notas e revisões.",
+    a: "A consulta de legislação, súmulas, glossário, exames, estatísticas e textos do blog continua aberta. A conta guarda o que é seu: planos, progresso, foco, notas e revisões — e é ela que libera a prova grátis.",
   },
   {
     q: "E a 2ª fase da OAB?",
     a: "O roadmap pode organizar sua rotina, mas o banco de questões e os simulados são voltados à 1ª fase. Correção de peças e respostas discursivas ainda não faz parte do produto.",
   },
-];
+  ];
+}
 
 function IconeSeta() {
   return (
@@ -70,60 +82,81 @@ function IconeSeta() {
   );
 }
 
-function PreviaDoPlano() {
-  const blocos = [
-    ["Hoje", "Direito Civil", "Obrigações · 45 min", "ativo"],
-    ["Amanhã", "Direito Constitucional", "Leitura e revisão · 35 min", ""],
-    ["Sex", "Revisão da semana", "Erros e anotações · 30 min", ""],
+/**
+ * O que quem vem do anúncio vai encontrar: uma questão da prova, marcada e
+ * corrigida. O enunciado é desenhado em barras, como no vídeo — questão de
+ * verdade só sai do banco para quem está logado (RLS), e a página é aberta.
+ */
+function PreviaDaProva({ edicao, total }: { edicao: number; total: number }) {
+  const alternativas = [
+    ["A", "w-[78%]", ""],
+    ["B", "w-[64%]", "certa"],
+    ["C", "w-[86%]", ""],
+    ["D", "w-[58%]", ""],
   ] as const;
 
   return (
-    <div className="relative mx-auto w-full max-w-[590px] lg:mx-0">
-      <div aria-hidden="true" className="absolute -top-10 -right-8 h-44 w-44 rounded-full border border-ouro-400/30 bg-ouro-400/10" />
+    <div className="relative mx-auto w-full max-w-[590px] lg:mx-0" aria-hidden="true">
+      <div className="absolute -top-10 -right-8 h-44 w-44 rounded-full border border-ouro-400/30 bg-ouro-400/10" />
       <div className="relative overflow-hidden rounded-[28px] border border-white/15 bg-white/[0.08] p-2 shadow-[0_38px_90px_-34px_rgba(0,0,0,.8)] backdrop-blur-sm">
         <div className="rounded-[22px] bg-[#f8faf8] p-5 sm:p-7">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-5">
             <div>
-              <span className="text-[0.68rem] font-bold tracking-[0.12em] text-brand-600 uppercase">Seu roadmap</span>
-              <h2 className="mt-1 text-[1.25rem] font-extrabold text-ink">Prova de Direito Civil</h2>
+              <span className="text-[0.68rem] font-bold tracking-[0.12em] text-brand-600 uppercase">{edicao}º Exame de Ordem</span>
+              <strong className="mt-1 block text-[1.25rem] font-extrabold text-ink">Questão 1 de {total}</strong>
             </div>
-            <span className="rounded-full bg-ouro-100 px-3 py-1.5 text-[0.7rem] font-bold text-ouro-700">12 dias</span>
+            <span className="rounded-full bg-ouro-100 px-3 py-1.5 text-[0.7rem] font-bold text-ouro-700">grátis</span>
           </div>
 
-          <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_112px]">
-            <ol className="flex flex-col gap-2.5">
-              {blocos.map(([dia, disciplina, objetivo, estado]) => (
-                <li key={`${dia}-${disciplina}`} className={`flex items-center gap-3 rounded-[14px] border p-3.5 ${estado ? "border-brand-200 bg-brand-50" : "border-line bg-white"}`}>
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] text-[0.65rem] font-bold ${estado ? "bg-brand-600 text-white" : "bg-sunk text-muted"}`}>{dia.slice(0, 3)}</span>
-                  <div className="min-w-0">
-                    <strong className="block truncate text-[0.78rem] text-ink">{disciplina}</strong>
-                    <span className="block truncate text-[0.68rem] text-muted">{objetivo}</span>
-                  </div>
-                </li>
-              ))}
-            </ol>
+          <div className="mt-5 flex flex-col gap-2">
+            {["w-full", "w-[94%]", "w-[71%]"].map((w) => (
+              <span key={w} className={`block h-2.5 rounded-full bg-sunk ${w}`} />
+            ))}
+          </div>
 
-            <div className="flex flex-row gap-2 sm:flex-col">
-              {[["4", "blocos"], ["2h", "de foco"], ["75%", "da semana"]].map(([valor, rotulo]) => (
-                <div key={rotulo} className="flex-1 rounded-[13px] bg-sunk p-3 text-center">
-                  <strong className="block text-[0.95rem] text-brand-800">{valor}</strong>
-                  <span className="text-[0.62rem] text-muted">{rotulo}</span>
-                </div>
+          <ol className="mt-5 flex flex-col gap-2.5">
+            {alternativas.map(([letra, w, estado]) => (
+              <li key={letra} className={`flex items-center gap-3 rounded-[14px] border p-3.5 ${estado ? "border-brand-200 bg-brand-50" : "border-line bg-white"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-[0.75rem] font-bold ${estado ? "bg-brand-600 text-white" : "bg-sunk text-muted"}`}>{letra}</span>
+                <span className={`block h-2 rounded-full ${estado ? "bg-brand-200" : "bg-sunk"} ${w}`} />
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-5 rounded-[14px] border border-line bg-white p-4">
+            <span className="text-[0.68rem] font-bold tracking-[0.12em] text-brand-600 uppercase">Gabarito B · comentário</span>
+            <div className="mt-3 flex flex-col gap-2">
+              {["w-full", "w-[82%]"].map((w) => (
+                <span key={w} className={`block h-2 rounded-full bg-sunk ${w}`} />
               ))}
             </div>
           </div>
         </div>
       </div>
       <div className="auth-flutua-atrasada absolute -bottom-8 -left-3 rounded-[16px] border border-white/15 bg-noite px-4 py-3 text-white shadow-xl sm:-left-7">
-        <span className="block text-[0.65rem] text-brand-200">Próximo passo</span>
-        <strong className="text-[0.8rem]">já decidido</strong>
+        <span className="block text-[0.65rem] text-brand-200">Errou?</span>
+        <strong className="text-[0.8rem]">volta na revisão</strong>
       </div>
     </div>
   );
 }
 
 export default async function Home() {
-  const [acervo, leis] = await Promise.all([getAcervo(), getLeis()]);
+  const [acervo, leis, exames, proximo] = await Promise.all([
+    getAcervo(),
+    getLeis(),
+    getExames(),
+    getProximoExame(),
+  ]);
+  // A oferta é o exame que a RLS de fato abre (`exames.amostra_gratuita`):
+  // trocar a amostra é um UPDATE, e o texto acompanha. Sem amostra, a home
+  // volta a vender o plano — não promete prova que o banco não dá.
+  const exameGratis = exames.find((e) => e.amostraGratuita && e.questoesCarregadas > 0);
+  const amostra: Amostra = exameGratis
+    ? { edicao: exameGratis.edicao, questoes: exameGratis.questoesCarregadas }
+    : null;
+  const perguntas = perguntasDaHome(amostra);
+  const dias = diasAte(proximo.data);
 
   return (
     <>
@@ -163,23 +196,28 @@ export default async function Home() {
           <div className="flex flex-col items-start">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 py-2 text-[0.72rem] font-bold tracking-[0.1em] text-brand-100 uppercase">
               <span className="h-1.5 w-1.5 rounded-full bg-ouro-400" />
-              Da primeira prova à OAB
+              {amostra ? `${amostra.edicao}º Exame inteiro grátis` : "Da primeira prova à OAB"}
             </span>
-            <h1 className="mt-7 max-w-[11ch] text-[clamp(3rem,6vw,5.4rem)] leading-[0.94] font-extrabold tracking-[-0.065em] text-white">
-              Direito se estuda com direção.
+            <h1 className="mt-7 max-w-[12ch] text-[clamp(3rem,6vw,5.4rem)] leading-[0.94] font-extrabold tracking-[-0.065em] text-white">
+              {amostra ? "Treine com a prova da OAB de verdade." : "Direito se estuda com direção."}
             </h1>
             <p className="mt-7 max-w-[48ch] text-[clamp(1.05rem,1.7vw,1.28rem)] leading-relaxed text-brand-100">
-              Transforme a matéria da faculdade, a próxima avaliação ou a preparação para a OAB em um plano que cabe na sua rotina — e saiba o que estudar toda vez que abrir o OABase.
+              {amostra
+                ? `Comece pelo ${amostra.edicao}º Exame inteiro, de graça: ${amostra.questoes} questões oficiais, com gabarito da FGV e comentário em cada uma. Depois, um plano que cabe na sua rotina até o dia da prova.`
+                : "Transforme a matéria da faculdade, a próxima avaliação ou a preparação para a OAB em um plano que cabe na sua rotina — e saiba o que estudar toda vez que abrir o OABase."}
             </p>
-            <div className="mt-9 flex w-full flex-wrap gap-3 sm:w-auto">
-              <Link href="/criar-conta" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-ouro-400 px-7 font-semibold text-noite shadow-[0_14px_30px_-14px_rgba(233,162,59,.9)] transition-transform hover:-translate-y-0.5 hover:bg-ouro-200 sm:flex-none">
-                Criar meu plano <IconeSeta />
+            <div className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <Link href={amostra ? "/criar-conta?proximo=/app/questoes" : "/criar-conta"} className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-ouro-400 px-7 font-semibold whitespace-nowrap text-noite shadow-[0_14px_30px_-14px_rgba(233,162,59,.9)] transition-transform hover:-translate-y-0.5 hover:bg-ouro-200 sm:flex-none">
+                {amostra ? `Fazer o ${amostra.edicao}º grátis` : "Criar meu plano"} <IconeSeta />
               </Link>
-              <Link href="#como-funciona" className="flex min-h-12 flex-1 items-center justify-center rounded-full border border-white/25 px-7 font-semibold text-white transition-colors hover:border-white/60 hover:bg-white hover:text-brand-800 sm:flex-none">
-                Ver como funciona
+              <Link href={amostra ? "/prova-gratis" : "#como-funciona"} className="flex min-h-12 flex-1 items-center justify-center rounded-full border border-white/25 px-7 font-semibold text-white transition-colors hover:border-white/60 hover:bg-white hover:text-brand-800 sm:flex-none">
+                {amostra ? "Como funciona" : "Ver como funciona"}
               </Link>
             </div>
-            <p className="mt-5 text-[0.82rem] text-brand-200">Conta gratuita · faculdade ou OAB · sem cartão para começar</p>
+            <p className="mt-5 text-[0.82rem] text-brand-200">
+              Conta gratuita · sem cartão · entra com o Google
+              {dias > 0 && ` · faltam ${dias} dias para o ${proximo.edicao}º Exame`}
+            </p>
             <Link
               href="/como-estudar-para-oab"
               className="mt-4 text-[0.9rem] font-semibold text-ouro-200 underline decoration-ouro-400/60 underline-offset-4 transition-colors hover:text-white"
@@ -187,16 +225,24 @@ export default async function Home() {
               Leia o guia: como estudar para a OAB →
             </Link>
           </div>
-          <PreviaDoPlano />
+          {amostra ? <PreviaDaProva edicao={amostra.edicao} total={amostra.questoes} /> : null}
         </Container>
       </section>
 
       <section className="bg-ouro-400 py-5">
         <Container className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2 text-center text-[0.78rem] font-bold tracking-[0.08em] text-noite/75 uppercase">
-          <span>Planejamento pessoal</span><span className="hidden h-1 w-1 rounded-full bg-noite/35 sm:block" />
-          <span>Foco registrado</span><span className="hidden h-1 w-1 rounded-full bg-noite/35 sm:block" />
-          <span>Revisão com contexto</span><span className="hidden h-1 w-1 rounded-full bg-noite/35 sm:block" />
-          <span>Fontes oficiais</span>
+          {[
+            ...(amostra ? [`${amostra.edicao}º Exame grátis`] : []),
+            `${acervo.questoes.toLocaleString("pt-BR")} questões oficiais`,
+            "Gabarito da FGV",
+            "Revisão dos erros",
+            "Fontes oficiais",
+          ].map((item, i) => (
+            <span key={item} className="contents">
+              {i > 0 && <span className="hidden h-1 w-1 rounded-full bg-noite/35 sm:block" />}
+              <span>{item}</span>
+            </span>
+          ))}
         </Container>
       </section>
 
@@ -220,7 +266,7 @@ export default async function Home() {
               <h3 className="mt-6 max-w-[15ch] text-[2rem] leading-[1.05] font-extrabold text-vinho-700">Quando a prova é nacional, os dados entram no plano.</h3>
               <p className="mt-5 max-w-[48ch] text-[0.96rem] leading-relaxed text-body">Use a incidência das disciplinas, treine com o acervo oficial da 1ª fase e deixe o caderno de erros decidir o que precisa voltar.</p>
               <ul className="mt-8 flex flex-col gap-3 text-[0.9rem] text-vinho-700">
-                {[`${acervo.questoes.toLocaleString("pt-BR")} questões oficiais no acervo`, "Gabaritos da FGV e anulações preservadas", "Simulados e revisão espaçada"].map((item) => <li key={item} className="flex items-center gap-3"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-vinho-600 text-[0.65rem] text-white">✓</span>{item}</li>)}
+                {[...(amostra ? [`${amostra.edicao}º Exame inteiro grátis, com comentário`] : []), `${acervo.questoes.toLocaleString("pt-BR")} questões oficiais de ${acervo.exames} exames`, "Gabaritos da FGV e anulações preservadas", "Simulados e revisão espaçada"].map((item) => <li key={item} className="flex items-center gap-3"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-vinho-600 text-[0.65rem] text-white">✓</span>{item}</li>)}
               </ul>
             </article>
           </div>
@@ -319,7 +365,7 @@ export default async function Home() {
             <div className="relative max-w-[62ch]">
               <span className="selo selo-claro">Planos de estudo</span>
               <h2 className="mt-5 text-[clamp(2.2rem,4.2vw,3.4rem)] leading-[1] font-extrabold tracking-[-0.05em] text-white">Comece por uma prova. Fique pelo seu progresso.</h2>
-              <p className="mt-5 text-brand-100">Crie a conta sem pagar e escolha o período quando quiser liberar todas as ferramentas. O plano mensal funciona tanto para a faculdade quanto para a preparação da OAB.</p>
+              <p className="mt-5 text-brand-100">Crie a conta sem pagar{amostra ? `, resolva o ${amostra.edicao}º Exame inteiro` : ""} e escolha o período quando quiser liberar todas as ferramentas. O plano mensal funciona tanto para a faculdade quanto para a preparação da OAB.</p>
             </div>
             <div className="relative mt-11 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {planosDisponiveis.map((plano) => (
