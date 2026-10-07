@@ -200,6 +200,20 @@ export default async function PrecosPage() {
           </dl>
         </section>
 
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-2xl border border-line bg-surface px-7 py-6">
+          <p className="max-w-[58ch] text-[0.98rem] text-body">
+            <strong className="text-ink">É uma instituição?</strong> Faculdades
+            de Direito e cursinhos têm licença por aluno, com relatório de
+            desempenho da turma e piloto gratuito para uma turma.
+          </p>
+          <Link
+            href="/institucional"
+            className="rounded-full border border-line px-6 py-3 font-semibold text-ink transition-colors hover:border-brand-300 hover:text-brand-600"
+          >
+            Ver licença institucional
+          </Link>
+        </div>
+
         <p className="mt-14 max-w-[68ch] text-[0.85rem] text-muted">
           Pagamento por Pix, cartão ou boleto, processado pela Asaas. Só o
           Mensal renova sozinho, e cancela em Configurações a qualquer
