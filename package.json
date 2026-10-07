@@ -17,6 +17,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "video:launch": "node scripts/render-launch-video.mjs",
+    "video:dia": "node --env-file=.env.local --import tsx scripts/video/do-dia.mjs",
     "fronteira": "node --env-file=.env.local scripts/fronteira.mjs",
     "mcp": "tsx src/mcp/server.ts",
     "test:mcp": "node --import tsx --test src/mcp/server.test.ts"
@@ -43,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "playwright": "1.58.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
