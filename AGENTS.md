@@ -293,10 +293,10 @@ dependências). Ver `ingest/README.md`.
 |---|---|
 | `questoes`: 3.540, do 3º ao 46º Exame (44 edições com questões, 16 anuladas) | |
 | `exames.data_prova`, cada uma vinda do edital | `questoes.disciplina_id` sem confirmação (3.044 classificadas, 1.698 com `disciplina_confirmada`) |
-| gabarito, tipo 1 — definitivo em 15 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
+| gabarito, tipo 1 — definitivo em 36 edições, preliminar nas demais (`exames.gabarito_definitivo`) | |
 | `leis` e `artigos`: 42 leis, 9.887 artigos do Planalto | |
 | `artigos.incidencia`: 164 vínculos em 113 artigos, só de citação explícita | |
-| `comentarios`: 92 comentários de questão publicados, zero rascunho (`fila_de_comentarios`/`salvar_comentario`) | |
+| `comentarios`: 3.524 comentários de questão publicados (`fila_de_comentarios`/`salvar_comentario`) | |
 | `termos_glossario`: 142 verbetes, cada um ancorado num artigo do acervo | |
 
 **Número de acervo em literal tem data de validade.** A entrada do 35º
