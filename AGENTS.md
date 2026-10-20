@@ -1176,6 +1176,15 @@ rota responder ali; na Netlify isso nunca funcionou e o endereço dava 404. O
 `robots.txt` continua anunciando `/sitemap-index.xml`, que é o que o app
 serve sozinho em qualquer hospedagem.
 
+**O Caddy atende outro projeto: o SEO Site Builder** (`sitenabusca.com.br`
+e os subdomínios dos sites dele). A configuração mora no repositório dele
+(`deploy/caddy/`), montada em `/etc/caddy-sites` e importada no fim do
+Caddyfile; o app dele fica na rede `edge` (externa, `docker network create
+edge`), que o Caddy compartilha — e só o Caddy, nada da `interna`. O bloco
+global ganhou `on_demand_tls { ask … }`: certificado sob demanda só para o
+que o app dele liberar; os domínios do OABase seguem com certificado normal.
+Recriar o container do Caddy derruba os dois sites por alguns segundos.
+
 **Monte pasta, não arquivo.** O Caddyfile era montado como arquivo, e montar
 um arquivo só prende o container àquele arquivo: `git pull` e `rsync` gravam
 um novo, e o Caddy seguia lendo o antigo — até depois de `caddy reload`.
