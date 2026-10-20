@@ -13,6 +13,12 @@
 	email {$EMAIL_ACME}
 	# Contadores de requisição e latência por resposta, para o monitor.
 	metrics
+	# Certificado sob demanda, usado pelos sites do SEO Site Builder (importado
+	# no fim deste arquivo): o Caddy só emite se o app daquele projeto disser
+	# que o endereço é dele. Não afeta os domínios do OABase.
+	on_demand_tls {
+		ask http://seo-builder:3000/api/tls/ask
+	}
 }
 
 {$DOMINIO} {
@@ -73,3 +79,8 @@ monitor.oabase.com.br {
 :9180 {
 	metrics /metrics
 }
+
+# Outro projeto na mesma VPS: o SEO Site Builder. A configuração mora no
+# repositório dele (deploy/caddy/) e chega montada em /etc/caddy-sites — ver
+# docker-compose.yml. Os endereços dele não se misturam com os do OABase.
+import /etc/caddy-sites/*.caddy

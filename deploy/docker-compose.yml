@@ -51,7 +51,12 @@ services:
       # Registro de acesso (Marco Civil, 6 meses). Volume próprio: sobrevive
       # a recriar o container e não se mistura com os certificados.
       - caddy-logs:/var/log/caddy
-    networks: [interna]
+      # Endereços do SEO Site Builder, outro projeto nesta VPS: a pasta
+      # deploy/caddy do repositório dele (importada no fim do Caddyfile).
+      - /home/deploy/seo-builder/app/deploy/caddy:/etc/caddy-sites:ro
+    # `edge`: rede compartilhada com o app do SEO Site Builder, que não
+    # enxerga nada do OABase (fica fora da `interna`).
+    networks: [interna, edge]
 
   tarefas:
     build: ./tarefas
@@ -148,3 +153,6 @@ volumes:
 
 networks:
   interna:
+  # Criada uma vez na VPS: `docker network create edge`.
+  edge:
+    external: true
