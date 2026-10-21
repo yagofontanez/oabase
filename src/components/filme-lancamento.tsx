@@ -8,6 +8,10 @@ import { useRef, useState } from "react";
  * `preload="none"`: são 4 MB, e a home é a página de entrada de quem estuda
  * pelo celular em conexão ruim. O vídeo só começa a baixar no toque; até lá,
  * a capa é um quadro do próprio filme.
+ *
+ * O arquivo mora em `public/filme/`, não em `public/videos/`: aquela pasta é
+ * a saída do roteiro de divulgação e fica fora da imagem Docker
+ * (`.dockerignore`) — servido de lá, o filme dava 404 em produção.
  */
 export function FilmeLancamento() {
   const video = useRef<HTMLVideoElement>(null);
@@ -26,8 +30,8 @@ export function FilmeLancamento() {
         <div className="relative aspect-[9/16] overflow-hidden rounded-[42px] bg-black">
           <video
             ref={video}
-            src="/videos/oabase-launch.mp4"
-            poster="/videos/oabase-launch-capa.jpg"
+            src="/filme/lancamento.mp4"
+            poster="/filme/lancamento-capa.jpg"
             preload="none"
             playsInline
             controls={tocando}
