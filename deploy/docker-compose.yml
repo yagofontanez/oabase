@@ -136,6 +136,8 @@ services:
     volumes:
       - ./monitor/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitor/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      # Dashboard do SEO Site Builder (deploy/monitor do repositório dele).
+      - /home/deploy/seo-builder/app/deploy/monitor:/var/lib/grafana/dashboards-sitenabusca:ro
       - grafana-dados:/var/lib/grafana
     networks: [interna]
 

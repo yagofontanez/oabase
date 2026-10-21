@@ -12,7 +12,11 @@
 {
 	email {$EMAIL_ACME}
 	# Contadores de requisição e latência por resposta, para o monitor.
-	metrics
+	# `per_host`: com o SEO Site Builder no mesmo Caddy, cada painel filtra
+	# pelos próprios domínios (rótulo `host`).
+	metrics {
+		per_host
+	}
 	# Certificado sob demanda, usado pelos sites do SEO Site Builder (importado
 	# no fim deste arquivo): o Caddy só emite se o app daquele projeto disser
 	# que o endereço é dele. Não afeta os domínios do OABase.

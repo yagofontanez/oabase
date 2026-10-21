@@ -1,0 +1,10 @@
+# Dashboard do Site na Busca (outro projeto nesta VPS). O arquivo mora no
+# repositório dele (deploy/monitor/) e chega montado pelo docker-compose.
+apiVersion: 1
+providers:
+  - name: Site na Busca
+    folder: Site na Busca
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards-sitenabusca
