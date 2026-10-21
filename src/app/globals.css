@@ -518,6 +518,85 @@
   }
 }
 
+/* ═════════ Landing ═════════════════════════════════════════════════
+   Tipografia grande, uma ideia por tela, e o produto como imagem. O
+   gradiente só toca número e a segunda linha de título — se espalhar,
+   vira enfeite e deixa de apontar. */
+@layer components {
+  .home-gradiente {
+    background: linear-gradient(
+      100deg,
+      var(--color-brand-300) 0%,
+      var(--color-ouro-200) 62%,
+      var(--color-ouro-400) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .home-gradiente-claro {
+    background: linear-gradient(
+      100deg,
+      var(--color-brand-600) 0%,
+      var(--color-brand-400) 45%,
+      var(--color-ouro-500) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .home-entrada {
+    animation: oab-entrada 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .home-atraso-1 {
+    animation-delay: 0.12s;
+  }
+  .home-atraso-2 {
+    animation-delay: 0.24s;
+  }
+  .home-atraso-3 {
+    animation-delay: 0.4s;
+  }
+}
+
+/* O aparelho do topo cresce enquanto a página rola, ligado à rolagem e
+   não ao relógio. Navegador sem `animation-timeline` vê a peça parada no
+   tamanho final — é melhoria, não dependência. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .home-zoom {
+      animation: home-zoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 42%;
+    }
+    .home-surge {
+      animation: home-surge linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+@keyframes home-zoom {
+  from {
+    transform: perspective(1600px) rotateX(14deg) scale(0.9);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes home-surge {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes oab-brilho {
   from {
     background-position: 200% 0;
