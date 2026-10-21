@@ -78,7 +78,7 @@ function perguntasDaHome(amostra: Amostra) {
 
 /* Um tamanho de título para a página inteira: a escala é o que dá a
    sensação de calma, e cada seção com o seu tamanho desfaz isso. */
-const titulo = "text-[clamp(2.5rem,5.6vw,4.6rem)] leading-[1.02] font-bold tracking-[-0.048em]";
+const titulo = "mx-auto max-w-[18ch] text-balance text-[clamp(2.5rem,5.6vw,4.6rem)] leading-[1.02] font-bold tracking-[-0.048em]";
 const sobretitulo = "text-[clamp(1.05rem,1.6vw,1.3rem)] font-semibold tracking-[-0.01em]";
 
 function Chevron() {
@@ -399,7 +399,7 @@ export default async function Home() {
       {/* ───── Duas jornadas ───── */}
       <section className="bg-paper py-28 sm:py-36">
         <Container>
-          <Reveal className="mx-auto max-w-[24ch] text-center">
+          <Reveal className="text-center">
             <h2 className={`${titulo} text-ink`}>
               A faculdade e a OAB pedem ritmos diferentes. <span className="text-muted">O método acompanha os dois.</span>
             </h2>
@@ -437,7 +437,7 @@ export default async function Home() {
       {/* ───── Como funciona ───── */}
       <section id="como-funciona" className="scroll-mt-24 bg-surface py-28 sm:py-36">
         <Container>
-          <Reveal className="mx-auto max-w-[20ch] text-center">
+          <Reveal className="text-center">
             <h2 className={`${titulo} text-ink`}>
               Menos tempo decidindo. <span className="home-gradiente-claro">Mais tempo estudando.</span>
             </h2>
@@ -460,7 +460,7 @@ export default async function Home() {
       {/* ───── Ferramentas ───── */}
       <section className="bg-paper py-28 sm:py-36">
         <Container>
-          <Reveal className="mx-auto max-w-[22ch] text-center">
+          <Reveal className="text-center">
             <h2 className={`${titulo} text-ink`}>As ferramentas conversam entre si.</h2>
           </Reveal>
           <p className="mx-auto mt-6 max-w-[56ch] text-center text-[1.1rem] leading-relaxed text-body">
@@ -499,7 +499,7 @@ export default async function Home() {
         <Container className="grid items-center gap-16 lg:grid-cols-2">
           <Reveal className="text-center lg:text-left">
             <span className={`${sobretitulo} text-ouro-200`}>O filme</span>
-            <h2 className={`${titulo} mt-3 text-white`}>
+            <h2 className={`${titulo} mt-3 text-white lg:mx-0`}>
               Trinta e seis segundos. <span className="home-gradiente">Sem abas abertas.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-[44ch] text-[1.1rem] leading-relaxed text-brand-100 lg:mx-0">
@@ -516,7 +516,7 @@ export default async function Home() {
       {/* ───── Fontes ───── */}
       <section className="bg-surface py-28 sm:py-36">
         <Container className="text-center">
-          <Reveal className="mx-auto max-w-[22ch]">
+          <Reveal className="text-center">
             <span className={`${sobretitulo} text-brand-600`}>Conteúdo com origem</span>
             <h2 className={`${titulo} mt-3 text-ink`}>
               A organização pode ser inteligente. <span className="text-muted">O Direito precisa ser verificável.</span>
@@ -545,7 +545,7 @@ export default async function Home() {
       {/* ───── Planos ───── */}
       <section id="planos" className="scroll-mt-24 bg-paper py-28 sm:py-36">
         <Container>
-          <Reveal className="mx-auto max-w-[20ch] text-center">
+          <Reveal className="text-center">
             <h2 className={`${titulo} text-ink`}>Comece por uma prova. <span className="text-muted">Fique pelo seu progresso.</span></h2>
           </Reveal>
           <p className="mx-auto mt-6 max-w-[56ch] text-center text-[1.1rem] leading-relaxed text-body">
