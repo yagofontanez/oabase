@@ -17,7 +17,7 @@
 # isso gravava todos os segredos na imagem. O `rm` fica no mesmo `RUN` do
 # build, para o arquivo não existir em camada nenhuma, nem no cache.
 
-ARG NODE_VERSION=24
+ARG NODE_VERSION=24.22.1
 
 FROM node:${NODE_VERSION}-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NEXT_TELEMETRY_DISABLED=1
